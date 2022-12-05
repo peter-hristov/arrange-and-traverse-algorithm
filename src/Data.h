@@ -35,6 +35,8 @@ class Data
     GLfloat minY, maxY;
     GLfloat minZ, maxZ;
 
+    int xDim, yDim, zDim;
+
     // Compute the min/max F, G and X, Y, Z coordinates
     void computeMinMaxRangeDomainCoordinates();
 
@@ -65,4 +67,8 @@ class Data
     // Read data file from a txt file
     // Construct a statndard hexahedral grid (split into tets)
     void readDataGrid(const std::string);
+
+    size_t trippleToIndex(const size_t, const size_t, const size_t);
+    void addTetsForCube(const size_t, const size_t, const size_t);
+
 };

@@ -62,6 +62,7 @@ void Data::computeTetExitPoints(const GLfloat u, const GLfloat v, const std::vec
 void
 Data::computeMinMaxRangeDomainCoordinates()
 {
+
     // Compute the min/max domain coordinates
     this->minX = this->vertexDomainCoordinates[0][0];
     this->maxX = this->vertexDomainCoordinates[0][0];
@@ -184,20 +185,74 @@ Data::readDataGrid(const string filename)
     std::ifstream dataFile (filename);
     if (false == dataFile.is_open()) { throw "Could not open data file."; }
 
-    int xDim, yDim, zDim;
     dataFile >> xDim >> yDim >> zDim;
 
-    for (int i = 0 ; i < zDim ; i++)
+    // Add vertex domain coordinates
+    //for (int k = 0 ; k < this->zdim ; k++)
+    //{
+        //for (int j = 0 ; j < this->ydim ; j++)
+        //{
+            //for (int i = 0 ; i < this->xdim ; i++)
+            //{
+                //this->vertexDomainCoordinates.push_back({static_cast<float>(i), static_cast<float>(j), static_cast<float>(k)});
+            //}
+        //}
+    //}
+
+    // Add vertex domain coordinates
+    for (int k = 0 ; k < this->zDim ; k++)
     {
-        for (int j = 0 ; j < yDim ; j++)
+        for (int j = 0 ; j < this->yDim ; j++)
         {
-            for (int k = 0 ; k < zDim ; k++)
+            for (int i = 0 ; i < this->xDim ; i++)
             {
-                float dataValue;
-                dataFile >> dataValue;
-                cout << "Data value " << dataValue << endl;
+                // Interpolated the coordinates
+                this->vertexDomainCoordinates.push_back({static_cast<float>(i), static_cast<float>(j), static_cast<float>(k)});
             }
         }
     }
 
+    // Add vertex range coordinates
+    for (int k = 0 ; k < this->zDim ; k++)
+    {
+        for (int j = 0 ; j < this->yDim ; j++)
+        {
+            for (int i = 0 ; i < this->xDim ; i++)
+            {
+                float value;
+                dataFile >> value;
+
+                this->vertexCoordinatesF.push_back(value);
+                this->vertexCoordinatesG.push_back(value);
+            }
+        }
+    }
+
+    // Add tets
+    for (int i = 0 ; i < this->xDim - 1 ; i++)
+    {
+        for (int j = 0 ; j < this->yDim - 1 ; j++)
+        {
+            for (int k = 0 ; k < this->zDim - 1 ; k++)
+            {
+                this->addTetsForCube(i, j, k);
+            }
+        }
+    }
+}
+
+size_t Data::trippleToIndex(const size_t i, const size_t j, const size_t k)
+{
+    return this->xDim * this->yDim * k + this->xDim * j + i;
+}
+
+void Data::addTetsForCube(const size_t i, const size_t j, const size_t k)
+{
+    this->tetrahedra.push_back({this->trippleToIndex(i, j, k), this->trippleToIndex(i+1, j+1, k+1), this->trippleToIndex(i, j+1, k), this->trippleToIndex(i+1, j+1, k)});
+    this->tetrahedra.push_back({this->trippleToIndex(i, j, k), this->trippleToIndex(i+1, j+1, k+1), this->trippleToIndex(i, j+1, k), this->trippleToIndex(i, j+1, k+1)});
+    this->tetrahedra.push_back({this->trippleToIndex(i, j, k), this->trippleToIndex(i+1, j+1, k+1), this->trippleToIndex(i, j, k+1), this->trippleToIndex(i, j+1, k+1)});
+
+    this->tetrahedra.push_back({this->trippleToIndex(i, j, k), this->trippleToIndex(i+1, j+1, k+1), this->trippleToIndex(i+1, j, k), this->trippleToIndex(i+1, j+1, k)});
+    this->tetrahedra.push_back({this->trippleToIndex(i, j, k), this->trippleToIndex(i+1, j+1, k+1), this->trippleToIndex(i+1, j, k), this->trippleToIndex(i+1, j, k+1)});
+    this->tetrahedra.push_back({this->trippleToIndex(i, j, k), this->trippleToIndex(i+1, j+1, k+1), this->trippleToIndex(i, j, k+1), this->trippleToIndex(i+1, j, k+1)});
 }
