@@ -223,10 +223,12 @@ Data::readDataGrid(const string filename)
                 dataFile >> value;
 
                 this->vertexCoordinatesF.push_back(value);
-                this->vertexCoordinatesG.push_back(value);
+                this->vertexCoordinatesG.push_back(static_cast<float>(j));
             }
         }
     }
+
+
 
     // Add tets
     for (int i = 0 ; i < this->xDim - 1 ; i++)

@@ -37,6 +37,16 @@ class Data
 
     int xDim, yDim, zDim;
 
+
+    struct MeshTriangle{
+        std::vector<float> vertixA;
+        std::vector<float> vertixB;
+        std::vector<float> vertixC;
+    };
+    std::vector<MeshTriangle> meshTriangles;
+
+
+
     // Compute the min/max F, G and X, Y, Z coordinates
     void computeMinMaxRangeDomainCoordinates();
 

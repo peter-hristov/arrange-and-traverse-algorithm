@@ -21,18 +21,18 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
   public:
     TracerVisualiserWidget(QWidget*, QWidget*, Data*);
-    GLfloat scale = 0;
+    GLfloat scale = 1;
 
     //bool drawEdges = false;
     //bool drawFaces = false;
     //bool drawVertices = false;
 
-    bool drawEdges = 1;
-    bool drawFaces = 1;
-    bool drawVertices = 1;
+    bool drawEdges = 0;
+    bool drawFaces = 0;
+    bool drawVertices = 0;
 
-    bool showUIsosurface = false;
-    bool showVIsosurface = false;
+    bool showUIsosurface = true;
+    bool showVIsosurface = true;
 
     float edgeOpacity = 0.8;
     float faceOpacity = 0.2;
@@ -54,6 +54,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     int displayListIndexTriangles = 0;
     int displayListIndexTrianglesG = 0;
+    void generateDisplayListTriangles(const float isovalue, const std::vector<float> &values, const int type);
 
   protected:
     void initializeGL();
@@ -83,6 +84,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void cube();
     void drawAxis(GLfloat, GLfloat);
     void drawWiredCube(const GLfloat vertices[8][3]);
+
 
     void drawScene();
 

@@ -486,64 +486,64 @@ PlotWidget::drawAndRecomputeFS(QPainter& p)
     }
 
     // Draw all the vertex coordinates
-    for(size_t i = 0 ; i <  this->data->vertexCoordinatesF.size() ; i++)
-    {
+    //for(size_t i = 0 ; i <  this->data->vertexCoordinatesF.size() ; i++)
+    //{
 
-        float x1 = (resolution / (data->maxF - data->minF)) * (this->data->vertexCoordinatesF[i] - data->minF);
-        float y1 = (resolution / (data->maxG - data->minG)) * (this->data->vertexCoordinatesG[i] - data->minG);
+        //float x1 = (resolution / (data->maxF - data->minF)) * (this->data->vertexCoordinatesF[i] - data->minF);
+        //float y1 = (resolution / (data->maxG - data->minG)) * (this->data->vertexCoordinatesG[i] - data->minG);
 
-        if (this->closePointData == i)
-        {
-            p.setPen(Qt::blue);
-        }
-        else
-        {
-            if (i == 13)
-            {
-                //p.setPen(Qt::red);
-                p.setPen(Qt::black);
-            }
-            else
-            {
-                p.setPen(Qt::black);
-            }
-        }
+        //if (this->closePointData == i)
+        //{
+            //p.setPen(Qt::blue);
+        //}
+        //else
+        //{
+            //if (i == 13)
+            //{
+                ////p.setPen(Qt::red);
+                //p.setPen(Qt::black);
+            //}
+            //else
+            //{
+                //p.setPen(Qt::black);
+            //}
+        //}
 
-        p.drawEllipse(QPointF(x1, y1), 3, 3);
-        // @TODO Figure out how to rotate the vertex numbers
-        //p.setTransform(QTransform(1., 0., 0., -1., 0., resolution));
-        p.drawText(x1, y1, QString::number(i));
-    }
+        //p.drawEllipse(QPointF(x1, y1), 3, 3);
+        //// @TODO Figure out how to rotate the vertex numbers
+        ////p.setTransform(QTransform(1., 0., 0., -1., 0., resolution));
+        //p.drawText(x1, y1, QString::number(i));
+    //}
 
     auto penGrey = QPen(QColor(0, 0, 0, 225));
     penGrey.setWidthF(0.8);
     p.setPen(penGrey);
 
     // Leave a trail of fibers or not
-    if (dynamic_cast<TracerVisualiserWindow*>(this->parent())->tracerVisualiserWidget->clearFibers == true)
-    {
-        this->data->faceFibers.clear();
-    }
+    //if (dynamic_cast<TracerVisualiserWindow*>(this->parent())->tracerVisualiserWidget->clearFibers == true)
+    //{
+        //this->data->faceFibers.clear();
+    //}
 
-    // Draw all edges from the tets
-    for(size_t tetId = 0 ; tetId < this->data->tetrahedra.size(); tetId++)
-    {
-        const auto tet = this->data->tetrahedra[tetId];
+    //// Draw all edges from the tets
+    //for(size_t tetId = 0 ; tetId < this->data->tetrahedra.size(); tetId++)
+    //{
+        //const auto tet = this->data->tetrahedra[tetId];
 
-        for(int i = 0 ; i < 4 ; i++)
-        {
-            for(int j = i + 1 ; j < 4 ; j++)
-            {
-                float x1 = (resolution / (data->maxF - data->minF)) * (this->data->vertexCoordinatesF[tet[i]] - data->minF);
-                float y1 = (resolution / (data->maxG - data->minG)) * (this->data->vertexCoordinatesG[tet[i]] - data->minG);
+        //for(int i = 0 ; i < 4 ; i++)
+        //{
+            //for(int j = i + 1 ; j < 4 ; j++)
+            //{
+                //float x1 = (resolution / (data->maxF - data->minF)) * (this->data->vertexCoordinatesF[tet[i]] - data->minF);
+                //float y1 = (resolution / (data->maxG - data->minG)) * (this->data->vertexCoordinatesG[tet[i]] - data->minG);
 
-                float x2 = (resolution / (data->maxF - data->minF)) * (this->data->vertexCoordinatesF[tet[j]] - data->minF);
-                float y2 = (resolution / (data->maxG - data->minG)) * (this->data->vertexCoordinatesG[tet[j]] - data->minG);
+                //float x2 = (resolution / (data->maxF - data->minF)) * (this->data->vertexCoordinatesF[tet[j]] - data->minF);
+                //float y2 = (resolution / (data->maxG - data->minG)) * (this->data->vertexCoordinatesG[tet[j]] - data->minG);
 
-                p.drawLine(x1, y1, x2, y2);
-            }
-        }
-    }
+                //p.drawLine(x1, y1, x2, y2);
+            //}
+        //}
+    //}
 
     // If we have selected a point in the scatterplot
     if (polyPoints.size() == 1)
@@ -559,6 +559,13 @@ PlotWidget::drawAndRecomputeFS(QPainter& p)
         // Display fibers
         const auto& visualiserWidget = dynamic_cast<TracerVisualiserWindow*>(this->parent())->tracerVisualiserWidget;
         visualiserWidget->generateDisplayList();
+
+        float iso = this->data->minF + (polyPoints[0].x() / resolution) * (this->data->maxF - this->data->minF);
+        visualiserWidget->generateDisplayListTriangles(iso, this->data->vertexCoordinatesF, 1);
+
+        float iso2 = this->data->minG + (polyPoints[0].y() / resolution) * (this->data->maxG - this->data->minG);
+        visualiserWidget->generateDisplayListTriangles(iso2, this->data->vertexCoordinatesG, 2);
+
         visualiserWidget->update();
     }
 }
