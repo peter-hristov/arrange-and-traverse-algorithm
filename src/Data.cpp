@@ -10,8 +10,6 @@ void Data::computeTetExitPoints(const GLfloat u, const GLfloat v, const std::vec
 {
     this->tetsWithFibers = vector<bool>(this->tetrahedra.size(), false);
 
-    //cout << endl << endl;
-
     // For every tet, compute the two exit points
     for(size_t tetId = 0 ; tetId < this->tetrahedra.size(); tetId++)
     {
@@ -173,4 +171,33 @@ Data::readData(string filename)
         dataStream >> this->tetrahedra[i][2];
         dataStream >> this->tetrahedra[i][3];
     }
+}
+
+void
+Data::readDataGrid(const string filename)
+{
+    // Set deault names for the range axis
+    this->longnameF = "f";
+    this->longnameG = "g";
+
+    // Open data file
+    std::ifstream dataFile (filename);
+    if (false == dataFile.is_open()) { throw "Could not open data file."; }
+
+    int xDim, yDim, zDim;
+    dataFile >> xDim >> yDim >> zDim;
+
+    for (int i = 0 ; i < zDim ; i++)
+    {
+        for (int j = 0 ; j < yDim ; j++)
+        {
+            for (int k = 0 ; k < zDim ; k++)
+            {
+                float dataValue;
+                dataFile >> dataValue;
+                cout << "Data value " << dataValue << endl;
+            }
+        }
+    }
+
 }

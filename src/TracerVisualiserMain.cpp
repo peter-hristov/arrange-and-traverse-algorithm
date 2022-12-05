@@ -24,7 +24,10 @@ int main(int argc, char* argv[])
     Data* data = new Data();
 
     // Read in data file
-    data->readData(filename);
+    //data->readData(filename);
+    data->readDataGrid(filename);
+
+    return 0;
 
     // Compute domain/range data bounds
     data->computeMinMaxRangeDomainCoordinates();

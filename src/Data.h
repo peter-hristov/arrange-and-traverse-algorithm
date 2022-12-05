@@ -45,17 +45,24 @@ class Data
 
     QVector<QPointF> mousePoints;
 
+    // Tetraheda given in vertex IDs
     std::vector<std::vector<size_t>> tetrahedra;
+
+    // The coordinates of vertices in the domain
     std::vector<std::vector<GLfloat>> vertexDomainCoordinates;
 
+    // The coordinates of vertices in the domain, split into two arrays
     std::vector<GLfloat> vertexCoordinatesF;
     std::vector<GLfloat> vertexCoordinatesG;
 
-
+    // These are the points on the faces of actives tets that have fibers (two per tet)
     std::vector<FaceFiberPoint> faceFibers;
 
     void computeTetExitPoints(const float, const float, const std::vector<float> = {1,1,1});
 
-
     void readData(std::string);
+
+    // Read data file from a txt file
+    // Construct a statndard hexahedral grid (split into tets)
+    void readDataGrid(const std::string);
 };
