@@ -88,9 +88,14 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent,
     faceOpacitySlider->setValue(this->tracerVisualiserWidget->faceOpacity * 100);
 
     fakeSlider = new QSlider(Qt::Horizontal);
+    fakeSlider->setMaximum(1000);
     fakeSlider->setTracking(false);
 
-    checkbox2 = new QCheckBox("Case sensitive");
+    fakeSlider2 = new QSlider(Qt::Horizontal);
+    fakeSlider2->setMaximum(1000);
+    fakeSlider2->setTracking(false);
+
+    checkbox2 = new QCheckBox("Function Value");
 
     //
     // Layouts
@@ -113,6 +118,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent,
 
     optionsLayout2->addWidget(checkbox2, 0, 0);
     optionsLayout2->addWidget(fakeSlider, 0, 1);
+    optionsLayout2->addWidget(fakeSlider2, 1, 1);
 
 
     // Set up layout
@@ -153,6 +159,32 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent,
     connect(this->edgeOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
         this->tracerVisualiserWidget->edgeOpacity = static_cast<double>(this->edgeOpacitySlider->value()) / 100.0;
         this->tracerVisualiserWidget->update();
+    });
+
+    connect(this->fakeSlider, &QSlider::valueChanged, plotWidget, [=]() {
+            double sliderRatio =  static_cast<double>(this->fakeSlider->value()) / 100.0;
+            double isovalue = this->data->minF + sliderRatio * (this->data->maxF - this->data->minF);
+
+            this->tracerVisualiserWidget->generateDisplayListTriangles(isovalue, this->data->vertexCoordinatesF, 1);
+            this->tracerVisualiserWidget->update();
+
+            //cout << "Isovalue is " isovalue << endl;
+            this->checkbox2->setText(QString::number(isovalue));
+
+        //this->tracerVisualiserWidget->edgeOpacity = static_cast<double>(this->fakeSlider->value()) / 100.0;
+        //this->tracerVisualiserWidget->update();
+    });
+
+    connect(this->fakeSlider2, &QSlider::valueChanged, plotWidget, [=]() {
+
+            double sliderRatio =  static_cast<double>(this->fakeSlider2->value()) / 100.0;
+            double isovalue = this->data->minG + sliderRatio * (this->data->maxG - this->data->minG);
+
+            this->tracerVisualiserWidget->generateDisplayListTriangles(isovalue, this->data->vertexCoordinatesG, 2);
+            this->tracerVisualiserWidget->update();
+
+        //this->tracerVisualiserWidget->edgeOpacity = static_cast<double>(this->fakeSlider->value()) / 100.0;
+        //this->tracerVisualiserWidget->update();
     });
 }
 

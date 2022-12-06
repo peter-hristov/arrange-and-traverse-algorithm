@@ -103,10 +103,10 @@ Data::computeMinMaxRangeDomainCoordinates()
     }
 
     // Add some padding to the range coordinates for better visibility
-    this->minF -= .2;
-    this->maxF += .2;
-    this->minG -= .2;
-    this->maxG += .2;
+    //this->minF -= .2;
+    //this->maxF += .2;
+    //this->minG -= .2;
+    //this->maxG += .2;
 }
 
 

@@ -717,11 +717,11 @@ TracerVisualiserWidget::generateDisplayListTriangles(const float isovalue, const
     //setMaterial(1, 0, 0, 1.0, 0.0);
     if (type == 1)
     {
-        glColor4f(0, 1, 0, 0.3);
+        glColor4f(0, 1, 0, 0.5);
     }
     else
     {
-        glColor4f(0, 0, 1, 0.3);
+        glColor4f(0, 0, 1, 0.5);
     }
 
     // Draw Fiber

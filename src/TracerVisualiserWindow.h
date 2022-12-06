@@ -38,6 +38,7 @@ class TracerVisualiserWindow : public QWidget
     QSlider *vertexOpacitySlider;
 
     QSlider *fakeSlider;
+    QSlider *fakeSlider2;
 
 
     QCheckBox *checkbox2;

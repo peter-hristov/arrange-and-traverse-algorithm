@@ -560,11 +560,11 @@ PlotWidget::drawAndRecomputeFS(QPainter& p)
         const auto& visualiserWidget = dynamic_cast<TracerVisualiserWindow*>(this->parent())->tracerVisualiserWidget;
         visualiserWidget->generateDisplayList();
 
-        float iso = this->data->minF + (polyPoints[0].x() / resolution) * (this->data->maxF - this->data->minF);
-        visualiserWidget->generateDisplayListTriangles(iso, this->data->vertexCoordinatesF, 1);
+        //float iso = this->data->minF + (polyPoints[0].x() / resolution) * (this->data->maxF - this->data->minF);
+        //visualiserWidget->generateDisplayListTriangles(iso, this->data->vertexCoordinatesF, 1);
 
-        float iso2 = this->data->minG + (polyPoints[0].y() / resolution) * (this->data->maxG - this->data->minG);
-        visualiserWidget->generateDisplayListTriangles(iso2, this->data->vertexCoordinatesG, 2);
+        //float iso2 = this->data->minG + (polyPoints[0].y() / resolution) * (this->data->maxG - this->data->minG);
+        //visualiserWidget->generateDisplayListTriangles(iso2, this->data->vertexCoordinatesG, 2);
 
         visualiserWidget->update();
     }
