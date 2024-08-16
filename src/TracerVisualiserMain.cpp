@@ -24,8 +24,8 @@ int main(int argc, char* argv[])
     Data* data = new Data();
 
     // Read in data file
-    //data->readData(filename);
-    data->readDataGrid(filename);
+    data->readData(filename);
+    //data->readDataGrid(filename);
 
 
     // Compute domain/range data bounds

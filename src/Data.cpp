@@ -143,6 +143,8 @@ Data::readData(string filename)
     int numVertices, numTets;
     dataStream >> numVertices >> numTets;
 
+    cout << "We have " << numVertices << " and " << numTets << endl;
+
     // Initialize all the data arrays
     this->vertexCoordinatesF = std::vector<GLfloat>(numVertices, 0);
     this->vertexCoordinatesG = std::vector<GLfloat>(numVertices, 0);
@@ -212,6 +214,7 @@ Data::readDataGrid(const string filename)
         }
     }
 
+
     // Add vertex range coordinates
     for (int k = 0 ; k < this->zDim ; k++)
     {
@@ -227,6 +230,72 @@ Data::readDataGrid(const string filename)
             }
         }
     }
+
+
+    //
+    // Write data to binary file
+    //
+    //ofstream outputFile("data.raw", ios::out | ios::binary);
+    //if (false == outputFile.is_open()) { throw "Could not open data file."; }
+
+    //for (int i = 0 ; i < this->xDim ; i++)
+    //{
+        //for (int j = 0 ; j < this->yDim ; j++)
+        //{
+            //for (int k = 0 ; k < this->zDim ; k++)
+            //{
+                //auto index = trippleToIndex(i, j, k);
+
+                //outputFile << this->vertexCoordinatesF[index];
+            //}
+        //}
+    //}
+    //outputFile.close();
+    //if (false == outputFile.good()) { throw "Error while writing file."; }
+
+
+    FILE *binaryWriteFile;
+    binaryWriteFile=fopen("data.raw","wb");
+    for (int i = 0 ; i < xDim ; i++)
+    {
+        for (int j = 0 ; j < yDim ; j++)
+        {
+            for (int k = 0 ; k < zDim ; k++)
+            {
+
+                size_t index = trippleToIndex(i, j, k);
+                double val = this->vertexCoordinatesF[index];
+
+                fwrite(&val, sizeof(val), 1, binaryWriteFile);
+
+                printf("Wrote value : %f\n", val);
+            }
+        }
+    }
+    fclose(binaryWriteFile);
+
+
+    //
+    // Read data from binary file
+    //
+    FILE *binaryReadFile;
+    binaryReadFile=fopen("data.raw","rb");
+
+    for (int i = 0 ; i < xDim ; i++)
+    {
+        for (int j = 0 ; j < yDim ; j++)
+        {
+            for (int k = 0 ; k < zDim ; k++)
+            {
+                double val;
+
+                fread(&val, sizeof(val), 1, binaryReadFile);
+
+                printf("Read value : %f\n", val);
+            }
+        }
+    }
+    fclose(binaryReadFile);
 
 
 
