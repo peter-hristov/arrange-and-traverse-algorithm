@@ -79,6 +79,56 @@ int main(int argc, char* argv[])
     arrangement.computeArrangement(tetMesh);
     Timer::stop("Arrangement                            :");
 
+
+    for (auto vit = arrangement.arr.vertices_begin(); vit != arrangement.arr.vertices_end(); ++vit)
+    {
+        const auto& v = *vit;
+
+        if (false == arrangement.arrangementPointIndices.contains(vit->point()))
+        {
+            assert(v.degree() == 4);
+            //std::cout << "Vertex at " << v.point() << " has degree " << v.degree() << "\n";
+        } 
+    }
+
+    for (auto heit = arrangement.arr.halfedges_begin(); heit != arrangement.arr.halfedges_end(); ++heit)
+    {
+        // Get iterators to originating curves via the arrangement object
+        auto oc_begin = arrangement.arr.originating_curves_begin(heit);
+        auto oc_end   = arrangement.arr.originating_curves_end(heit);
+
+        std::size_t count = std::distance(oc_begin, oc_end);
+
+        assert(count == 1);
+
+        //std::cout << "Halfedge from "
+            //<< heit->source()->point() << " to "
+            //<< heit->target()->point()
+            //<< " has " << count << " originating curve(s)\n";
+    }
+
+
+
+    //cout << tetMesh.vertexCoordinatesF.size() << " " << tetMesh.edges.size() << "\n";
+
+    //// Print vertices
+    //for (int i = 0 ; i < tetMesh.vertexCoordinatesF.size() ; i++)
+    //{
+        //cout << tetMesh.vertexCoordinatesF[i] << " " << tetMesh.vertexCoordinatesG[i] << "\n";
+    //}
+
+    ////// Print edges
+    //for (const auto &edge : tetMesh.edges)
+    //{
+        //cout << edge[0] << " " << edge[1] << "\n";
+
+        ////cout << tetMesh.vertexCoordinatesF[edge[0]] << " " << tetMesh.vertexCoordinatesG[edge[0]] << " " << tetMesh.vertexCoordinatesF[edge[1]] << " " << tetMesh.vertexCoordinatesG[edge[1]] << "\n";
+    //}
+
+
+
+    return 0;
+
     Timer::start();
     arrangement.computePointLocationDataStructure();
     Timer::stop("Arrangement search structure           :");
