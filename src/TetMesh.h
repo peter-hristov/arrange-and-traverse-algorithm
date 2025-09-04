@@ -40,7 +40,9 @@ class TetMesh
     std::map<std::array<int, 2>, std::vector<int>> lowerStarTriangles;
     std::vector<std::set<int>> triangles;
     std::unordered_map<std::set<int>, int, MyHash<std::set<int>>> triangleIndices;
-    std::vector<std::vector<int>> tetIncidentTriangles;
+
+    //std::vector<std::vector<int>> tetIncidentTriangles;
+    std::vector<std::set<int>> tetIncidentTriangles;
 
     int singularEdgesNumber;
     int regularEdgesNumber;

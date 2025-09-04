@@ -244,6 +244,38 @@ class DisjointSet {
                 std::cout << "\n\n";
             }
         }
+
+
+
+        std::map<int, std::set<int>> groupComponents()
+        {
+            std::map<int, std::set<int>> grouped;
+
+            for (const auto &[key, value] : this->data)
+            {
+                grouped[this->findIndex(value)].insert(key);
+            }
+
+            return grouped;
+
+        }
+
+
+        void printByRoot()
+        {
+            std::map<int, std::set<int>> grouped = this->groupComponents();
+
+            // Now grouped[v] contains all keys with that value v
+            for (const auto &[value, keys] : grouped)
+            {
+                std::cout << "Component root " << value << ": ";
+                for (int k : keys)
+                {
+                    std::cout << k << " ";
+                }
+                std::cout << "\n";
+            }
+        }
 };
 
 

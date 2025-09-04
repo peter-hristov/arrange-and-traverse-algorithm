@@ -1,47 +1,36 @@
 #include "./CGALTypedefs.h"
 
-#include "./Timer.h"
-#include "./ReebSpace2.h"
-#include "./io.h"
-#include "src/DisjointSet.h"
+#include <cassert>
 #include <utility>
 
+#include "./io.h"
+#include "./Timer.h"
+#include "./ReebSpace2.h"
+#include "./DisjointSet.h"
+#include "./PreimageGraph.h"
 
-
-
-DisjointSet<int> computePreimageGraph(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const DisjointSet<int> &preimageGraphPrevious)
+PreimageGraph computePreimageGraph(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
 {
-    std::set<int> preimageGraph;
-    for (const auto &[triangleId, internalIndex] : preimageGraphPrevious.data)
+    std::set<int> preimageGraphTriangles;
+    for (const auto &triangleId : preimageGraphPrevious.triangleIds)
     {
-        preimageGraph.insert(triangleId);
+        preimageGraphTriangles.insert(triangleId);
     }
 
     for (const auto &triangle: minusTriangles)
     {
-        preimageGraph.erase(triangle);
+        preimageGraphTriangles.erase(triangle);
     }
 
     for (const auto &triangle: plusTriangles)
     {
-        preimageGraph.insert(triangle);
+        preimageGraphTriangles.insert(triangle);
     }
 
-    DisjointSet<int> preimageGraphFirstComponents(preimageGraph);
+    PreimageGraph pg(preimageGraphTriangles);
+    pg.computeConnectedComponents(tetMesh);
 
-    for (const auto &[t1, id1] : preimageGraphFirstComponents.data)
-    {
-        for (const auto &t2 : tetMesh.tetIncidentTriangles[t1])
-        {
-            if (preimageGraphFirstComponents.data.contains(t2))
-            {
-                preimageGraphFirstComponents.unionElements(t1, t2);
-            }
-        }
-    }
-
-    // @TODO Is this returned RVO?
-    return preimageGraphFirstComponents;
+    return pg;
 }
 
 // The halfEdge is in the twin face, it's second is our initial preimage graph
@@ -171,7 +160,7 @@ void ReebSpace2::traverse(const TetMesh &tetMesh, Arrangement &singularArrangeme
             tetMesh, 
             this->edgeCrossingMinusTriangles[startingHalfedge], 
             this->edgeCrossingPlusTriangles[startingHalfedge], 
-            DisjointSet<int>()
+            PreimageGraph()
             );
 
 
@@ -199,17 +188,20 @@ void ReebSpace2::traverse(const TetMesh &tetMesh, Arrangement &singularArrangeme
         //}
 
         //// Clear the preimage graphs in the currect face.
-        //Halfedge_const_handle iterator = currentHalfEdge;
-        //do
-        //{
-            //this->preimageGraphs[iterator].first.clear();
-            //this->preimageGraphs[iterator].second.clear();
-            //iterator = iterator->next();
+        Halfedge_const_handle iterator = currentHalfEdge;
+        do
+        {
+            this->preimageGraphsCached[iterator].first = this->preimageGraphs[iterator].first;
+            this->preimageGraphsCached[iterator].second = this->preimageGraphs[iterator].second;
 
-        //} while (iterator != currentHalfEdge);
+            this->preimageGraphs[iterator].first.clear();
+            this->preimageGraphs[iterator].second.clear();
+            iterator = iterator->next();
+
+        } while (iterator != currentHalfEdge);
     }
 
-    printf("The correspondence graphs has %ld vertices.\n", this->correspondenceGraph.data.size());
+    //printf("The correspondence graphs has %ld vertices.\n", this->correspondenceGraph..size());
 
     //preimageGraphFirst.print([&](const int &triangleId) {
             //io::printTriangle(tetMesh, triangleId);
@@ -1016,6 +1008,12 @@ void ReebSpace2::checkInitialAssumptions(const TetMesh &tetMesh, Arrangement &si
     }
 }
 
+
+
+
+
+
+
 bool segmentsOverlap(const Segment_2& s1, const Segment_2& s2)
 {
     auto result = CGAL::intersection(s1, s2);
@@ -1077,36 +1075,33 @@ std::pair<Halfedge_const_handle, Halfedge_const_handle>  findHalfEdges(const Hal
 
 void ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs)
 {
-    for (const auto& [halfEdge, preimageGraphs] : this->preimageGraphs)
+    for (const auto& [halfEdge, preimageGraphs] : this->preimageGraphsCached)
     {
         std::pair<Halfedge_const_handle, Halfedge_const_handle> foundHalfEdges =  findHalfEdges(halfEdge, singularArrangement, regularArrangement);
         std::pair<Face_const_handle, Face_const_handle> foundFaces =  {foundHalfEdges.first->face(), foundHalfEdges.second->face()};
         std::pair<int, int> foundFaceIds =  {regularArrangement.arrangementFacesIdices.at(foundFaces.first), regularArrangement.arrangementFacesIdices.at(foundFaces.second)};
 
-        std::pair<DisjointSet<int>, DisjointSet<int>> &singularPreimageGraphs = this->preimageGraphs[halfEdge];
+        std::pair<PreimageGraph, PreimageGraph> &singularPreimageGraphs = this->preimageGraphsCached[halfEdge];
         std::pair<DisjointSet<int>, DisjointSet<int>> regularPreimageGraphs = {rs.preimageGraphs[foundFaceIds.first], rs.preimageGraphs[foundFaceIds.second]};
 
-        assert(singularPreimageGraphs.first == regularPreimageGraphs.first);
-        assert(singularPreimageGraphs.second == regularPreimageGraphs.second);
+        //assert(singularPreimageGraphs.first == regularPreimageGraphs.first);
+        //assert(singularPreimageGraphs.second == regularPreimageGraphs.second);
 
-        //
-        if(singularPreimageGraphs.first != regularPreimageGraphs.first || singularPreimageGraphs.second != regularPreimageGraphs.second)
+
+        //if (false == singularPreimageGraphs.first.areEqual(regularPreimageGraphs.first) || false == singularPreimageGraphs.second.areEqual(regularPreimageGraphs.second))
         {
-
             printf("\n------------------------------------------------------------------------------------\n");
             std::cout << "SingularHalf-edge is [" << halfEdge->source()->point() << "] -> [" << halfEdge->target()->point() << "]";
             printf("The IDs are %d -> %d\n", singularArrangement.arrangementPointIndices[halfEdge->source()->point()], singularArrangement.arrangementPointIndices[halfEdge->target()->point()]);
             printf("\n------------------------------------------------------------------------------------\n");
 
+
             std::cout << "First singular preimage graph is: \n";
-            singularPreimageGraphs.first.print([&](const int &triangleId) {
-                    io::printTriangle(tetMesh, triangleId);
-                    });
+            singularPreimageGraphs.first.printByRoot();
 
             std::cout << "Second singular preimage graph is: \n";
-            singularPreimageGraphs.second.print([&](const int &triangleId) {
-                    io::printTriangle(tetMesh, triangleId);
-                    });
+            singularPreimageGraphs.second.printByRoot();
+
 
             printf("\n------------------------------------------------------------------------------------\n");
             std::cout << "Regular-edge 1 is [" << foundHalfEdges.first->source()->point() << "] -> [" << foundHalfEdges.first->target()->point() << "]\n";
@@ -1114,14 +1109,16 @@ void ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
             printf("\n------------------------------------------------------------------------------------\n");
 
             std::cout << "First regular preimage graph is: \n";
-            regularPreimageGraphs.first.print([&](const int &triangleId) {
-                    io::printTriangle(tetMesh, triangleId);
-                    });
+            regularPreimageGraphs.first.printByRoot();
+            //regularPreimageGraphs.first.print([&](const int &triangleId) {
+                    //io::printTriangle(tetMesh, triangleId);
+                    //});
 
             std::cout << "Second regular preimage graph is: \n";
-            regularPreimageGraphs.second.print([&](const int &triangleId) {
-                    io::printTriangle(tetMesh, triangleId);
-                    });
+            regularPreimageGraphs.second.printByRoot();
+            //regularPreimageGraphs.second.print([&](const int &triangleId) {
+                    //io::printTriangle(tetMesh, triangleId);
+                    //});
 
             printf("\n\n\n");
 

@@ -1,14 +1,15 @@
 #pragma once
 
+#include <queue>
+
 #include "./TetMesh.h"
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
-#include <queue>
+#include "./PreimageGraph.h"
 
 class ReebSpace2
 {
     public:
-
 
         //
         // Geometric computation
@@ -29,8 +30,11 @@ class ReebSpace2
         void traverse(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
 
-        std::map<Halfedge_const_handle, std::pair<DisjointSet<int>, DisjointSet<int>>> preimageGraphs;
-        DisjointSet<std::pair<int, int>> correspondenceGraph;
+        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
+
+        // Used for uint tests
+        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
+
 
         // Make sure the image of the Jacobi set is simple (connected, no weird things going on).
         void checkInitialAssumptions(const TetMesh &tetMesh, Arrangement &singularArrangement);

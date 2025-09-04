@@ -451,8 +451,14 @@ void TetMesh::computeCombinatorialStructure()
             {
                 int t1Index = this->triangleIndices[t1];
                 int t2Index = this->triangleIndices[t2];
-                this->tetIncidentTriangles[t1Index].push_back(t2Index);
-                this->tetIncidentTriangles[t2Index].push_back(t1Index);
+
+                if (t1Index == t2Index) { continue; }
+
+                //this->tetIncidentTriangles[t1Index].push_back(t2Index);
+                //this->tetIncidentTriangles[t2Index].push_back(t1Index);
+
+                this->tetIncidentTriangles[t1Index].insert(t2Index);
+                this->tetIncidentTriangles[t2Index].insert(t1Index);
             }
         }
     }

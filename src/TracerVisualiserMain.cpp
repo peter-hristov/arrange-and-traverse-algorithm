@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
 
     Timer::start();
     Arrangement arrangement;
-    //arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
+    arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
     Timer::stop("Arrangement                            :");
 
     Timer::start();
@@ -228,15 +228,15 @@ int main(int argc, char* argv[])
 
     Timer::start();
     ReebSpace reebSpace;
-    //reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
+    reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
     Timer::stop("Computed {G_F} and H                   :");
 
 
 
 
-    //Timer::start();
-    //reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-    //Timer::stop("Comparing preimage graphs              :");
+    Timer::start();
+    reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+    Timer::stop("Comparing preimage graphs              :");
 
 
     return 0;
