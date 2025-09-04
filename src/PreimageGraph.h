@@ -12,19 +12,16 @@
 class PreimageGraph
 {
     public:
-        // For each vertex in the preimage graph, store its associated triangleId
-        std::set<int> triangleIds;
         std::map<int, int> componentRoot;
 
         PreimageGraph() { }
 
         // Initialize vertices (triangles), the edges are implicit
-        PreimageGraph(const std::set<int> &_vertexTriangleId) : triangleIds(_vertexTriangleId) { }
+        PreimageGraph(const std::map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
 
         // @TODO Refactor with a better clear
         void clear()
         {
-            this->triangleIds  = std::set<int>();
             this->componentRoot  = std::map<int, int>();
         }
 
@@ -40,7 +37,7 @@ class PreimageGraph
                 //std::cout << "Neighbour ID is " << neighbourTriangleId << std::endl;
 
                 // Is this neighbour in the fiber component?
-                if (triangleIds.contains(neighbourTriangleId))
+                if (componentRoot.contains(neighbourTriangleId))
                 {
                     neighbours.push_back(neighbourTriangleId);
                 }
@@ -134,38 +131,11 @@ class PreimageGraph
         // Compute Connected Components
         void computeConnectedComponents(const TetMesh &tetMesh)
         {
-
-
-            // Print all the triangles
-            //std::cout << "Here are the preimage graph triangles" << std::endl;
-            //for (const int &triangleId : this->triangleIds)
-            //{
-                //std::cout << triangleId << std::endl;
-
-            //}
-
-
-
             std::set<int> visited;
-            for (const int &triangleId : this->triangleIds)
+            for (const auto &[triangleId, rootId] : this->componentRoot)
             {
-
-                //std::cout << "Currently at triangle ID : " << triangleId << std::endl;
-
-
-                if (visited.contains(triangleId))
-                {
-                    continue;
-                }
-
+                if (visited.contains(triangleId)) { continue; }
                 this->bfsSearch(triangleId, visited, tetMesh);
             }
-
-
-            //std::cout << std::endl << std::endl;
         }
-
-        // Get connected components
-
-        // Find (which cc am I in)
 };

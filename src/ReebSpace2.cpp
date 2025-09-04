@@ -11,20 +11,20 @@
 
 PreimageGraph computePreimageGraph(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
 {
-    std::set<int> preimageGraphTriangles;
-    for (const auto &triangleId : preimageGraphPrevious.triangleIds)
+    std::map<int, int> preimageGraphTriangles;
+    for (const auto &[triangleId, rootId] : preimageGraphPrevious.componentRoot)
     {
-        preimageGraphTriangles.insert(triangleId);
+        preimageGraphTriangles.emplace(triangleId, triangleId);
     }
 
-    for (const auto &triangle: minusTriangles)
+    for (const auto &triangleId: minusTriangles)
     {
-        preimageGraphTriangles.erase(triangle);
+        preimageGraphTriangles.erase(triangleId);
     }
 
-    for (const auto &triangle: plusTriangles)
+    for (const auto &triangleId: plusTriangles)
     {
-        preimageGraphTriangles.insert(triangle);
+        preimageGraphTriangles.emplace(triangleId, triangleId);
     }
 
     PreimageGraph pg(preimageGraphTriangles);
@@ -1088,7 +1088,7 @@ void ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
         //assert(singularPreimageGraphs.second == regularPreimageGraphs.second);
 
 
-        //if (false == singularPreimageGraphs.first.areEqual(regularPreimageGraphs.first) || false == singularPreimageGraphs.second.areEqual(regularPreimageGraphs.second))
+        if (false == singularPreimageGraphs.first.areEqual(regularPreimageGraphs.first) || false == singularPreimageGraphs.second.areEqual(regularPreimageGraphs.second))
         {
             printf("\n------------------------------------------------------------------------------------\n");
             std::cout << "SingularHalf-edge is [" << halfEdge->source()->point() << "] -> [" << halfEdge->target()->point() << "]";
