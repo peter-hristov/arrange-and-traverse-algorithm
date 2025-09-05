@@ -26,6 +26,125 @@ class PreimageGraph
         }
 
 
+        bool areEqual(PreimageGraph &p)
+        {
+            // Group elements with the same root
+            std::map<int, std::set<int>> groupedOurs = this->groupComponents();
+            std::map<int, std::set<int>> groupedTheirs = p.groupComponents();
+
+            // Make sure there is an equal number of roots
+            if (groupedOurs.size() != groupedTheirs.size())
+            {
+                std::cerr << "Size of preimage graphs is not equal!.";
+                return false;
+            }
+
+            for (const auto &[root, elements] : groupedOurs)
+            {
+                const int firstElement = *elements.begin();
+
+                // Find which component it's in
+                const int componentId = p.componentRoot.at(firstElement);
+
+                if (elements != groupedTheirs[componentId])
+                {
+                    std::cerr << "Corresponding components are not equal!\n\n";
+                    std::cerr << "Our Component root             " << root << ": ";
+                    for (int k : elements)
+                    {
+                        std::cerr << k << " ";
+                    }
+                    std::cerr << "\n\n";
+
+                    std::cerr << "THEIR (Regular) Component root " << componentId << ": ";
+                    for (int k : groupedTheirs[componentId])
+                    {
+                        std::cerr << k << " ";
+                    }
+                    std::cerr << "\n\n\n";
+
+                    return false;
+                }
+
+
+            }
+
+            return true;
+        }
+
+        bool areEqual(DisjointSet<int> &ds)
+        {
+            // Group elements with the same root
+            std::map<int, std::set<int>> groupedOurs = this->groupComponents();
+            std::map<int, std::set<int>> groupedTheirs = ds.groupComponents();
+
+            // Make sure there is an equal number of roots
+            if (groupedOurs.size() != groupedTheirs.size())
+            {
+                std::cerr << "Size of preimage graphs is not equal!.";
+                return false;
+            }
+
+            for (const auto &[root, elements] : groupedOurs)
+            {
+                const int firstElement = *elements.begin();
+
+                // Find which component it's in
+                const int componentId = ds.findElement(firstElement);
+
+                if (elements != groupedTheirs[componentId])
+                {
+                    std::cerr << "Corresponding components are not equal!\n\n";
+                    std::cerr << "Our Component root             " << root << ": ";
+                    for (int k : elements)
+                    {
+                        std::cerr << k << " ";
+                    }
+                    std::cerr << "\n\n";
+
+                    std::cerr << "THEIR (Regular) Component root " << componentId << ": ";
+                    for (int k : groupedTheirs[componentId])
+                    {
+                        std::cerr << k << " ";
+                    }
+                    std::cerr << "\n\n\n";
+
+                    return false;
+                }
+
+
+            }
+
+            return true;
+        }
+
+        std::map<int, std::set<int>> groupComponents()
+        {
+            std::map<int, std::set<int>> grouped;
+
+            for (const auto &[key, value] : componentRoot)
+            {
+                grouped[value].insert(key);
+            }
+
+            return grouped;
+        }
+
+        void printByRoot()
+        {
+            const std::map<int, std::set<int>> grouped = groupComponents();
+
+            // Now grouped[v] contains all keys with that value v
+            for (const auto &[value, keys] : grouped)
+            {
+                std::cout << "Component root " << value << ": ";
+                for (int k : keys)
+                    std::cout << k << " ";
+                std::cout << "\n";
+            }
+
+        }
+
         std::vector<int> getNeighbours(const int &triangleId, const TetMesh &tetMesh)
         {
             // Get the two neighbours of the current triangle in the fiber component
@@ -43,64 +162,14 @@ class PreimageGraph
                 }
             }
 
-            assert(neighbours.size() == 1 || neighbours.size() == 2);
+            if (neighbours.size() == 0 || neighbours.size() > 2)
+            {
+                throw std::runtime_error( "Triangle has " + std::to_string(neighbours.size()) + " neighbours in its preimage graph.");
+            }
 
             return neighbours;
         }
 
-        bool areEqual(DisjointSet<int> &ds)
-        {
-            std::map<int, std::set<int>> groupedOurs = this->groupComponents();
-            std::map<int, std::set<int>> groupedTheirs = ds.groupComponents();
-
-            assert(groupedOurs.size() == groupedTheirs.size());
-
-            for (const auto &[root, elements] : groupedOurs)
-            {
-                const int firstElement = *elements.begin();
-
-                // Find which component it's in
-                const int componentId = ds.findElement(firstElement);
-
-                if (elements != groupedTheirs[componentId])
-                {
-                    return false;
-                }
-
-
-            }
-
-            return true;
-        }
-
-
-
-        std::map<int, std::set<int>> groupComponents()
-        {
-            std::map<int, std::set<int>> grouped;
-
-            for (const auto &[key, value] : componentRoot)
-            {
-                grouped[value].insert(key);
-            }
-
-            return grouped;
-        }
-
-        void printByRoot()
-        {
-            std::map<int, std::set<int>> grouped = groupComponents();
-
-            // Now grouped[v] contains all keys with that value v
-            for (const auto &[value, keys] : grouped)
-            {
-                std::cout << "Component root " << value << ": ";
-                for (int k : keys)
-                    std::cout << k << " ";
-                std::cout << "\n";
-            }
-
-        }
 
         void bfsSearch(const int &root, std::set<int> &visited, const TetMesh &tetMesh)
         {
@@ -109,6 +178,8 @@ class PreimageGraph
 
             visited.insert(root);
             this->componentRoot[root] = root;
+
+            //std::cout << "\nConnected component with root " << root << "...\n";
 
             while (false == q.empty())
             {
@@ -119,6 +190,7 @@ class PreimageGraph
                 {
                     if (false == visited.contains(neighbourTriangleId))
                     {
+                        //printf("%d -> from %d.\n", currentTriangleId, neighbourTriangleId);
                         visited.insert(neighbourTriangleId);
                         q.push(neighbourTriangleId);
                         this->componentRoot[neighbourTriangleId] = root;
@@ -128,14 +200,51 @@ class PreimageGraph
         }
 
 
-        // Compute Connected Components
+        // Compute Connected Components from scratch
         void computeConnectedComponents(const TetMesh &tetMesh)
         {
+            // Reset all the roots
+            for (auto &[triangleId, rootId] : this->componentRoot)
+            {
+                rootId = triangleId;
+            }
+
+            // @TODO You can move this to the bfsSearch function
             std::set<int> visited;
             for (const auto &[triangleId, rootId] : this->componentRoot)
             {
-                if (visited.contains(triangleId)) { continue; }
-                this->bfsSearch(triangleId, visited, tetMesh);
+                if (false == visited.contains(triangleId)) 
+                {  
+                    this->bfsSearch(triangleId, visited, tetMesh);
+                }
             }
         }
+
+        void updateConnectedComponents(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
+        {
+            this->componentRoot = preimageGraphPrevious.componentRoot;
+
+            for (auto &triangleId : minusTriangles)
+            {
+                this->componentRoot.erase(triangleId);
+            }
+
+            // Add the plus triangles with a sentinel value
+            for (auto &triangleId : plusTriangles)
+            {
+                this->componentRoot[triangleId] = triangleId;
+            }
+
+            // @TODO You can move this to the bfsSearch function
+            std::set<int> visited;
+            for (auto &triangleId : plusTriangles)
+            {
+                if (false == visited.contains(triangleId)) 
+                {  
+                    this->bfsSearch(triangleId, visited, tetMesh);
+                }
+            }
+
+        }
+
 };
