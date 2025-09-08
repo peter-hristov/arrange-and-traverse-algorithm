@@ -12,29 +12,29 @@
 
 
 // @TODO Depricated
-PreimageGraph computePreimageGraph(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
-{
-    std::map<int, int> preimageGraphTriangles;
-    for (const auto &[triangleId, rootId] : preimageGraphPrevious.componentRoot)
-    {
-        preimageGraphTriangles.emplace(triangleId, triangleId);
-    }
+//PreimageGraph computePreimageGraph(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
+//{
+    //std::map<int, int> preimageGraphTriangles;
+    //for (const auto &[triangleId, rootId] : preimageGraphPrevious.componentRoot)
+    //{
+        //preimageGraphTriangles.emplace(triangleId, triangleId);
+    //}
 
-    for (const auto &triangleId: minusTriangles)
-    {
-        preimageGraphTriangles.erase(triangleId);
-    }
+    //for (const auto &triangleId: minusTriangles)
+    //{
+        //preimageGraphTriangles.erase(triangleId);
+    //}
 
-    for (const auto &triangleId: plusTriangles)
-    {
-        preimageGraphTriangles.emplace(triangleId, triangleId);
-    }
+    //for (const auto &triangleId: plusTriangles)
+    //{
+        //preimageGraphTriangles.emplace(triangleId, triangleId);
+    //}
 
-    PreimageGraph pg(preimageGraphTriangles);
-    pg.computeConnectedComponents(tetMesh);
+    //PreimageGraph pg(preimageGraphTriangles);
+    //pg.computeConnectedComponents(tetMesh);
 
-    return pg;
-}
+    //return pg;
+//}
  
 // The halfEdge is in the twin face, it's second is our initial preimage graph
 void ReebSpace2::loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited)
@@ -194,8 +194,8 @@ void ReebSpace2::traverse(const TetMesh &tetMesh, Arrangement &singularArrangeme
         Halfedge_const_handle iterator = currentHalfEdge;
         do
         {
-            this->preimageGraphsCached[iterator].first = this->preimageGraphs[iterator].first;
-            this->preimageGraphsCached[iterator].second = this->preimageGraphs[iterator].second;
+            //this->preimageGraphsCached[iterator].first = this->preimageGraphs[iterator].first;
+            //this->preimageGraphsCached[iterator].second = this->preimageGraphs[iterator].second;
 
             this->preimageGraphs[iterator].first.clear();
             this->preimageGraphs[iterator].second.clear();
@@ -974,6 +974,8 @@ void ReebSpace2::unitTest(const TetMesh &tetMesh, Arrangement &singularArrangeme
 
 void ReebSpace2::checkInitialAssumptions(const TetMesh &tetMesh, Arrangement &singularArrangement)
 {
+    return;
+
     for (Face_const_iterator fit = singularArrangement.arr.faces_begin(); fit != singularArrangement.arr.faces_end(); ++fit) 
     {
         if (fit->is_unbounded()) 

@@ -215,6 +215,7 @@ int main(int argc, char* argv[])
 
 
 
+    return 0;
 
     Timer::start();
     Arrangement arrangement;

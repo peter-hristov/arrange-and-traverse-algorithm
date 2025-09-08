@@ -247,9 +247,9 @@ class DisjointSet {
 
 
 
-        std::map<int, std::set<int>> groupComponents()
+        const std::unordered_map<int, std::set<int>> groupComponents()
         {
-            std::map<int, std::set<int>> grouped;
+            std::unordered_map<int, std::set<int>> grouped;
 
             for (const auto &[key, value] : this->data)
             {
@@ -263,7 +263,7 @@ class DisjointSet {
 
         void printByRoot()
         {
-            std::map<int, std::set<int>> grouped = this->groupComponents();
+            std::unordered_map<int, std::set<int>> grouped = this->groupComponents();
 
             // Now grouped[v] contains all keys with that value v
             for (const auto &[value, keys] : grouped)

@@ -1,9 +1,10 @@
 #pragma once
 
 #include <cassert>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
-//#include <unordered_set>
-#include <set>
+//#include <set>
 #include <queue>
 
 #include "./TetMesh.h"
@@ -12,25 +13,25 @@
 class PreimageGraph
 {
     public:
-        std::map<int, int> componentRoot;
+        std::unordered_map<int, int> componentRoot;
 
         PreimageGraph() { }
 
         // Initialize vertices (triangles), the edges are implicit
-        PreimageGraph(const std::map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
+        PreimageGraph(const std::unordered_map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
 
         // @TODO Refactor with a better clear
         void clear()
         {
-            this->componentRoot  = std::map<int, int>();
+            this->componentRoot  = std::unordered_map<int, int>();
         }
 
 
         bool areEqual(PreimageGraph &p)
         {
             // Group elements with the same root
-            std::map<int, std::set<int>> groupedOurs = this->groupComponents();
-            std::map<int, std::set<int>> groupedTheirs = p.groupComponents();
+            std::unordered_map<int, std::set<int>> groupedOurs = this->groupComponents();
+            std::unordered_map<int, std::set<int>> groupedTheirs = p.groupComponents();
 
             // Make sure there is an equal number of roots
             if (groupedOurs.size() != groupedTheirs.size())
@@ -75,8 +76,8 @@ class PreimageGraph
         bool areEqual(DisjointSet<int> &ds)
         {
             // Group elements with the same root
-            std::map<int, std::set<int>> groupedOurs = this->groupComponents();
-            std::map<int, std::set<int>> groupedTheirs = ds.groupComponents();
+            std::unordered_map<int, std::set<int>> groupedOurs = this->groupComponents();
+            std::unordered_map<int, std::set<int>> groupedTheirs = ds.groupComponents();
 
             // Make sure there is an equal number of roots
             if (groupedOurs.size() != groupedTheirs.size())
@@ -118,9 +119,9 @@ class PreimageGraph
             return true;
         }
 
-        std::map<int, std::set<int>> groupComponents()
+        std::unordered_map<int, std::set<int>> groupComponents()
         {
-            std::map<int, std::set<int>> grouped;
+            std::unordered_map<int, std::set<int>> grouped;
 
             for (const auto &[key, value] : componentRoot)
             {
@@ -132,7 +133,7 @@ class PreimageGraph
 
         void printByRoot()
         {
-            const std::map<int, std::set<int>> grouped = groupComponents();
+            const std::unordered_map<int, std::set<int>> grouped = groupComponents();
 
             // Now grouped[v] contains all keys with that value v
             for (const auto &[value, keys] : grouped)
@@ -171,7 +172,7 @@ class PreimageGraph
         }
 
 
-        void bfsSearch(const int &root, std::set<int> &visited, const TetMesh &tetMesh)
+        void bfsSearch(const int &root, std::unordered_set<int> &visited, const TetMesh &tetMesh)
         {
             std::queue<int> q;
             q.push(root);
@@ -210,7 +211,7 @@ class PreimageGraph
             }
 
             // @TODO You can move this to the bfsSearch function
-            std::set<int> visited;
+            std::unordered_set<int> visited;
             for (const auto &[triangleId, rootId] : this->componentRoot)
             {
                 if (false == visited.contains(triangleId)) 
@@ -236,7 +237,7 @@ class PreimageGraph
             }
 
             // @TODO You can move this to the bfsSearch function
-            std::set<int> visited;
+            std::unordered_set<int> visited;
             for (auto &triangleId : plusTriangles)
             {
                 if (false == visited.contains(triangleId)) 
