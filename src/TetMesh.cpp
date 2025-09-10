@@ -2,6 +2,7 @@
 
 #include "./TetMesh.h"
 #include <random>
+#include <queue>
 
 void TetMesh::perturbRangeValues(const float &epsilon)
 {
@@ -364,6 +365,7 @@ void TetMesh::computeCombinatorialStructure()
 {
     // Compute all unique edges
     std::set<std::array<int, 2>> allEdges;
+    this->skeletonGraph.resize(this->vertexCoordinatesF.size());
 
     for (int i = 0 ; i <  this->tetrahedra.size() ; i++)
     {
@@ -383,6 +385,8 @@ void TetMesh::computeCombinatorialStructure()
                 }
 
                 allEdges.insert({aIndex, bIndex});
+                skeletonGraph[aIndex].insert(bIndex);
+                skeletonGraph[bIndex].insert(aIndex);
             }
         }
     }
@@ -462,4 +466,200 @@ void TetMesh::computeCombinatorialStructure()
             }
         }
     }
+}
+
+int TetMesh::computeSingularSetConnectivity()
+{
+    DisjointSet<int> singularComponents;
+
+    for (const auto &[edge, type] : this->edgeSingularTypes)
+    {
+        if (type != 1)
+        {
+            if (false == singularComponents.data.contains(edge[0]))
+            {
+                singularComponents.addElement(edge[0]);
+            }
+
+            if (false == singularComponents.data.contains(edge[1]))
+            {
+                singularComponents.addElement(edge[1]);
+            }
+        }
+    }
+
+    for (const auto &[edge, type] : this->edgeSingularTypes)
+    {
+        if (type != 1)
+        {
+            singularComponents.unionElements(edge[0], edge[1]);
+        }
+    }
+
+    std::map<int, int> componentSize;
+
+    for (const auto &[vertexId, internalId] : singularComponents.data)
+    {
+        componentSize[singularComponents.findElement(vertexId)]++;
+    }
+
+    //printf("Ther are %d singular vertices.\n", skeletonGraph.data.size());
+    printf("The singular set has %d connected components.\n", singularComponents.countConnectedComponents());
+
+    return singularComponents.countConnectedComponents();
+
+    //int totalSize = 0;
+    //for (const auto &[rootId, size] : componentSize)
+    //{
+        //totalSize += size;
+        //printf("Component with ID %d has %d components.\n", rootId, size);
+    //}
+
+    //if (totalSize != skeletonGraph.data.size())
+    //{
+        //std::cerr << "The sizes do not match up!";
+    //}
+}
+
+void TetMesh::singularTraversalBFS(const std::vector<int> &roots, std::vector<bool> &visited)
+{
+    std::queue<int> q;
+
+    for (int r : roots)
+    {
+        q.push(r);
+        visited[r] = true;
+    }
+
+    //printf("--------------------------------------\n");
+    //printf("New component\n");
+
+    while (false == q.empty())
+    {
+        int currentVertexId = q.front();
+        q.pop();
+
+        //printf("At vertex (%f, %f)\n", this->vertexCoordinatesF[currentVertexId], this->vertexCoordinatesG[currentVertexId]);
+
+        for (int neighbourVertexId : this->skeletonGraph[currentVertexId])
+        {
+            if (false == visited[neighbourVertexId] && this->getEdgeType({currentVertexId, neighbourVertexId}) != 1)
+            {
+                visited[neighbourVertexId] = true;
+                q.push(neighbourVertexId);
+            }
+        }
+    }
+}
+
+int TetMesh::computeSingularSetConnectivity2()
+{
+    std::vector<bool> visited(this->vertexCoordinatesF.size(), true);
+
+    for (const auto &[edge, type] : this->edgeSingularTypes)
+    {
+        if (type != 1)
+        {
+            visited[edge[0]] = false;
+            visited[edge[1]] = false;
+        }
+    }
+
+    int componentCount = 0;
+    for (int i = 0 ; i < visited.size() ; i++)
+    {
+        if (visited[i] == false)
+        {
+            componentCount++;
+            singularTraversalBFS({i}, visited);
+        }
+    }
+
+    printf("The singular set has %d connected components.\n", componentCount);
+
+    return componentCount;
+}
+
+
+
+
+
+std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const std::set<int> &sink)
+{
+    std::vector<int> parent(this->vertexCoordinatesF.size(), -1);
+
+    std::queue<int> q;
+    for (int s : source)
+    {
+        q.push(s);
+        parent[s] = s;
+    }
+
+    int firstFound = -1;
+
+    while (false == q.empty())
+    {
+        int currentVertexId = q.front();
+        q.pop();
+        
+        for (int neighbourVertexId : this->skeletonGraph[currentVertexId])
+        {
+            if (sink.contains(neighbourVertexId))
+            {
+                firstFound = neighbourVertexId;
+                parent[firstFound] = currentVertexId;
+                break;
+            }
+
+            if (-1 == parent[neighbourVertexId] && this->getEdgeType({currentVertexId, neighbourVertexId}) == 1)
+            {
+                parent[neighbourVertexId] = currentVertexId;
+                q.push(neighbourVertexId);
+            }
+
+        }
+
+        if (firstFound != -1)
+        {
+            break;
+        }
+    }
+
+    if (firstFound == -1)
+    {
+        throw std::runtime_error("Could not find a path between the source and the sink.");       
+    }
+
+    // Assemble path
+    std::vector<int> path;
+
+    int currentVertexId = firstFound;
+
+    while (parent[currentVertexId] != currentVertexId)
+    {
+        path.push_back(currentVertexId);
+        currentVertexId = parent[currentVertexId];
+    }
+    path.push_back(currentVertexId); // finally push the root
+    std::reverse(path.begin(), path.end());
+
+
+    std::unordered_map<std::array<int, 2>, int, MyHash<std::array<int, 2>>> edgeSingularTypes;
+
+    for (int i = 0 ; i < path.size() - 1 ; i++)
+    {
+        int vertexA = path[i];
+        int vertexB = path[i+1];
+
+        if (vertexA > vertexB)
+        {
+            std::swap(vertexA, vertexB);
+        }
+
+        this->edgeSingularTypes[{vertexA, vertexB}] = -1;
+
+    }
+
+
+    return path;
 }

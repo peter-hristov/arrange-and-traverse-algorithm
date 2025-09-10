@@ -36,9 +36,6 @@ class ReebSpace2
         std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
 
-        // Make sure the image of the Jacobi set is simple (connected, no weird things going on).
-        void checkInitialAssumptions(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         void unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
 

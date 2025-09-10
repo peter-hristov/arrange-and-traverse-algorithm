@@ -49,5 +49,6 @@ class Arrangement
     void computeArrangement(const TetMesh&, const SegmentMode&);
     void computePointLocationDataStructure();
 
+    void checkInitialAssumptions(TetMesh &tetMesh);
 
 };

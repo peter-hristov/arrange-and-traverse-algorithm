@@ -104,6 +104,42 @@ int main(int argc, char* argv[])
 
 
 
+
+    //Timer::start();
+    //singularArrangement.checkInitialAssumptions(tetMesh);
+    //Timer::stop("Making sure all faces are simple       :");
+
+
+    //std::vector<Segment_2> segments;
+    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    //{
+        //if (type == -1)
+        //{
+            //segments.push_back(Segment_2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]));
+        //}
+
+    //}
+
+    //CGAL::insert(singularArrangement.arr, segments.begin(), segments.end());
+
+    //tetMesh.regularEdgesNumber -= segments.size();
+    //tetMesh.singularEdgesNumber += segments.size();
+
+    //std::cout << "\n------------------------------------------------------------- A FRESH START.\n";
+
+    //Timer::start();
+    //singularArrangement.checkInitialAssumptions(tetMesh);
+    //Timer::stop("Making sure all faces are simple       :");
+
+
+
+
+
+
+
+
+
+
     // New computation
     ReebSpace2 reebSpace2;
 
@@ -114,10 +150,6 @@ int main(int argc, char* argv[])
     Timer::start();
     reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
     Timer::stop("Computed vertex regions                :");
-
-    Timer::start();
-    reebSpace2.checkInitialAssumptions(tetMesh, singularArrangement);
-    Timer::stop("Making sure all faces are simple       :");
 
     Timer::start();
     reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);

@@ -972,46 +972,6 @@ void ReebSpace2::unitTest(const TetMesh &tetMesh, Arrangement &singularArrangeme
     assert(areHalfEdgeRegionMapsEqual(vertexRegionSegments, halfEdgeVertexRegionSegmentsUnitTest));
 }
 
-void ReebSpace2::checkInitialAssumptions(const TetMesh &tetMesh, Arrangement &singularArrangement)
-{
-    return;
-
-    for (Face_const_iterator fit = singularArrangement.arr.faces_begin(); fit != singularArrangement.arr.faces_end(); ++fit) 
-    {
-        if (fit->is_unbounded()) 
-        {
-            if (
-                    fit->number_of_inner_ccbs() != 1 ||
-                    fit->number_of_outer_ccbs() != 0 ||
-                    fit->number_of_holes() != 1 ||
-                    fit->number_of_isolated_vertices() != 0
-                    )
-            {
-                std::cerr << "number_of_inner_ccbs: " << fit->number_of_inner_ccbs() << std::endl;
-                std::cerr << "number_of_outer_ccbs: " << fit->number_of_outer_ccbs() << std::endl;
-                std::cerr << "number_of_holes: " << fit->number_of_holes() << std::endl;
-                std::cerr << "number_of_isolated_vertices: " << fit->number_of_isolated_vertices() << std::endl;
-                throw std::runtime_error("Outer face is degenerate!");
-            }
-        }
-        else
-        {
-            if (
-                    fit->number_of_inner_ccbs() != 0 ||
-                    fit->number_of_outer_ccbs() != 1 ||
-                    fit->number_of_holes() != 0 ||
-                    fit->number_of_isolated_vertices() != 0
-                    )
-            {
-                std::cerr << "number_of_inner_ccbs: " << fit->number_of_inner_ccbs() << std::endl;
-                std::cerr << "number_of_outer_ccbs: " << fit->number_of_outer_ccbs() << std::endl;
-                std::cerr << "number_of_holes: " << fit->number_of_holes() << std::endl;
-                std::cerr << "number_of_isolated_vertices: " << fit->number_of_isolated_vertices() << std::endl;
-                throw std::runtime_error("An inner face is degenerate!");
-            }
-        }
-    }
-}
 
 
 

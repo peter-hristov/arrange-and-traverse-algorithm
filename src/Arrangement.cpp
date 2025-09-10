@@ -139,3 +139,122 @@ void Arrangement::computePointLocationDataStructure()
 {
     this->pl = std::make_unique<Point_location>(this->arr);
 }
+
+void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
+{
+    int faceBoundarySizeTotal = 0;
+    int innerFaces = 0;
+    for (Face_const_iterator fit = this->arr.faces_begin(); fit != this->arr.faces_end(); ++fit) 
+    {
+        if (fit->is_unbounded()) 
+        {
+            if (
+                    fit->number_of_inner_ccbs() != 1 ||
+                    fit->number_of_outer_ccbs() != 0 ||
+                    fit->number_of_holes() != 1 ||
+                    fit->number_of_isolated_vertices() != 0
+                    )
+            {
+                std::cerr << "number_of_inner_ccbs: " << fit->number_of_inner_ccbs() << std::endl;
+                std::cerr << "number_of_outer_ccbs: " << fit->number_of_outer_ccbs() << std::endl;
+                std::cerr << "number_of_holes: " << fit->number_of_holes() << std::endl;
+                std::cerr << "number_of_isolated_vertices: " << fit->number_of_isolated_vertices() << std::endl;
+                //throw std::runtime_error("Outer face is degenerate!");
+            }
+        }
+        else
+        {
+            std::vector<int> ounterBoundaryVertices;
+
+            int faceBoundarySize = 0;
+            auto circ = fit->outer_ccb();
+            auto start = circ;
+            do
+            {
+                if (this->arrangementPointIndices.contains(circ->source()->point()))
+                {
+                    ounterBoundaryVertices.push_back(
+                            this->arrangementPointIndices.at(circ->source()->point())
+                            );
+
+                }
+
+                ++circ;
+                faceBoundarySize++;
+            } while (circ != start);
+
+            innerFaces++;
+            faceBoundarySizeTotal += faceBoundarySize;
+
+            if (
+                    fit->number_of_inner_ccbs() != 0 ||
+                    fit->number_of_outer_ccbs() != 1 ||
+                    fit->number_of_holes() != 0 ||
+                    fit->number_of_isolated_vertices() != 0
+               )
+            {
+
+                std::vector<std::set<int>> innerBoundaryVertices;
+
+                int innerFaceBoundarySize = 0;
+                for (auto icit = fit->inner_ccbs_begin(); icit != fit->inner_ccbs_end(); ++icit) {
+                    auto circ = *icit;   // circulator around this hole
+                    auto start = circ;
+                    std::set<int> innerBoundary;
+                    do {
+                        if (this->arrangementPointIndices.contains(circ->source()->point()))
+                        {
+                            innerBoundary.insert(
+                                    this->arrangementPointIndices.at(circ->source()->point())
+                                    );
+                        }
+
+                        ++circ;
+                        innerFaceBoundarySize++;
+                    } while (circ != start);
+
+                    innerBoundaryVertices.push_back(innerBoundary);
+                }
+
+                // count inner face boundary
+
+                std::cerr << "\nFound a face with holes...\n";
+                std::cerr << "number_of_inner_ccbs: " << fit->number_of_inner_ccbs() << std::endl;
+                std::cerr << "number_of_outer_ccbs: " << fit->number_of_outer_ccbs() << std::endl;
+                std::cerr << "number_of_holes: " << fit->number_of_holes() << std::endl;
+                std::cerr << "number_of_isolated_vertices: " << fit->number_of_isolated_vertices() << std::endl;
+                std::cerr << "Size of the outer boundary: " << faceBoundarySize << std::endl;
+                std::cerr << "Size of the inner boundary: " << innerFaceBoundarySize << std::endl;
+                std::cerr << "Is fictitious?: " << fit->is_fictitious() << std::endl;
+                //throw std::runtime_error("An inner face is degenerate!");
+
+                for (const auto &innerBoundary : innerBoundaryVertices)
+                {
+                    std::vector<int> shortestPath = tetMesh.findShortestPath(ounterBoundaryVertices, innerBoundary);
+                    std::cerr << "The shortes path between the two has " << shortestPath.size() << " vertices." << std::endl;
+                }
+            }
+        }
+    }
+
+    double averageFaceBoundarySize = (double)faceBoundarySizeTotal / (double)innerFaces;
+
+    std::cerr << "There is this number of average faces in a boundary " << averageFaceBoundarySize << std::endl;
+
+
+
+    for (auto he = this->arr.halfedges_begin(); he != this->arr.halfedges_end(); ++he)
+    {
+        // If you want to not iterate over the same edge twice
+        if (he->face() == he->twin()->face())
+        {
+            std::cerr << "\nA half-edge has the same face as it's twin!!!\n";
+        }
+    }
+
+
+
+}
+
+
+

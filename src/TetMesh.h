@@ -67,4 +67,27 @@ class TetMesh
     // Give the edge (aIndex, bIndex), is the vertex vIndex from its link in the upper and lower link of the edge
     // We assume that aIndex < bIndex for consistent orientation.
     bool isUpperLinkEdgeVertex(int, int, int);
+
+
+
+
+
+    std::vector<std::set<int>> skeletonGraph;
+
+    int getEdgeType(std::array<int, 2> edge)
+    {
+        if (edge[0] > edge[1])
+        {
+            std::swap(edge[0], edge[1]);
+        }
+
+        return this->edgeSingularTypes[edge];
+    }
+    int computeSingularSetConnectivity();
+
+    void singularTraversalBFS(const std::vector<int> &roots, std::vector<bool> &visited);
+    int computeSingularSetConnectivity2();
+
+    std::vector<int> findShortestPath(const std::vector<int> &source, const std::set<int> &sink);
+
 };
