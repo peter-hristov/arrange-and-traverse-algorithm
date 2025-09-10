@@ -611,7 +611,8 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
                 break;
             }
 
-            if (-1 == parent[neighbourVertexId] && this->getEdgeType({currentVertexId, neighbourVertexId}) == 1)
+            //if (-1 == parent[neighbourVertexId] && this->getEdgeType({currentVertexId, neighbourVertexId}) == 1)
+            if (-1 == parent[neighbourVertexId])
             {
                 parent[neighbourVertexId] = currentVertexId;
                 q.push(neighbourVertexId);
@@ -656,7 +657,10 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
             std::swap(vertexA, vertexB);
         }
 
-        this->edgeSingularTypes[{vertexA, vertexB}] = -1;
+        if (this->edgeSingularTypes[{vertexA, vertexB}] == 1)
+        {
+            this->edgeSingularTypes[{vertexA, vertexB}] = -1;
+        }
 
     }
 

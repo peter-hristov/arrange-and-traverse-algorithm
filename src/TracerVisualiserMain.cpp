@@ -105,37 +105,46 @@ int main(int argc, char* argv[])
 
 
 
-    //Timer::start();
-    //singularArrangement.checkInitialAssumptions(tetMesh);
-    //Timer::stop("Making sure all faces are simple       :");
+    Timer::start();
+    singularArrangement.checkInitialAssumptions(tetMesh);
+    Timer::stop("Making sure all faces are simple       :");
+
+    std::cout << "\n------------------------------------------------------------- A FRESH START.\n";
+
+    std::vector<Segment_2> segments;
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    {
+        if (type == -1)
+        {
+            segments.push_back(Segment_2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]));
+        }
+
+    }
+
+    Timer::start();
+    CGAL::insert(singularArrangement.arr, segments.begin(), segments.end());
+
+    std::cout << "We have added " << segments.size() << " new segments to the arrangement.\n";
+    std::cout << "The arrangement size:"
+        << "   |V| = " << singularArrangement.arr.number_of_vertices()
+        << ",  |E| = " << singularArrangement.arr.number_of_edges()
+        << ",  |F| = " << singularArrangement.arr.number_of_faces() << std::endl << std::endl;
+    Timer::stop("Singular Arrangement 2                 :");
+
+    tetMesh.regularEdgesNumber -= segments.size();
+    tetMesh.singularEdgesNumber += segments.size();
 
 
-    //std::vector<Segment_2> segments;
-    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
-    //{
-        //if (type == -1)
-        //{
-            //segments.push_back(Segment_2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]));
-        //}
-
-    //}
-
-    //CGAL::insert(singularArrangement.arr, segments.begin(), segments.end());
-
-    //tetMesh.regularEdgesNumber -= segments.size();
-    //tetMesh.singularEdgesNumber += segments.size();
-
-    //std::cout << "\n------------------------------------------------------------- A FRESH START.\n";
-
-    //Timer::start();
-    //singularArrangement.checkInitialAssumptions(tetMesh);
-    //Timer::stop("Making sure all faces are simple       :");
+    Timer::start();
+    singularArrangement.checkInitialAssumptions(tetMesh);
+    Timer::stop("Making sure all faces are simple       :");
 
 
 
 
 
 
+    return 0;
 
 
 
@@ -247,7 +256,6 @@ int main(int argc, char* argv[])
 
 
 
-    return 0;
 
     Timer::start();
     Arrangement arrangement;
