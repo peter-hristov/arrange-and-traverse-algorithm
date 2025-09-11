@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./CGALTypedefs.h"
+
 #include <queue>
 
 #include "./TetMesh.h"
@@ -15,10 +17,16 @@ class ReebSpace2
         // Geometric computation
         //
         std::map<Halfedge_const_handle, std::set<int>> edgeRegionSegments;
-        std::map<Halfedge_const_handle, std::set<int>> vertexRegionSegments;
+        std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
+
+        std::map<Halfedge_const_handle, std::map<K::FT, int>> edgeRegionSegmentsMap;
 
         void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
+        // When sorting the segments around a vertex, compare two of them
+        bool compareRegularSegments(const Halfedge_const_handle &halfEdge, const Point_2& b, const Point_2& c);
+
 
         bool doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2);
         bool ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment);
@@ -39,14 +47,14 @@ class ReebSpace2
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         void unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
 
-        std::map<Halfedge_const_handle, std::vector<int>> edgeRegionMinusTriangles;
-        std::map<Halfedge_const_handle, std::vector<int>> edgeRegionPlusTriangles;
+        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionMinusTriangles;
+        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionPlusTriangles;
 
         std::map<Halfedge_const_handle, std::vector<int>> edgeCrossingMinusTriangles;
         std::map<Halfedge_const_handle, std::vector<int>> edgeCrossingPlusTriangles;
 
-        std::map<Halfedge_const_handle, std::vector<int>> vertexRegionMinusTriangles;
-        std::map<Halfedge_const_handle, std::vector<int>> vertexRegionPlusTriangles;
+        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> vertexRegionMinusTriangles;
+        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> vertexRegionPlusTriangles;
 
 
         void computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);

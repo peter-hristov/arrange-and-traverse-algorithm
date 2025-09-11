@@ -27,5 +27,18 @@ make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-30
 
 make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-40-tets-625.vtu  
 make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-18-400.vtu 
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-15-400.vtu 
 make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.40.90.vtu 
 make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.30.240.vtu 
+
+
+
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-18-400.vtu 
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-15-400.vtu 
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-12-400.vtu 
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-10-400.vtu 
+
+
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-40-tets-625.vtu  
+make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-30-tets-1080.vtu 

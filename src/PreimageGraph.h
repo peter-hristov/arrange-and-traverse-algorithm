@@ -146,6 +146,7 @@ class PreimageGraph
 
         }
 
+        // Get the two neighbours in the mesh that are part of the fiber
         std::vector<int> getNeighbours(const int &triangleId, const TetMesh &tetMesh)
         {
             // Get the two neighbours of the current triangle in the fiber component
@@ -246,6 +247,126 @@ class PreimageGraph
                 }
             }
 
+        }
+
+
+        void updateConnectedComponentsEdge(const TetMesh &tetMesh, const std::vector<std::vector<int>> &minusTriangles, const std::vector<std::vector<int>> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
+        {
+            //PreimageGraph prevousGraph = preimageGraphPrevious;
+
+            std::set<int> minusTrianglesSet;
+            std::set<int> plusTrianglesSet;
+
+            for (int i = 0 ; i < minusTriangles.size() ; i++)
+            {
+                //prevousGraph.componentRoot = this->componentRoot;
+
+                //printf("\nThe minus triangles are : ");
+                //for (int t : minusTriangles[i])
+                //{
+                    //std::cout << t << " ";
+                //}
+                //printf("\nThe plus triangles are : ");
+                //for (int t : plusTriangles[i])
+                //{
+                    //std::cout << t << " ";
+                //}
+
+                minusTrianglesSet.insert(minusTriangles[i].begin(), minusTriangles[i].end());
+                plusTrianglesSet.insert(plusTriangles[i].begin(), plusTriangles[i].end());
+
+                //this->updateConnectedComponents(tetMesh, minusTriangles[i], plusTriangles[i], prevousGraph);
+            }
+            std::vector<int> sumMinusTriangles;
+            std::vector<int> sumPlusTriangles;
+
+            std::set_difference(
+                    minusTrianglesSet.begin(), minusTrianglesSet.end(),
+                    plusTrianglesSet.begin(), plusTrianglesSet.end(),
+                    std::back_inserter(sumMinusTriangles));
+
+            std::set_difference(
+                    plusTrianglesSet.begin(), plusTrianglesSet.end(),
+                    minusTrianglesSet.begin(), minusTrianglesSet.end(),
+                    std::back_inserter(sumPlusTriangles));
+
+            this->updateConnectedComponents(tetMesh, sumMinusTriangles, sumPlusTriangles, preimageGraphPrevious);
+        }
+
+        void updateConnectedComponentsEdge2(const TetMesh &tetMesh, const std::vector<std::vector<int>> &minusTriangles, const std::vector<std::vector<int>> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
+        {
+            //std::cout << "-------------------------------------------------------- GOING INTO A NEW COMPONENT!!!\n";
+
+            this->componentRoot = preimageGraphPrevious.componentRoot;
+
+
+
+            //std::cout << "Here are the INITIAL roots and components : " << std::endl;
+            //for (const auto &[triangle, root] : this->componentRoot)
+            //{
+                //printf("triangle ID = %d, rootId = %d\n", triangle, root);
+            //}
+
+
+
+            //for (int i = 0 ; i < minusTriangles.size() ; i++)
+            //{
+                //printf("\n\nThe minus triangles are : ");
+                //for (int t : minusTriangles[i])
+                //{
+                    //std::cout << t << " ";
+                //}
+                //printf("\nThe plus triangles are : ");
+                //for (int t : plusTriangles[i])
+                //{
+                    //std::cout << t << " ";
+                //}
+            //}
+
+
+            //std::cout << "\n\nNow recomputing properly...\n";
+
+
+
+            for (int i = 0 ; i < minusTriangles.size() ; i++)
+            {
+
+                if (minusTriangles[i].empty())
+                {
+                    throw std::runtime_error("minusTriangles[i] is empty");
+                }
+
+                //std::cout << "\nHere are the roots and components : " << std::endl;
+                //for (const auto &[triangle, root] : this->componentRoot)
+                //{
+                    //printf("triangle ID = %d, rootId = %d\n", triangle, root);
+                //}
+
+
+                //std::cout << "The first minus triangle is " << minusTriangles[i][0] << std::endl;
+
+                const int rootId = this->componentRoot.at(minusTriangles[i][0]);
+
+                //std::cout << "Here are the minus triangles : \n";
+                for (auto &triangleId : minusTriangles[i])
+                {
+                    //printf("triangle ID = %d\n", triangleId);
+                    if (this->componentRoot.at(triangleId) != rootId)
+                    {
+                        throw std::runtime_error( "Not all triangles are removed from the same root!");
+                    }
+
+                    this->componentRoot.erase(triangleId);
+
+                }
+
+                //std::cout << "Here are the plus triangles : \n";
+                for (auto &triangleId : plusTriangles[i])
+                {
+                    //printf("triangle ID = %d\n", triangleId);
+                    this->componentRoot[triangleId] = rootId;
+                }
+            }
         }
 
 };
