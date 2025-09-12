@@ -29,6 +29,7 @@
 #include "./Fiber.h"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
+#include "src/PreimageGraph.h"
 
 using namespace std;
 
@@ -85,69 +86,125 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
 
 void PlotWidget::drawReebSpaceBackground(QPainter &p)
 {
-    for (const auto &[sheetId, polygon] : data.reebSpace.sheetPolygon)
+    // Collect the polygons for each sheet
+    std::vector<std::vector<QPolygonF>> polygonsPerSheet(PreimageGraph::componentCount);
+
+    for (const auto &[faceHandle, componentIds] : data.reebSpace2.correspondenceGraph)
     {
+        if (faceHandle->is_unbounded()) { continue; }
         QVector<QPointF> points;
 
-        // If the sheet is incomplete, the polygon will not be corret, just draww all the faces manually
-        if (data.reebSpace.incompleteSheets.contains(sheetId))
-        {
+        //printf("\nFace with ID = %d has these points\n", data.singularArrangement.arrangementFacesIdices[faceHandle]);
+        typename Arrangement_2::Ccb_halfedge_const_circulator circ = faceHandle->outer_ccb();
+        typename Arrangement_2::Ccb_halfedge_const_circulator curr = circ;
+        do {
+            typename Arrangement_2::Halfedge_const_handle e = curr;
 
-            // Loop through all faces to see which ones are in the sheet
-            for (auto f = data.arrangement.arr.faces_begin(); f != data.arrangement.arr.faces_end(); ++f) 
-            {
-                const int currentFaceID = data.arrangement.arrangementFacesIdices[f];
+            // Get point from CGAL (and convert to double )
+            const float u = CGAL::to_double(e->source()->point().x());
+            const float v = CGAL::to_double(e->source()->point().y());
 
-                // For each fiber component in the face, see if one of those is in our sheet
-                for (const auto &[triangleId, fiberComponentId] : this->data.reebSpace.fiberSeeds[currentFaceID])
-                {
-                    const int componentSheetId = data.reebSpace.correspondenceGraph.findElement({currentFaceID, fiberComponentId});
+            // Add to the polygon
+            points << rescalePoint(u, v);
 
-                    // Now we can add the polygon
-                    if (componentSheetId == sheetId)
-                    {
-                        typename Arrangement_2::Ccb_halfedge_const_circulator circ = f->outer_ccb();
-                        typename Arrangement_2::Ccb_halfedge_const_circulator curr = circ;
-                        do {
-                            typename Arrangement_2::Halfedge_const_handle e = curr;
-
-                            // Get point from CGAL (and convert to double )
-                            const float u = CGAL::to_double(e->source()->point().x());
-                            const float v = CGAL::to_double(e->source()->point().y());
-
-                            // Add to the polygon
-                            points << rescalePoint(u, v);
-
-                            //std::cout << "   (" << e->source()->point() << ")  -> " << "(" << e->target()->point() << ")" << std::endl;
-                        } while (++curr != circ);
-                    }
-                }
-            }
-        }
-
-        // If the sheet is no incomplete, the polygon is valid, draw the directly
-        else
-        {
-            for (const CartesianPoint &point : polygon) 
-            {
-                // Get point from CGAL (and convert to double )
-                const float u = point.x();
-                const float v = point.y();
-
-                // Add to the polygon
-                points << rescalePoint(u, v);
-            }
-        }
+            //std::cout << "   (" << e->source()->point() << ")  -> " << "(" << e->target()->point() << ")" << std::endl;
+        } while (++curr != circ);
 
         QPolygonF qPolygon(points);
 
-        const int colourID = data.reebSpace.sheetConsequitiveIndices[sheetId];
-        const array<float, 3> colorF = fiber::fiberColours[colourID % fiber::fiberColours.size()];
-
-        p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], 0.392f));
-        p.setPen(Qt::NoPen);
-        p.drawPolygon(qPolygon);
+        for (const int componentId : componentIds)
+        {
+            polygonsPerSheet[componentId].push_back(qPolygon);
+        }
     }
+
+    // Draw the polygons for each sheet
+    for (int componentId = 0 ; componentId < PreimageGraph::componentCount ; componentId++)
+    {
+        for (const auto &qPolygon : polygonsPerSheet[componentId])
+        {
+            const array<float, 3> colorF = fiber::fiberColours[componentId % fiber::fiberColours.size()];
+
+            p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], 0.292f));
+            p.setPen(Qt::NoPen);
+            p.drawPolygon(qPolygon);
+        }
+    }
+
+    //for (const auto &[faceHandle, componentIds] : data.reebSpace2.correspondenceGraph)
+
+    // Draw polygonds from the regular reeb space
+    //for (const auto &[sheetId, polygon] : data.reebSpace.sheetPolygon)
+    //{
+        //QVector<QPointF> points;
+
+        //// If the sheet is incomplete, the polygon will not be corret, just draww all the faces manually
+        //if (data.reebSpace.incompleteSheets.contains(sheetId))
+        //{
+
+            //// Loop through all faces to see which ones are in the sheet
+            //for (auto f = data.arrangement.arr.faces_begin(); f != data.arrangement.arr.faces_end(); ++f) 
+            //{
+                //const int currentFaceID = data.arrangement.arrangementFacesIdices[f];
+
+                //// For each fiber component in the face, see if one of those is in our sheet
+                //for (const auto &[triangleId, fiberComponentId] : this->data.reebSpace.fiberSeeds[currentFaceID])
+                //{
+                    //const int componentSheetId = data.reebSpace.correspondenceGraph.findElement({currentFaceID, fiberComponentId});
+
+                    //// Now we can add the polygon
+                    //if (componentSheetId == sheetId)
+                    //{
+                        //typename Arrangement_2::Ccb_halfedge_const_circulator circ = f->outer_ccb();
+                        //typename Arrangement_2::Ccb_halfedge_const_circulator curr = circ;
+                        //do {
+                            //typename Arrangement_2::Halfedge_const_handle e = curr;
+
+                            //// Get point from CGAL (and convert to double )
+                            //const float u = CGAL::to_double(e->source()->point().x());
+                            //const float v = CGAL::to_double(e->source()->point().y());
+
+                            //// Add to the polygon
+                            //points << rescalePoint(u, v);
+
+                            ////std::cout << "   (" << e->source()->point() << ")  -> " << "(" << e->target()->point() << ")" << std::endl;
+                        //} while (++curr != circ);
+                    //}
+                //}
+            //}
+        //}
+
+        //// If the sheet is no incomplete, the polygon is valid, draw the directly
+        //else
+        //{
+            //for (const CartesianPoint &point : polygon) 
+            //{
+                //// Get point from CGAL (and convert to double )
+                //const float u = point.x();
+                //const float v = point.y();
+
+                //// Add to the polygon
+                //points << rescalePoint(u, v);
+            //}
+        //}
+
+        //QPolygonF qPolygon(points);
+
+        //const int colourID = data.reebSpace.sheetConsequitiveIndices[sheetId];
+        //const array<float, 3> colorF = fiber::fiberColours[colourID % fiber::fiberColours.size()];
+
+        //p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], 0.392f));
+        //p.setPen(Qt::NoPen);
+        //p.drawPolygon(qPolygon);
+    //}
+
+
+
+
+
+
+
+
 
     //for (int i = 0 ; i < this->data.fiberSeeds.size() ; i++) 
     //{
@@ -235,77 +292,84 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         //}
     //}
 
+
+
+
+
+
     // Draw all edges
-    for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
-    {
-        const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
-        const float v1 = this->data.tetMesh.vertexCoordinatesG[edge[0]];
+    //for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
+    //{
+        //const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
+        //const float v1 = this->data.tetMesh.vertexCoordinatesG[edge[0]];
 
-        const float u2 = this->data.tetMesh.vertexCoordinatesF[edge[1]];
-        const float v2 = this->data.tetMesh.vertexCoordinatesG[edge[1]];
+        //const float u2 = this->data.tetMesh.vertexCoordinatesF[edge[1]];
+        //const float v2 = this->data.tetMesh.vertexCoordinatesG[edge[1]];
 
-        if (type == 0)
-        {
-            p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
-        }
-        else if (type == 1)
-        {
-            //p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
-            p.setPen(QPen(Qt::black, 5.0, Qt::SolidLine));
-        }
-        else
-        {
-            p.setPen(QPen(Qt::black, 10.2, Qt::SolidLine));
-        }
+        //if (type == 0)
+        //{
+            //p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
+        //}
+        //else if (type == 1)
+        //{
+            ////p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
+            //p.setPen(QPen(Qt::black, 5.0, Qt::SolidLine));
+        //}
+        //else
+        //{
+            //p.setPen(QPen(Qt::black, 10.2, Qt::SolidLine));
+        //}
 
-        p.setRenderHint(QPainter::Antialiasing, true);
-        p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
-    }
+        //p.setRenderHint(QPainter::Antialiasing, true);
+        //p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
+    //}
 
-    // Draw all the vertex coordinates
-    for(size_t i = 0 ; i <  this->data.tetMesh.vertexCoordinatesF.size() ; i++)
-    {
-        float u = this->data.tetMesh.vertexCoordinatesF[i];
-        float v = this->data.tetMesh.vertexCoordinatesG[i];
+    //// Draw all the vertex coordinates
+    //for(size_t i = 0 ; i <  this->data.tetMesh.vertexCoordinatesF.size() ; i++)
+    //{
+        //float u = this->data.tetMesh.vertexCoordinatesF[i];
+        //float v = this->data.tetMesh.vertexCoordinatesG[i];
 
-        p.setPen(QPen(Qt::black, 6, Qt::SolidLine));
-        p.setBrush(Qt::white);           // Fill color
-        p.drawEllipse(rescalePoint(u, v), 20, 20);
+        //p.setPen(QPen(Qt::black, 6, Qt::SolidLine));
+        //p.setBrush(Qt::white);           // Fill color
+        //p.drawEllipse(rescalePoint(u, v), 20, 20);
 
-        QFont font = p.font();
-        font.setPointSize(70);
-        p.setFont(font);
-        p.drawText(rescalePoint(u, v), QString::number(i));
-    }
+        //QFont font = p.font();
+        //font.setPointSize(70);
+        //p.setFont(font);
+        //p.drawText(rescalePoint(u, v), QString::number(i));
+    //}
 
 
-    for (auto vit = data.singularArrangement.arr.vertices_begin(); vit != data.singularArrangement.arr.vertices_end(); ++vit) 
-    {
-        const float u = CGAL::to_double(vit->point().x());
-        const float v = CGAL::to_double(vit->point().y());
+    //// Draw all singular vertices
+    //for (auto vit = data.singularArrangement.arr.vertices_begin(); vit != data.singularArrangement.arr.vertices_end(); ++vit) 
+    //{
+        //const float u = CGAL::to_double(vit->point().x());
+        //const float v = CGAL::to_double(vit->point().y());
 
-        p.setPen(QPen(Qt::black, 6, Qt::SolidLine));
-        p.setBrush(Qt::white);           // Fill color
-        p.drawEllipse(rescalePoint(u, v), 20, 20);
+        //p.setPen(QPen(Qt::black, 6, Qt::SolidLine));
+        //p.setBrush(Qt::white);           // Fill color
+        //p.drawEllipse(rescalePoint(u, v), 20, 20);
 
-        QFont font = p.font();
-        font.setPointSize(70);
-        p.setFont(font);
-        //p.drawText(rescalePoint(u, v), QString::number(1));
-    }
+        //QFont font = p.font();
+        //font.setPointSize(70);
+        //p.setFont(font);
+        ////p.drawText(rescalePoint(u, v), QString::number(1));
+    //}
 
-    for (const auto &[halfEdge, vertices] : data.singularArrangement.halfEdgePoints)
-    {
-        for (const auto &vertex : vertices)
-        {
-            const float u = CGAL::to_double(vertex.x());
-            const float v = CGAL::to_double(vertex.y());
+    //// Draw all singular arrangement half-edges
+    //for (const auto &[halfEdge, vertices] : data.singularArrangement.halfEdgePoints)
+    //{
+        //for (const auto &vertex : vertices)
+        //{
+            //const float u = CGAL::to_double(vertex.x());
+            //const float v = CGAL::to_double(vertex.y());
 
-            p.setPen(QPen(Qt::black, 5, Qt::SolidLine));
-            p.setBrush(Qt::white);           // Fill color
-            p.drawEllipse(rescalePoint(u, v), 15, 15);
-        }
-    }
+            //p.setPen(QPen(Qt::black, 5, Qt::SolidLine));
+            //p.setBrush(Qt::white);           // Fill color
+            //p.drawEllipse(rescalePoint(u, v), 15, 15);
+        //}
+    //}
 }
 
 void PlotWidget::generateStaticReebSpaceCache()

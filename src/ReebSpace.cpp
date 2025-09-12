@@ -320,7 +320,7 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
 
             if (order[currentFaceID] < order[twinFaceID])
             {
-                //ReebSpace::determineCorrespondence(tetMesh, arrangement, currentHalfedge);
+                ReebSpace::determineCorrespondence(tetMesh, arrangement, currentHalfedge);
             }
 
             ++currentHalfedge;
@@ -337,8 +337,8 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         }
 
         // Dispose of the preimage graph we will no longer need it
-        //this->preimageGraphs[currentFaceID].clear();
-        //graphsInMemory--;
+        this->preimageGraphs[currentFaceID].clear();
+        graphsInMemory--;
     }
 
     this->correspondenceGraph.finalise();

@@ -16,10 +16,10 @@ class ReebSpace2
         //
         // Geometric computation
         //
-        std::map<Halfedge_const_handle, std::set<int>> edgeRegionSegments;
+        std::map<Halfedge_const_handle, std::vector<int>> edgeRegionSegments;
         std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
 
-        std::map<Halfedge_const_handle, std::map<K::FT, int>> edgeRegionSegmentsMap;
+        //std::map<Halfedge_const_handle, std::map<K::FT, int>> edgeRegionSegmentsMap;
 
         void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
@@ -34,7 +34,7 @@ class ReebSpace2
 
 
         //void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &halfEdgeSeed);
-        void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited);
+        void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement);
         void traverse(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
 
@@ -44,8 +44,17 @@ class ReebSpace2
         std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
 
+        std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
+
+
+
+
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         void unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
+
+
+
+
 
         std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionMinusTriangles;
         std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionPlusTriangles;

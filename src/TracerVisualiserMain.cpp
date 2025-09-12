@@ -258,7 +258,7 @@ int main(int argc, char* argv[])
 
     Timer::start();
     Arrangement arrangement;
-    arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
+    //arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
     Timer::stop("Arrangement                            :");
 
     Timer::start();
@@ -268,26 +268,24 @@ int main(int argc, char* argv[])
 
     Timer::start();
     ReebSpace reebSpace;
-    reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
+    //reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
     Timer::stop("Computed {G_F} and H                   :");
 
 
+    //Timer::start();
+    //reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+    //Timer::stop("Comparing preimage graphs              :");
 
 
-    Timer::start();
-    reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-    Timer::stop("Comparing preimage graphs              :");
-
-
-    return 0;
+    //return 0;
 
     
 
     std::cout << "Postprocessing..." << std::endl;
     Timer::start();
-    reebSpace.computeSheetGeometry(tetMesh, arrangement);
-    reebSpace.computeSheetArea(tetMesh, arrangement);
-    reebSpace.printTopSheets(tetMesh, arrangement, 20);
+    //reebSpace.computeSheetGeometry(tetMesh, arrangement);
+    //reebSpace.computeSheetArea(tetMesh, arrangement);
+    //reebSpace.printTopSheets(tetMesh, arrangement, 20);
     Timer::stop("Computed RS(f) Postprocess             :");
 
     if (performanceRun == true)
@@ -328,7 +326,7 @@ int main(int argc, char* argv[])
     glutInit(&argc, argv);
 
     // Package all my data for visualisation
-    Data data(tetMesh, arrangement, singularArrangement, reebSpace);
+    Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
 
     // Create the widget
     TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);

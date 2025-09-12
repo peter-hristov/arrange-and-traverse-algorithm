@@ -6,19 +6,23 @@
 #include <vector>
 //#include <set>
 #include <queue>
+#include <limits> 
 
 #include "./TetMesh.h"
 #include "./DisjointSet.h"
+
 
 class PreimageGraph
 {
     public:
         std::unordered_map<int, int> componentRoot;
+        inline static int componentCount = 0; // declaration inside class
 
         PreimageGraph() { }
 
         // Initialize vertices (triangles), the edges are implicit
         PreimageGraph(const std::unordered_map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
+
 
         // @TODO Refactor with a better clear
         void clear()
@@ -179,7 +183,8 @@ class PreimageGraph
             q.push(root);
 
             visited.insert(root);
-            this->componentRoot[root] = root;
+            const int componentId = PreimageGraph::componentCount++;
+            this->componentRoot[root] = componentId;
 
             //std::cout << "\nConnected component with root " << root << "...\n";
 
@@ -195,7 +200,7 @@ class PreimageGraph
                         //printf("%d -> from %d.\n", currentTriangleId, neighbourTriangleId);
                         visited.insert(neighbourTriangleId);
                         q.push(neighbourTriangleId);
-                        this->componentRoot[neighbourTriangleId] = root;
+                        this->componentRoot[neighbourTriangleId] = componentId;
                     }
                 }
             }

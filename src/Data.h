@@ -24,6 +24,7 @@
 #include "./TetMesh.h"
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
+#include "./ReebSpace2.h"
 
 class Data
 {
@@ -36,12 +37,14 @@ class Data
     Arrangement &arrangement;
     Arrangement &singularArrangement;
     ReebSpace &reebSpace;
+    ReebSpace2 &reebSpace2;
 
-    Data(TetMesh& tm, Arrangement& a, Arrangement& sa, ReebSpace& rs)
+    Data(TetMesh& tm, Arrangement& a, Arrangement& sa, ReebSpace& rs, ReebSpace2 &rs2)
         : tetMesh(tm),
         arrangement(a),
         singularArrangement(sa),
-        reebSpace(rs)
+        reebSpace(rs),
+        reebSpace2(rs2)
     {}
 
     std::string outputFibersFile = "./fibers.vtp";
