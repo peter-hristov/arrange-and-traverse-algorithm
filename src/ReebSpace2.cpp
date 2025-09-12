@@ -129,27 +129,27 @@ void ReebSpace2::loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &i
 
 
 
-            //const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(currentHalfEdge);
-            //const std::array<int, 2> edge = {
-                //singularArrangement.arrangementPointIndices.at(segment.source()), 
-                //singularArrangement.arrangementPointIndices.at(segment.target())
-            //};
+            const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(currentHalfEdge);
+            const std::array<int, 2> edge = {
+                singularArrangement.arrangementPointIndices.at(segment.source()), 
+                singularArrangement.arrangementPointIndices.at(segment.target())
+            };
 
-            //if (tetMesh.edgeSingularTypes.at(edge) == -1)
-            //{
-                //// Seed the first half-edge in the twin
-                //this->preimageGraphs[currentHalfEdge->twin()].first.updateConnectedComponentsEdge2(
-                        //tetMesh, 
-                        //{this->edgeCrossingMinusTriangles[currentHalfEdge]}, 
-                        //{this->edgeCrossingPlusTriangles[currentHalfEdge]}, 
-                        //currentPreimageGraphPair.second
-                        //);
+            if (tetMesh.edgeSingularTypes.at(edge) == -1)
+            {
+                // Seed the first half-edge in the twin
+                this->preimageGraphs[currentHalfEdge->twin()].first.updateConnectedComponentsEdge2(
+                        tetMesh, 
+                        {this->edgeCrossingMinusTriangles[currentHalfEdge]}, 
+                        {this->edgeCrossingPlusTriangles[currentHalfEdge]}, 
+                        currentPreimageGraphPair.second
+                        );
 
-                //traversalQueue.push(currentHalfEdge->twin());
-                //visited.insert(currentHalfEdge->twin()->face());
+                traversalQueue.push(currentHalfEdge->twin());
+                visited.insert(currentHalfEdge->twin()->face());
 
-            //}
-            //else
+            }
+            else
             {
                 // Seed the first half-edge in the twin
                 this->preimageGraphs[currentHalfEdge->twin()].first.updateConnectedComponents(
@@ -235,13 +235,13 @@ void ReebSpace2::traverse(const TetMesh &tetMesh, Arrangement &singularArrangeme
 
 
         // Save the faceComponents
-        //std::vector<int> faceComponents;
-        //for (const auto &[componentId, triangles] : this->preimageGraphs[currentHalfEdge].first.groupComponents())
-        //{
-            //faceComponents.push_back(componentId);
-        //}
+        std::vector<int> faceComponents;
+        for (const auto &[componentId, triangles] : this->preimageGraphs[currentHalfEdge].first.groupComponents())
+        {
+            faceComponents.push_back(componentId);
+        }
 
-        //correspondenceGraph[currentHalfEdge->face()] = faceComponents;
+        correspondenceGraph[currentHalfEdge->face()] = faceComponents;
 
 
         // Clear the preimage graphs in the currect face.

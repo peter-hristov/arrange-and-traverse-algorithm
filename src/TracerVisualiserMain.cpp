@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
     Timer::stop("Computed singular traversal            :");
 
 
-    //return 0;
+    return 0;
 
 
 
