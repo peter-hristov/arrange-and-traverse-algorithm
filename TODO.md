@@ -1,3 +1,12 @@
+# Optimisation 13.09.2025
+Use id's instead of maps with half-edge and faces.
+Optimise the red-blue computation.
+
+Computing the unique components in a preimage graph (for the correspondence graph)
+    Done - track the current components without O(fiber size)
+    You only need them once per face.
+
+
 # Refactor
 
 Done - IO

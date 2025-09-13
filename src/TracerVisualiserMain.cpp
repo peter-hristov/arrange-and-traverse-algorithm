@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
     Timer::stop("Computed singular traversal            :");
 
 
-    return 0;
+    //return 0;
 
 
 
@@ -272,9 +272,9 @@ int main(int argc, char* argv[])
     Timer::stop("Computed {G_F} and H                   :");
 
 
-    //Timer::start();
+    Timer::start();
     //reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-    //Timer::stop("Comparing preimage graphs              :");
+    Timer::stop("Comparing preimage graphs              :");
 
 
     //return 0;

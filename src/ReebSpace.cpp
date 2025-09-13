@@ -337,8 +337,8 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         }
 
         // Dispose of the preimage graph we will no longer need it
-        this->preimageGraphs[currentFaceID].clear();
-        graphsInMemory--;
+        //this->preimageGraphs[currentFaceID].clear();
+        //graphsInMemory--;
     }
 
     this->correspondenceGraph.finalise();

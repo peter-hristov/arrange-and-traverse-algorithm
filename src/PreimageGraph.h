@@ -16,6 +16,8 @@ class PreimageGraph
 {
     public:
         std::unordered_map<int, int> componentRoot;
+        std::unordered_set<int> uniqueComponentIds;
+
         inline static int componentCount = 0; // declaration inside class
 
         PreimageGraph() { }
@@ -28,6 +30,7 @@ class PreimageGraph
         void clear()
         {
             this->componentRoot  = std::unordered_map<int, int>();
+            this->uniqueComponentIds  = std::unordered_set<int>();
         }
 
 
@@ -123,6 +126,35 @@ class PreimageGraph
             return true;
         }
 
+        std::vector<int> getUniqueComponents()
+        {
+            return std::vector<int>(this->uniqueComponentIds.begin(), this->uniqueComponentIds.end());
+        }
+
+        void unitTestGetUniqueComponents()
+        {
+            std::set<int> componentIdsA;
+
+            for (const auto &[triangleId, componentId] : this->componentRoot)
+            {
+                componentIdsA.insert(componentId);
+            }
+
+            std::set<int> componentIdsB;
+            for (const auto &componentId : this->uniqueComponentIds)
+            {
+                componentIdsB.insert(componentId);
+
+            }
+
+            if (componentIdsA != componentIdsB)
+            {
+                throw std::runtime_error( "Unique componentIds not computed correctly.");
+            }
+        }
+
+
+
         std::unordered_map<int, std::set<int>> groupComponents()
         {
             std::unordered_map<int, std::set<int>> grouped;
@@ -183,10 +215,22 @@ class PreimageGraph
             q.push(root);
 
             visited.insert(root);
+
+            // Obtain the next available componentId
             const int componentId = PreimageGraph::componentCount++;
+
+            // All new components will have this as their root
             this->componentRoot[root] = componentId;
 
-            //std::cout << "\nConnected component with root " << root << "...\n";
+            // This is a new component now
+            this->uniqueComponentIds.insert(componentId);
+
+            //std::cout << "\nConnected component with root " << componentId << "...\n";
+            //std::cerr << "\nComponent FAST INSIDE: ";
+            //for (int c : this->getUniqueComponentsFase())
+            //{
+                //std::cerr << c << " ";
+            //}
 
             while (false == q.empty())
             {
@@ -205,7 +249,6 @@ class PreimageGraph
                 }
             }
         }
-
 
         // Compute Connected Components from scratch
         void computeConnectedComponents(const TetMesh &tetMesh)
@@ -230,10 +273,22 @@ class PreimageGraph
         void updateConnectedComponents(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
         {
             this->componentRoot = preimageGraphPrevious.componentRoot;
+            this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
 
             for (auto &triangleId : minusTriangles)
             {
-                this->componentRoot.erase(triangleId);
+                auto it = componentRoot.find(triangleId);
+
+                if (it == componentRoot.end())
+                {
+                    throw std::runtime_error("Minus triangle now found in preimage graph.");
+                }
+
+                // This connected component will not longer exist
+                uniqueComponentIds.erase(it->second);
+
+                // Remove it from the list
+                componentRoot.erase(it);
             }
 
             // Add the plus triangles with a sentinel value
@@ -303,20 +358,17 @@ class PreimageGraph
             //std::cout << "-------------------------------------------------------- GOING INTO A NEW COMPONENT!!!\n";
 
             this->componentRoot = preimageGraphPrevious.componentRoot;
+            this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
 
-
-
-            //std::cout << "Here are the INITIAL roots and components : " << std::endl;
+            //std::cout << "\nHere are the INITIAL roots and components : " << std::endl;
             //for (const auto &[triangle, root] : this->componentRoot)
             //{
                 //printf("triangle ID = %d, rootId = %d\n", triangle, root);
             //}
 
-
-
             //for (int i = 0 ; i < minusTriangles.size() ; i++)
             //{
-                //printf("\n\nThe minus triangles are : ");
+                //printf("\nThe minus triangles are : ");
                 //for (int t : minusTriangles[i])
                 //{
                     //std::cout << t << " ";
@@ -327,11 +379,10 @@ class PreimageGraph
                     //std::cout << t << " ";
                 //}
             //}
+            //std::cout << "\n\n";
 
 
             //std::cout << "\n\nNow recomputing properly...\n";
-
-
 
             for (int i = 0 ; i < minusTriangles.size() ; i++)
             {
@@ -355,13 +406,22 @@ class PreimageGraph
                 //std::cout << "Here are the minus triangles : \n";
                 for (auto &triangleId : minusTriangles[i])
                 {
+
+                    auto it = componentRoot.find(triangleId);
+
+                    if (it == componentRoot.end())
+                    {
+                        throw std::runtime_error("Minus triangle now found in preimage graph.");
+                    }
+
                     //printf("triangle ID = %d\n", triangleId);
-                    if (this->componentRoot.at(triangleId) != rootId)
+                    // @TODO Double call
+                    if (it->second != rootId)
                     {
                         throw std::runtime_error( "Not all triangles are removed from the same root!");
                     }
 
-                    this->componentRoot.erase(triangleId);
+                    this->componentRoot.erase(it);
 
                 }
 
