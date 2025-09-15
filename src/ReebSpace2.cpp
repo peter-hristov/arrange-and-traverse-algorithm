@@ -9,63 +9,9 @@
 #include "./PreimageGraph.h"
 #include "src/CGALTypedefs.h"
 
-
-// Compute barycentric parameter of the target endpoint of s2 w.r.t. s1
-std::optional<CGAL::Filtered_kernel<K>::FT> computeBarycentricCoordinateSecond(const Segment_2& s1, const Segment_2& s2)
-{
-    const Point_2& p1 = s1.source();
-    const Point_2& q1 = s1.target();
-    const Point_2& p2 = s2.source();
-    const Point_2& q2 = s2.target();
-
-    // Degenerate segments?
-    if (p1 == q1 || p2 == q2) {
-        return std::nullopt;
-    }
-
-    // Any endpoints coincide?
-    if (p1 == p2 || p1 == q2 || q1 == p2 || q1 == q2) {
-        return std::nullopt;
-    }
-
-    CGAL::Filtered_kernel<K>::Vector_2 pq = q1 - p1;
-    CGAL::Filtered_kernel<K>::Vector_2 pr = q2 - p1;
-
-    CGAL::Filtered_kernel<K>::FT denom = pq.squared_length();
-    CGAL::Filtered_kernel<K>::FT num   = pq * pr;
-
-    return num / denom;
-}
-
-
-
-// @TODO Depricated
-//PreimageGraph computePreimageGraph(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
-//{
-    //std::map<int, int> preimageGraphTriangles;
-    //for (const auto &[triangleId, rootId] : preimageGraphPrevious.componentRoot)
-    //{
-        //preimageGraphTriangles.emplace(triangleId, triangleId);
-    //}
-
-    //for (const auto &triangleId: minusTriangles)
-    //{
-        //preimageGraphTriangles.erase(triangleId);
-    //}
-
-    //for (const auto &triangleId: plusTriangles)
-    //{
-        //preimageGraphTriangles.emplace(triangleId, triangleId);
-    //}
-
-    //PreimageGraph pg(preimageGraphTriangles);
-    //pg.computeConnectedComponents(tetMesh);
-
-    //return pg;
-//}
  
 // The halfEdge is in the twin face, it's second is our initial preimage graph
-void ReebSpace2::loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement)
+void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement)
 {
     // We assume the the first one has already been seeded
     //
@@ -76,10 +22,9 @@ void ReebSpace2::loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &i
             //this->preimageGraphs[initialHalfEdge->twin()].second
             //);
 
-    this->preimageGraphs[initialHalfEdge].second.updateConnectedComponentsEdge2(
+    this->preimageGraphs[initialHalfEdge].second.updateConnectedComponentsEdge3(
             tetMesh, 
-            this->edgeRegionMinusTriangles[initialHalfEdge], 
-            this->edgeRegionPlusTriangles[initialHalfEdge], 
+            this->edgeRegionSegments[initialHalfEdge],
             this->preimageGraphs[initialHalfEdge].first
             );
 
@@ -112,10 +57,9 @@ void ReebSpace2::loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &i
                 this->preimageGraphs[previousHalfEdge].second
                 );
 
-        currentPreimageGraphPair.second.updateConnectedComponentsEdge2(
+        currentPreimageGraphPair.second.updateConnectedComponentsEdge3(
                 tetMesh, 
-                this->edgeRegionMinusTriangles[currentHalfEdge], 
-                this->edgeRegionPlusTriangles[currentHalfEdge], 
+                this->edgeRegionSegments[currentHalfEdge], 
                 currentPreimageGraphPair.first
                 );
 
@@ -187,7 +131,7 @@ void ReebSpace2::loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &i
 }
 
 
-void ReebSpace2::traverse(const TetMesh &tetMesh, Arrangement &singularArrangement)
+void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement)
 {
     // Find the outside face
     Halfedge_const_handle startingHalfedge;
@@ -274,39 +218,6 @@ void ReebSpace2::traverse(const TetMesh &tetMesh, Arrangement &singularArrangeme
 
 
 
-bool ReebSpace2::areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b)
-{
-    if (a.size() != b.size())
-    {
-        std::cerr << "Size is not equal.\n";
-        return false;
-    }
-
-    for (const auto& [key, setA] : a)
-    {
-        auto itB = b.find(key);
-        if (itB == b.end())
-        {
-            std::cerr << "Second map does not have a key.\n";
-            return false;
-        }
-
-        const std::set<int>& setB = itB->second;
-        if (setA.size() != setB.size())
-        {
-            std::cerr << "Sets for the same key do not match in size.\n";
-            return false;
-        }
-
-        if (setA != setB)
-        {
-            std::cerr << "Set elements for the same key do not match.\n";
-            return false;
-        }
-    }
-
-    return true;
-}
 
 bool ReebSpace2::doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2)
 {
@@ -394,7 +305,6 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
         }
     }
 
-
     // Callback that handles bounding box intersections
     //
     auto cb = [&](const Box& regularSegmentBox, const Box& singularSegmentBox) {
@@ -405,16 +315,6 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
         if (doSegmentEndpointsOverlap(regularSegmentHandle.seg, singularSegmentHandle.seg)) { return; }
 
 
-        //std::optional<K::FT> result = computeBarycentricCoordinateSecond(regularSegmentHandle.seg, singularSegmentHandle.seg);
-        //if (result)
-        //{
-            ////Point_2 ip = std::get<Point_2>(*result);
-            ////singularArrangement.halfEdgePoints[he].push_back(ip);
-            //Halfedge_const_handle he = *(singularSegmentHandle.originatingHalfEdge); 
-            //edgeRegionSegments[he].insert(regularSegmentHandle.originatingEdge);
-        //}
-
-
         std::optional<std::variant<Point_2, Segment_2>> result = CGAL::intersection(regularSegmentHandle.seg, singularSegmentHandle.seg);
 
         if (result && std::holds_alternative<Point_2>(*result))
@@ -422,18 +322,9 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
             Point_2 ip = std::get<Point_2>(*result);
 
             Halfedge_const_handle he = *(singularSegmentHandle.originatingHalfEdge); 
-            singularArrangement.halfEdgePoints[he].push_back(ip);
+            //singularArrangement.halfEdgePoints[he].push_back(ip);
 
-
-            //std::cout << t << " ";
-
-
-            this->edgeRegionSegments[he].push_back(regularSegmentHandle.originatingEdge);
-
-            //K::Vector_2 v = he->target()->point() - he->source()->point();   // vector along segment
-            //K::Vector_2 w = ip - he->source()->point();              // vector from source to point
-            //K::FT t = (w * v) / v.squared_length();       // exact dot / squared length
-            //this->edgeRegionSegmentsMap[he][t] = regularSegmentHandle.originatingEdge;
+            this->edgeRegionSegments[he].push_back({regularSegmentHandle.originatingRegularEdgeId, true});
         }
     };
 
@@ -444,10 +335,13 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
 
     // Sort all points along edges
     //
-    for (auto &[halfEdge, segmentIds] : edgeRegionSegments)
+    for (auto &[halfEdge, intersectingSegments] : edgeRegionSegments)
     {
-        auto cmp = [this, &halfEdge, &tetMesh, &singularArrangement] (int segmentIdA, int segmentIdB)
+        auto cmp = [this, &halfEdge, &tetMesh, &singularArrangement] (std::pair<int, int> intersectingSegmentA, std::pair<int, int> intersectingSegmentB)
             {
+                const int segmentIdA = intersectingSegmentA.first;
+                const int segmentIdB = intersectingSegmentB.first;
+
                 if (segmentIdA == segmentIdB)
                 {
                     return false;
@@ -467,7 +361,7 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
 
                 if (false == (resultA && std::holds_alternative<Point_2>(*resultA) && resultB && std::holds_alternative<Point_2>(*resultB)))
                 {
-                    throw std::runtime_error("OVERLAPPING OT NON-CROSSING SEGMENTS.");
+                    throw std::runtime_error("OVERLAPPING OR NON-CROSSING SEGMENTS.");
                 }
 
                 Point_2 pA = std::get<Point_2>(*resultA);
@@ -484,9 +378,159 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
                 return tA < tB;
             };
 
-        std::sort(segmentIds.begin(), segmentIds.end(), cmp);
+        std::sort(intersectingSegments.begin(), intersectingSegments.end(), cmp);
     }
 }
+
+
+void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement)
+{
+    for (auto &[halfEdge, intersectingSegments] : edgeRegionSegments)
+    //for (const auto &[halfEdge, segmentIdsMap] : edgeRegionSegmentsMap)
+    {
+        // Each vertex is guaratneed to be in the singular arrangement
+        const Point_2 &a = halfEdge->source()->point();
+        const Point_2 &b = halfEdge->target()->point();
+
+        //std::vector<std::vector<int>> minusTrianglesAll;
+        //std::vector<std::vector<int>> plusTrianglesAll;
+
+        // Set up handles so don't have to pay for access
+        //std::vector<std::vector<int>> &edgeRegionMinusTrianglesHandle = edgeRegionMinusTriangles[halfEdge];
+        //std::vector<std::vector<int>> &edgeRegionPlusTrianglesHandle = edgeRegionPlusTriangles[halfEdge];
+
+        for (std::pair<int, bool> &intersectingSegment : intersectingSegments)
+        {
+            const int segmentId = intersectingSegment.first;
+            const std::array<int, 2> edge = tetMesh.edges.at(segmentId);
+            const int segmentSourceId = edge[0];
+            const Point_2 &c = singularArrangement.arrangementPoints[segmentSourceId];
+
+            //std::vector<int> minusTriangles;
+            //std::vector<int> plusTriangles;
+
+            //
+            // If the orientation is the other way around note it
+            //   (regular segment)
+            //          d 
+            //           \
+            //            \
+            // a ----------\--------- b (singular segment)
+            //              \
+            //               \
+            //                c
+            //
+            if (CGAL::orientation(a, b, c) == CGAL::RIGHT_TURN)
+            {
+                intersectingSegment.second = false;
+                //minusTriangles = tetMesh.upperStarTriangles.at(edge);
+                //plusTriangles = tetMesh.lowerStarTriangles.at(edge);
+            }
+
+            //
+            //   (regular segment)
+            //          c 
+            //           \
+            //            \
+            // a ----------\--------- b (singular segment)
+            //              \
+            //               \
+            //                d
+            //
+            //else if (CGAL::orientation(a, b, c) == CGAL::LEFT_TURN)
+            //{
+                //minusTriangles = tetMesh.lowerStarTriangles.at(edge);
+                //plusTriangles = tetMesh.upperStarTriangles.at(edge);
+            //}
+
+            //// Non-robust predicate issue
+            //else
+            //{
+                //throw std::runtime_error("Input is degenerate, three points are collienar.");
+            //}
+
+            //printf("Minus Triangles:\n");
+            //for (auto triangleId : minusTriangles)
+            //{
+                //printf("%d\n", triangleId);
+            //}
+
+            //printf("Plus Triangles:\n");
+            //for (auto triangleId : plusTriangles)
+            //{
+                //printf("%d\n", triangleId);
+            //}
+
+            
+            //edgeRegionMinusTrianglesHandle.push_back(minusTriangles);
+            //edgeRegionPlusTrianglesHandle.push_back(plusTriangles);
+        }
+
+        // In the twin edge reverse the order
+        edgeRegionSegments[halfEdge->twin()].assign(intersectingSegments.rbegin(), intersectingSegments.rend());
+
+        // Reverse the direction of travel as well
+        for (std::pair<int, bool> &intersectingSegment : edgeRegionSegments[halfEdge->twin()])
+        {
+            intersectingSegment.second = !intersectingSegment.second;
+        }
+
+        //printf("\n\nThe intersecting segments are :\n");
+        //for (const auto &[edgeId, isDirectionLowerToUpper] : edgeRegionSegments[halfEdge])
+        //{
+            //printf("%d %d\n", edgeId, isDirectionLowerToUpper);
+
+
+            //const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
+            //const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
+
+            //printf("Minus Triangles:\n");
+            //for (auto triangleId : minusTriangles)
+            //{
+                //printf("%d\n", triangleId);
+            //}
+
+            //printf("Plus Triangles:\n");
+            //for (auto triangleId : plusTriangles)
+            //{
+                //printf("%d\n", triangleId);
+            //}
+        //}
+
+        //printf("The intersecting segments of the twin :\n");
+        //for (std::pair<int, bool> &intersectingSegment : edgeRegionSegments[halfEdge->twin()])
+        //{
+            //printf("%d %d\n", intersectingSegment.first, intersectingSegment.second);
+        //}
+        //printf("\n\n");
+        //printf("------------------------------------------------------------------------------------------------------------");
+        //printf("\n\n");
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -640,7 +684,7 @@ void ReebSpace2::computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement
         {
             //std::cout << "The source point is : " << itSource->second->point() << " | " << singularArrangement.arrangementPointIndices.at(itSource->second->point()) << std::endl;
             Halfedge_const_handle regionHalfEdgeHandle = getSegmentRegion(itSource->second, segment);
-            vertexRegionSegments[regionHalfEdgeHandle].push_back(mySegment.originatingEdge);
+            vertexRegionSegments[regionHalfEdgeHandle].push_back(mySegment.originatingRegularEdgeId);
 
             //std::cout << "Added segment [" << tetMesh.edges[mySegment.originatingEdge][0] << ", " << tetMesh.edges[mySegment.originatingEdge][1] << "]\n";
             //std::cout << "Between " << singularArrangement.arrangementPoints[tetMesh.edges[mySegment.originatingEdge][0]] << " and " << singularArrangement.arrangementPoints[tetMesh.edges[mySegment.originatingEdge][0]] << std::endl;
@@ -652,7 +696,7 @@ void ReebSpace2::computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement
         {
             //std::cout << "The target point is : " << itTarget->second->point() << " | " <<  singularArrangement.arrangementPointIndices.at(itTarget->second->point()) << std::endl;
             Halfedge_const_handle regionHalfEdgeHandle = getSegmentRegion(itTarget->second, segment);
-            vertexRegionSegments[regionHalfEdgeHandle].push_back(mySegment.originatingEdge);
+            vertexRegionSegments[regionHalfEdgeHandle].push_back(mySegment.originatingRegularEdgeId);
 
             //std::cout << "Added segment [" << tetMesh.edges[mySegment.originatingEdge][0] << ", " << tetMesh.edges[mySegment.originatingEdge][1] << "]\n";
             //std::cout << "Between " << singularArrangement.arrangementPoints[tetMesh.edges[mySegment.originatingEdge][0]] << " and " << singularArrangement.arrangementPoints[tetMesh.edges[mySegment.originatingEdge][0]] << std::endl;
@@ -696,77 +740,6 @@ void ReebSpace2::computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement
 
 
 
-void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement)
-{
-    for (const auto &[halfEdge, segmentIdsMap] : edgeRegionSegments)
-    //for (const auto &[halfEdge, segmentIdsMap] : edgeRegionSegmentsMap)
-    {
-        // Each vertex is guaratneed to be in the singular arrangement
-        const Point_2 &a = halfEdge->source()->point();
-        const Point_2 &b = halfEdge->target()->point();
-
-        // Set up handles so don't have to pay for access
-        std::vector<std::vector<int>> &edgeRegionMinusTrianglesHandle = edgeRegionMinusTriangles[halfEdge];
-        std::vector<std::vector<int>> &edgeRegionPlusTrianglesHandle = edgeRegionPlusTriangles[halfEdge];
-
-        for (const auto &segmentId : segmentIdsMap)
-        //for (const auto &[lambda, segmentId] : segmentIdsMap)
-        {
-            const std::array<int, 2> edge = tetMesh.edges[segmentId];
-            const int segmentSourceId = edge[0];
-            const Point_2 &c = singularArrangement.arrangementPoints[segmentSourceId];
-
-            std::vector<int> minusTriangles;
-            std::vector<int> plusTriangles;
-
-            //
-            //   (regular segment)
-            //          d 
-            //           \
-            //            \
-            // a ----------\--------- b (singular segment)
-            //              \
-            //               \
-            //                c
-            //
-            if (CGAL::orientation(a, b, c) == CGAL::RIGHT_TURN)
-            {
-                minusTriangles = tetMesh.upperStarTriangles.at(edge);
-                plusTriangles = tetMesh.lowerStarTriangles.at(edge);
-            }
-
-            //
-            //   (regular segment)
-            //          c 
-            //           \
-            //            \
-            // a ----------\--------- b (singular segment)
-            //              \
-            //               \
-            //                d
-            //
-            else if (CGAL::orientation(a, b, c) == CGAL::LEFT_TURN)
-            {
-                minusTriangles = tetMesh.lowerStarTriangles.at(edge);
-                plusTriangles = tetMesh.upperStarTriangles.at(edge);
-            }
-
-            // Non-robust predicate issue
-            else
-            {
-                throw std::runtime_error("Input is degenerate, three points are collienar.");
-            }
-
-            
-            edgeRegionMinusTrianglesHandle.push_back(minusTriangles);
-            edgeRegionPlusTrianglesHandle.push_back(plusTriangles);
-        }
-
-        // The twin half-edge has the same +- triangles, but in reverse order
-        edgeRegionMinusTriangles[halfEdge->twin()].assign(edgeRegionPlusTrianglesHandle.rbegin(), edgeRegionPlusTrianglesHandle.rend());
-        edgeRegionPlusTriangles[halfEdge->twin()].assign(edgeRegionMinusTrianglesHandle.rbegin(), edgeRegionMinusTrianglesHandle.rend());
-    }
-}
 
 
 void ReebSpace2::computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement)
@@ -903,6 +876,39 @@ void ReebSpace2::computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, A
 
 
 
+bool ReebSpace2::areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b)
+{
+    if (a.size() != b.size())
+    {
+        std::cerr << "Size is not equal.\n";
+        return false;
+    }
+
+    for (const auto& [key, setA] : a)
+    {
+        auto itB = b.find(key);
+        if (itB == b.end())
+        {
+            std::cerr << "Second map does not have a key.\n";
+            return false;
+        }
+
+        const std::set<int>& setB = itB->second;
+        if (setA.size() != setB.size())
+        {
+            std::cerr << "Sets for the same key do not match in size.\n";
+            return false;
+        }
+
+        if (setA != setB)
+        {
+            std::cerr << "Set elements for the same key do not match.\n";
+            return false;
+        }
+    }
+
+    return true;
+}
 
 
 
@@ -969,7 +975,7 @@ void ReebSpace2::unitTest(const TetMesh &tetMesh, Arrangement &singularArrangeme
 
                 Halfedge_const_handle he = *(mySingularSegment.originatingHalfEdge); 
 
-                halfEdgeEdgeRegionSegmentsUnitTest[he].insert(myRegularSegment.originatingEdge);
+                halfEdgeEdgeRegionSegmentsUnitTest[he].insert(myRegularSegment.originatingRegularEdgeId);
             }
         }
     }

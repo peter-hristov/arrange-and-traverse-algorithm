@@ -36,13 +36,22 @@ class TetMesh
 
     std::map<std::array<int, 2>, std::set<int>> upperLink;
     std::map<std::array<int, 2>, std::set<int>> lowerLink;
+
     std::map<std::array<int, 2>, std::vector<int>> upperStarTriangles;
     std::map<std::array<int, 2>, std::vector<int>> lowerStarTriangles;
+
+    std::vector<std::vector<int>> upperStarTrianglesNew;
+    std::vector<std::vector<int>> lowerStarTrianglesNew;
+
     std::vector<std::set<int>> triangles;
     std::unordered_map<std::set<int>, int, MyHash<std::set<int>>> triangleIndices;
 
     //std::vector<std::vector<int>> tetIncidentTriangles;
     std::vector<std::set<int>> tetIncidentTriangles;
+
+    // given an edge Id, return it's plus/minus triangles (depending on the direction of travel)
+    const std::vector<int>& getMinusTriangles(const int &edgeId, const bool &isDirectionLowerToUpper) const;
+    const std::vector<int>& getPlusTriangles(const int &edgeId, const bool &isDirectionLowerToUpper) const;
 
     int singularEdgesNumber;
     int regularEdgesNumber;

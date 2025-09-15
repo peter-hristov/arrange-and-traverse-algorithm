@@ -14,14 +14,14 @@ class ReebSpace2
     public:
 
         //
-        // Geometric computation
-        std::map<Halfedge_const_handle, std::vector<int>> edgeRegionSegments;
+        // Geometric computation, which segments intersect which others, in which order and whether their upper/lower triangles are flipped
+        std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> edgeRegionSegments;
         std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
 
         // 
         // Plus/Minus Triangles for each region
-        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionMinusTriangles;
-        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionPlusTriangles;
+        //std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionMinusTriangles;
+        //std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionPlusTriangles;
 
         std::map<Halfedge_const_handle, std::vector<int>> edgeCrossingMinusTriangles;
         std::map<Halfedge_const_handle, std::vector<int>> edgeCrossingPlusTriangles;
@@ -57,8 +57,8 @@ class ReebSpace2
 
         //
         // Compute the actual REeb space
-        void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement);
-        void traverse(const TetMesh &tetMesh, Arrangement &singularArrangement);
+        void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement);
+        void traverse(TetMesh &tetMesh, Arrangement &singularArrangement);
 
         // 
         // Unit Tests

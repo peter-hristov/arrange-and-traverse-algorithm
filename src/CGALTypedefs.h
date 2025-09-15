@@ -55,17 +55,16 @@ struct MySegment_2
 {
     Segment_2 seg;
     std::optional<Halfedge_handle> originatingHalfEdge;
-    int originatingEdge;
+    int originatingRegularEdgeId;
 
     MySegment_2(const Segment_2& s, std::optional<Halfedge_handle> he = std::nullopt, int originatingEdge = -1)
-        : seg(s), originatingHalfEdge(he), originatingEdge(originatingEdge) {}
+        : seg(s), originatingHalfEdge(he), originatingRegularEdgeId(originatingEdge) {}
 };
 
 
 //typedef CGAL::Box_intersection_d::Box_d<double, 2> Box;
 typedef CGAL::Box_intersection_d::Box_with_handle_d<double, 2, const MySegment_2*> Box;
 typedef CGAL::Bbox_2 Bbox;
-
 
 
 // Used to find which face a point is in 

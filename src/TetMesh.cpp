@@ -253,11 +253,12 @@ void TetMesh::computeSingularEdgeTypes()
 
     printf("There are %d singular edges out of %ld edges. That is %.2f%%.\n", this->singularEdgesNumber, edges.size(), 100.0 * (float)this->singularEdgesNumber / (float)edges.size());
 }
+
+
 void TetMesh::computeUpperLowerLinkAndStar()
 {
-
-    std::map<std::array<int, 2>, std::set<int>> upperStarTrianglesSet;
-    std::map<std::array<int, 2>, std::set<int>> lowerStarTrianglesSet;
+    this->upperStarTrianglesNew.resize(this->edges.size());
+    this->lowerStarTrianglesNew.resize(this->edges.size());
 
     // Initialize all maps with the empty set, so that all edges are covered
     for (auto &edge : this->edges)
@@ -295,17 +296,22 @@ void TetMesh::computeUpperLowerLinkAndStar()
                     {
                         const int vIndex = tet[v];
                         const std::array<int, 2> edge = {aIndex, bIndex};
+                        const int edgeId = this->edgeIndices.at(edge);
                         const bool isUpperLink = this->isUpperLinkEdgeVertex(aIndex, bIndex, vIndex);
 
                         if (true == isUpperLink && false == this->upperLink[edge].contains(vIndex)) 
                         {
                             this->upperLink[edge].insert(vIndex);
                             this->upperStarTriangles[edge].push_back(triangleIndices.at({aIndex, bIndex, vIndex}));
+
+                            this->upperStarTrianglesNew[edgeId].push_back(triangleIndices.at({aIndex, bIndex, vIndex}));
                         } 
                         else if (false == isUpperLink && false == this->lowerLink[edge].contains(vIndex)) 
                         {
                             this->lowerLink[edge].insert(vIndex);
                             this->lowerStarTriangles[edge].push_back(triangleIndices.at({aIndex, bIndex, vIndex}));
+
+                            this->lowerStarTrianglesNew[edgeId].push_back(triangleIndices.at({aIndex, bIndex, vIndex}));
                         }
                     }
                 }
@@ -666,4 +672,30 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
 
 
     return path;
+}
+
+
+
+const std::vector<int>& TetMesh::getMinusTriangles(const int &edgeId, const bool &isDirectionLowerToUpper) const
+{
+    if (isDirectionLowerToUpper)
+    {
+        return this->lowerStarTrianglesNew[edgeId];
+    }
+    else
+    {
+        return this->upperStarTrianglesNew[edgeId];
+    }
+}
+
+const std::vector<int>& TetMesh::getPlusTriangles(const int &edgeId, const bool &isDirectionLowerToUpper) const
+{
+    if (isDirectionLowerToUpper)
+    {
+        return this->upperStarTrianglesNew[edgeId];
+    }
+    else
+    {
+        return this->lowerStarTrianglesNew[edgeId];
+    }
 }

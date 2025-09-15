@@ -431,4 +431,53 @@ class PreimageGraph
             }
         }
 
+        void updateConnectedComponentsEdge3(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges, const PreimageGraph &preimageGraphPrevious)
+        {
+            this->componentRoot = preimageGraphPrevious.componentRoot;
+            this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
+
+            for (const auto &[edgeId, isDirectionLowerToUpper] : intersectingEdges)
+            {
+                const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
+                const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
+
+                if (minusTriangles.empty() || plusTriangles.empty())
+                {
+                    throw std::runtime_error("MinusTriangles or plus triangles is empty");
+                }
+
+                const int rootId = this->componentRoot.at(minusTriangles[0]);
+
+                //std::cout << "Here are the minus triangles : \n";
+                for (auto &triangleId : minusTriangles)
+                {
+
+                    auto it = componentRoot.find(triangleId);
+
+                    if (it == componentRoot.end())
+                    {
+                        throw std::runtime_error("Minus triangle now found in preimage graph.");
+                    }
+
+                    //printf("triangle ID = %d\n", triangleId);
+                    // @TODO Double call
+                    if (it->second != rootId)
+                    {
+                        throw std::runtime_error( "Not all triangles are removed from the same root!");
+                    }
+
+                    this->componentRoot.erase(it);
+
+                }
+
+                //std::cout << "Here are the plus triangles : \n";
+                for (auto &triangleId : plusTriangles)
+                {
+                    //printf("triangle ID = %d\n", triangleId);
+                    this->componentRoot[triangleId] = rootId;
+                }
+            }
+
+        }
+
 };

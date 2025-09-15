@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <filesystem>
+#include <fstream>
 
 #include <GL/glut.h>
 #include <QApplication>
@@ -15,6 +16,15 @@
 #include "./utility/CLI11.hpp"
 #include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
+
+
+size_t getCurrentRSS()
+{
+    std::ifstream statm("/proc/self/statm");
+    size_t size, resident;
+    statm >> size >> resident;
+    return (resident * getpagesize()) / (1024.0 * 1024.0); // MB
+}
 
 using namespace std;
 
@@ -94,7 +104,7 @@ int main(int argc, char* argv[])
     tetMesh.computeSingularEdgeTypes();
     Timer::stop("Computing singular edges               :");
 
-    //Timer::start();
+
 
     Timer::start();
     Arrangement singularArrangement;
@@ -103,6 +113,8 @@ int main(int argc, char* argv[])
 
 
 
+    //std::cout << "Press Enter to continue...";
+    //std::cin.get();
 
 
     Timer::start();
@@ -155,20 +167,21 @@ int main(int argc, char* argv[])
     Timer::stop("Computed red/blud intersetions         :");
 
     Timer::start();
+    reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
+    Timer::stop("Edge regions plus/minus triangles      :");
+
+    Timer::start();
     reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
     Timer::stop("Computed vertex regions                :");
 
     Timer::start();
-    reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
-    Timer::stop("Edge regions plus/minus triangles      :");
+    reebSpace2.computeVertexRegionMinusPlusTriangles(tetMesh, singularArrangement);
+    Timer::stop("Vertex regions plus/minus triangles    :");
 
     Timer::start();
     reebSpace2.computeEdgeCrossingMinusPlusTriangles(tetMesh, singularArrangement);
     Timer::stop("Edge crossing plus/minus triangles     :");
 
-    Timer::start();
-    reebSpace2.computeVertexRegionMinusPlusTriangles(tetMesh, singularArrangement);
-    Timer::stop("Vertex regions plus/minus triangles    :");
 
     //Timer::start();
     //reebSpace2.unitTest(tetMesh, singularArrangement, arrangement);
@@ -250,6 +263,9 @@ int main(int argc, char* argv[])
     Timer::start();
     reebSpace2.traverse(tetMesh, singularArrangement);
     Timer::stop("Computed singular traversal            :");
+
+    //std::cout << "Press Enter to continue...";
+    //std::cin.get();
 
     int correspondenceGraphSize = 0;
     for (const auto &[faceHandle, correspondenceGraph] : reebSpace2.correspondenceGraph)
