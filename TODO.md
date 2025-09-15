@@ -5,6 +5,7 @@ Optimise the red-blue computation.
 Computing the unique components in a preimage graph (for the correspondence graph)
     Done - track the current components without O(fiber size)
     You only need them once per face.
+    Use IDs in CGAL directly (get rid of all the maps).
 
 
 # Refactor

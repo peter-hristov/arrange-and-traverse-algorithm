@@ -15,47 +15,11 @@ class ReebSpace2
 
         //
         // Geometric computation
-        //
         std::map<Halfedge_const_handle, std::vector<int>> edgeRegionSegments;
         std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
 
-        //std::map<Halfedge_const_handle, std::map<K::FT, int>> edgeRegionSegmentsMap;
-
-        void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
-        void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
-        // When sorting the segments around a vertex, compare two of them
-        bool compareRegularSegments(const Halfedge_const_handle &halfEdge, const Point_2& b, const Point_2& c);
-
-
-        bool doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2);
-        bool ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment);
-        Halfedge_const_handle getSegmentRegion(Vertex_const_handle &vertexHandle, const Segment_2 &segment);
-
-
-        //void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &halfEdgeSeed);
-        void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement);
-        void traverse(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
-
-        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
-
-        // Used for uint tests
-        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
-
-
-        std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
-
-
-
-
-        void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
-        void unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
-
-
-
-
-
+        // 
+        // Plus/Minus Triangles for each region
         std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionMinusTriangles;
         std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionPlusTriangles;
 
@@ -65,12 +29,40 @@ class ReebSpace2
         std::map<Halfedge_const_handle, std::vector<std::vector<int>>> vertexRegionMinusTriangles;
         std::map<Halfedge_const_handle, std::vector<std::vector<int>>> vertexRegionPlusTriangles;
 
+        //
+        // Preimage graphs and correspondence graph
+        std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
+        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
+        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
+
+        //
+        // Geometric computation
+        void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
+        void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
+        // When sorting the segments around a vertex, compare two of them
+        bool compareRegularSegments(const Halfedge_const_handle &halfEdge, const Point_2& b, const Point_2& c);
+
+        bool doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2);
+        bool ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment);
+        Halfedge_const_handle getSegmentRegion(Vertex_const_handle &vertexHandle, const Segment_2 &segment);
+
+        //
+        // Plus/Minus triangles for each region
         void computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
+
+        //
+        // Compute the actual REeb space
+        void loopFace(const TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement);
+        void traverse(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
+        // 
+        // Unit Tests
+        void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
+        void unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
         bool areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b);
-
-
 };

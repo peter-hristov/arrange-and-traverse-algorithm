@@ -251,6 +251,13 @@ int main(int argc, char* argv[])
     reebSpace2.traverse(tetMesh, singularArrangement);
     Timer::stop("Computed singular traversal            :");
 
+    int correspondenceGraphSize = 0;
+    for (const auto &[faceHandle, correspondenceGraph] : reebSpace2.correspondenceGraph)
+    {
+        correspondenceGraphSize += correspondenceGraph.size();
+    }
+
+    std::cout << "The size of the corresponde graph is " << correspondenceGraphSize << std::endl;
 
     //return 0;
 

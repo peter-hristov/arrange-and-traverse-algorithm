@@ -33,7 +33,6 @@ class PreimageGraph
             this->uniqueComponentIds  = std::unordered_set<int>();
         }
 
-
         bool areEqual(PreimageGraph &p)
         {
             // Group elements with the same root
@@ -152,8 +151,6 @@ class PreimageGraph
                 throw std::runtime_error( "Unique componentIds not computed correctly.");
             }
         }
-
-
 
         std::unordered_map<int, std::set<int>> groupComponents()
         {
@@ -284,7 +281,7 @@ class PreimageGraph
                     throw std::runtime_error("Minus triangle now found in preimage graph.");
                 }
 
-                // This connected component will not longer exist
+                // This connected component will no longer exist
                 uniqueComponentIds.erase(it->second);
 
                 // Remove it from the list
