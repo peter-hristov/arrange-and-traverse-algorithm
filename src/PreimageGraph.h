@@ -267,10 +267,16 @@ class PreimageGraph
             }
         }
 
-        void updateConnectedComponents(const TetMesh &tetMesh, const std::vector<int> &minusTriangles, const std::vector<int> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
+
+
+
+        void updateConnectedComponents(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &preimageGraphPrevious)
         {
             this->componentRoot = preimageGraphPrevious.componentRoot;
             this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
+
+            const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
+            const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
 
             for (auto &triangleId : minusTriangles)
             {
@@ -278,7 +284,7 @@ class PreimageGraph
 
                 if (it == componentRoot.end())
                 {
-                    throw std::runtime_error("Minus triangle now found in preimage graph.");
+                    throw std::runtime_error("Minus triangle not found in preimage graph.");
                 }
 
                 // This connected component will no longer exist
@@ -303,52 +309,9 @@ class PreimageGraph
                     this->bfsSearch(triangleId, visited, tetMesh);
                 }
             }
-
         }
 
 
-        void updateConnectedComponentsEdge(const TetMesh &tetMesh, const std::vector<std::vector<int>> &minusTriangles, const std::vector<std::vector<int>> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
-        {
-            //PreimageGraph prevousGraph = preimageGraphPrevious;
-
-            std::set<int> minusTrianglesSet;
-            std::set<int> plusTrianglesSet;
-
-            for (int i = 0 ; i < minusTriangles.size() ; i++)
-            {
-                //prevousGraph.componentRoot = this->componentRoot;
-
-                //printf("\nThe minus triangles are : ");
-                //for (int t : minusTriangles[i])
-                //{
-                    //std::cout << t << " ";
-                //}
-                //printf("\nThe plus triangles are : ");
-                //for (int t : plusTriangles[i])
-                //{
-                    //std::cout << t << " ";
-                //}
-
-                minusTrianglesSet.insert(minusTriangles[i].begin(), minusTriangles[i].end());
-                plusTrianglesSet.insert(plusTriangles[i].begin(), plusTriangles[i].end());
-
-                //this->updateConnectedComponents(tetMesh, minusTriangles[i], plusTriangles[i], prevousGraph);
-            }
-            std::vector<int> sumMinusTriangles;
-            std::vector<int> sumPlusTriangles;
-
-            std::set_difference(
-                    minusTrianglesSet.begin(), minusTrianglesSet.end(),
-                    plusTrianglesSet.begin(), plusTrianglesSet.end(),
-                    std::back_inserter(sumMinusTriangles));
-
-            std::set_difference(
-                    plusTrianglesSet.begin(), plusTrianglesSet.end(),
-                    minusTrianglesSet.begin(), minusTrianglesSet.end(),
-                    std::back_inserter(sumPlusTriangles));
-
-            this->updateConnectedComponents(tetMesh, sumMinusTriangles, sumPlusTriangles, preimageGraphPrevious);
-        }
 
         void updateConnectedComponentsEdge2(const TetMesh &tetMesh, const std::vector<std::vector<int>> &minusTriangles, const std::vector<std::vector<int>> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
         {
@@ -436,15 +399,47 @@ class PreimageGraph
             this->componentRoot = preimageGraphPrevious.componentRoot;
             this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
 
+
+            //std::cout << "\nHere are the INITIAL roots and components : " << std::endl;
+            //for (const auto &[triangle, root] : this->componentRoot)
+            //{
+                //printf("triangle ID = %d, rootId = %d\n", triangle, root);
+            //}
+
+
+
+            //std::cout << "\n\nNow recomputing properly...\n";
+
+
+
             for (const auto &[edgeId, isDirectionLowerToUpper] : intersectingEdges)
             {
                 const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
                 const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
 
-                if (minusTriangles.empty() || plusTriangles.empty())
-                {
-                    throw std::runtime_error("MinusTriangles or plus triangles is empty");
-                }
+                //std::cout << edgeId << " - " << isDirectionLowerToUpper << std::endl;
+
+
+                //for (int i = 0 ; i < minusTriangles.size() ; i++)
+                //{
+                    //printf("\nThe minus triangles are : ");
+                    //for (int t : minusTriangles)
+                    //{
+                        //std::cout << t << " ";
+                    //}
+                    //printf("\nThe plus triangles are : ");
+                    //for (int t : plusTriangles)
+                    //{
+                        //std::cout << t << " ";
+                    //}
+                //}
+                //std::cout << "\n\n";
+
+
+                //if (minusTriangles.empty() || plusTriangles.empty())
+                //{
+                    //throw std::runtime_error("MinusTriangles or plus triangles is empty");
+                //}
 
                 const int rootId = this->componentRoot.at(minusTriangles[0]);
 
@@ -456,7 +451,7 @@ class PreimageGraph
 
                     if (it == componentRoot.end())
                     {
-                        throw std::runtime_error("Minus triangle now found in preimage graph.");
+                        throw std::runtime_error("Minus triangle not found in preimage graph.");
                     }
 
                     //printf("triangle ID = %d\n", triangleId);

@@ -15,19 +15,11 @@ class ReebSpace2
 
         //
         // Geometric computation, which segments intersect which others, in which order and whether their upper/lower triangles are flipped
+        std::map<Halfedge_const_handle, std::pair<int, bool>> edgeCrossingSegments;
         std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> edgeRegionSegments;
-        std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
+        std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> vertexRegionSegments;
 
-        // 
-        // Plus/Minus Triangles for each region
-        //std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionMinusTriangles;
-        //std::map<Halfedge_const_handle, std::vector<std::vector<int>>> edgeRegionPlusTriangles;
-
-        std::map<Halfedge_const_handle, std::vector<int>> edgeCrossingMinusTriangles;
-        std::map<Halfedge_const_handle, std::vector<int>> edgeCrossingPlusTriangles;
-
-        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> vertexRegionMinusTriangles;
-        std::map<Halfedge_const_handle, std::vector<std::vector<int>>> vertexRegionPlusTriangles;
+        //std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
 
         //
         // Preimage graphs and correspondence graph
