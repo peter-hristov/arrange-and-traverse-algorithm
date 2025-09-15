@@ -399,51 +399,13 @@ class PreimageGraph
             this->componentRoot = preimageGraphPrevious.componentRoot;
             this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
 
-
-            //std::cout << "\nHere are the INITIAL roots and components : " << std::endl;
-            //for (const auto &[triangle, root] : this->componentRoot)
-            //{
-                //printf("triangle ID = %d, rootId = %d\n", triangle, root);
-            //}
-
-
-
-            //std::cout << "\n\nNow recomputing properly...\n";
-
-
-
             for (const auto &[edgeId, isDirectionLowerToUpper] : intersectingEdges)
             {
                 const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
                 const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
 
-                //std::cout << edgeId << " - " << isDirectionLowerToUpper << std::endl;
-
-
-                //for (int i = 0 ; i < minusTriangles.size() ; i++)
-                //{
-                    //printf("\nThe minus triangles are : ");
-                    //for (int t : minusTriangles)
-                    //{
-                        //std::cout << t << " ";
-                    //}
-                    //printf("\nThe plus triangles are : ");
-                    //for (int t : plusTriangles)
-                    //{
-                        //std::cout << t << " ";
-                    //}
-                //}
-                //std::cout << "\n\n";
-
-
-                //if (minusTriangles.empty() || plusTriangles.empty())
-                //{
-                    //throw std::runtime_error("MinusTriangles or plus triangles is empty");
-                //}
-
                 const int rootId = this->componentRoot.at(minusTriangles[0]);
 
-                //std::cout << "Here are the minus triangles : \n";
                 for (auto &triangleId : minusTriangles)
                 {
 
@@ -454,8 +416,6 @@ class PreimageGraph
                         throw std::runtime_error("Minus triangle not found in preimage graph.");
                     }
 
-                    //printf("triangle ID = %d\n", triangleId);
-                    // @TODO Double call
                     if (it->second != rootId)
                     {
                         throw std::runtime_error( "Not all triangles are removed from the same root!");
@@ -472,7 +432,5 @@ class PreimageGraph
                     this->componentRoot[triangleId] = rootId;
                 }
             }
-
         }
-
 };

@@ -147,19 +147,18 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement)
     std::queue<Halfedge_const_handle> traversalQueue;
     std::set<Face_const_handle> visited;
 
+    traversalQueue.push(startingHalfedge->twin());
+    visited.insert(startingHalfedge->face());
+
+    // Make sure the outer face is visited as well, no need to go back
+    visited.insert(startingHalfedge->twin()->face());
+
     // Seed the first face
     this->preimageGraphs[startingHalfedge->twin()].first.updateConnectedComponents(
             tetMesh, 
             this->edgeCrossingSegments[startingHalfedge],
             PreimageGraph()
             );
-
-
-    traversalQueue.push(startingHalfedge->twin());
-    visited.insert(startingHalfedge->face());
-
-    // Make sure the outer face is visited as well, no need to go back
-    visited.insert(startingHalfedge->twin()->face());
 
     while (false == traversalQueue.empty())
     {
@@ -170,10 +169,8 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement)
         loopFace(tetMesh, currentHalfEdge, traversalQueue, visited, singularArrangement);
 
         correspondenceGraph[currentHalfEdge->face()] = this->preimageGraphs[currentHalfEdge].first.getUniqueComponents();
-        //this->preimageGraphs[currentHalfEdge].first.unitTestGetUniqueComponents();
 
         // Clear the preimage graphs in the currect face.
-        //std::cout << "\n\n--------------------------------------------------------------\n\n";
         Halfedge_const_handle iterator = currentHalfEdge;
         do
         {
