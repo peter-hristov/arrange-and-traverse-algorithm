@@ -15,16 +15,23 @@ class ReebSpace2
 
         //
         // Geometric computation, which segments intersect which others, in which order and whether their upper/lower triangles are flipped
-        std::map<Halfedge_const_handle, std::pair<int, bool>> edgeCrossingSegments;
-        std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> edgeRegionSegments;
-        std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> vertexRegionSegments;
+        //std::map<Halfedge_const_handle, std::pair<int, bool>> edgeCrossingSegments;
+        //std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> edgeRegionSegments;
+        //std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> vertexRegionSegments;
+
+        std::vector<std::pair<int, bool>> edgeCrossingSegments2;
+        std::vector<std::vector<std::pair<int, bool>>> vertexRegionSegments2;
+        std::vector<std::vector<std::pair<int, bool>>> edgeRegionSegments;
 
         //std::map<Halfedge_const_handle, std::vector<int>> vertexRegionSegments;
 
         //
         // Preimage graphs and correspondence graph
-        std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
-        std::map<Face_const_handle, PreimageGraph> preimageGraphs;
+        std::vector<std::vector<int>> correspondenceGraph;
+        std::vector<PreimageGraph> preimageGraphs;
+
+        //std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
+        //std::map<Face_const_handle, PreimageGraph> preimageGraphs;
         std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
 

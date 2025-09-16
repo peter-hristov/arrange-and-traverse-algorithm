@@ -153,6 +153,8 @@ int main(int argc, char* argv[])
 
 
 
+    // Before the computation assign indices
+    singularArrangement.assignIndices();
 
 
 
@@ -268,14 +270,14 @@ int main(int argc, char* argv[])
     //std::cin.get();
 
     int correspondenceGraphSize = 0;
-    for (const auto &[faceHandle, correspondenceGraph] : reebSpace2.correspondenceGraph)
+    //for (const auto &[faceHandle, correspondenceGraph] : reebSpace2.correspondenceGraph)
     {
-        correspondenceGraphSize += correspondenceGraph.size();
+        //correspondenceGraphSize += correspondenceGraph.size();
     }
 
     std::cout << "The size of the corresponde graph is " << correspondenceGraphSize << std::endl;
 
-    //return 0;
+    return 0;
 
 
 

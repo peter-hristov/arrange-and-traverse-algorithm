@@ -51,4 +51,6 @@ class Arrangement
 
     void checkInitialAssumptions(TetMesh &tetMesh);
 
+    void assignIndices();
+
 };

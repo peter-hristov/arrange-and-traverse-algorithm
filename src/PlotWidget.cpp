@@ -89,7 +89,8 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
     // Collect the polygons for each sheet
     std::vector<std::vector<QPolygonF>> polygonsPerSheet(PreimageGraph::componentCount);
 
-    for (const auto &[faceHandle, componentIds] : data.reebSpace2.correspondenceGraph)
+    //for (const auto &[faceHandle, componentIds] : data.reebSpace2.correspondenceGraph)
+    for (auto faceHandle = data.singularArrangement.arr.faces_begin(); faceHandle != data.singularArrangement.arr.faces_end(); ++faceHandle) 
     {
         if (faceHandle->is_unbounded()) { continue; }
         QVector<QPointF> points;
@@ -112,7 +113,8 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
         QPolygonF qPolygon(points);
 
-        for (const int componentId : componentIds)
+        //for (const int componentId : componentIds)
+        for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
         {
             polygonsPerSheet[componentId].push_back(qPolygon);
         }
