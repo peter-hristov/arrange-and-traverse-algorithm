@@ -270,7 +270,7 @@ class PreimageGraph
 
 
 
-        void updateConnectedComponents(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment)
+        void updateComponentsSingular(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment)
         {
             //this->componentRoot = preimageGraphPrevious.componentRoot;
             //this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
@@ -311,90 +311,7 @@ class PreimageGraph
             }
         }
 
-
-
-        void updateConnectedComponentsEdge2(const TetMesh &tetMesh, const std::vector<std::vector<int>> &minusTriangles, const std::vector<std::vector<int>> &plusTriangles, const PreimageGraph &preimageGraphPrevious)
-        {
-            //std::cout << "-------------------------------------------------------- GOING INTO A NEW COMPONENT!!!\n";
-
-            this->componentRoot = preimageGraphPrevious.componentRoot;
-            this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
-
-            //std::cout << "\nHere are the INITIAL roots and components : " << std::endl;
-            //for (const auto &[triangle, root] : this->componentRoot)
-            //{
-                //printf("triangle ID = %d, rootId = %d\n", triangle, root);
-            //}
-
-            //for (int i = 0 ; i < minusTriangles.size() ; i++)
-            //{
-                //printf("\nThe minus triangles are : ");
-                //for (int t : minusTriangles[i])
-                //{
-                    //std::cout << t << " ";
-                //}
-                //printf("\nThe plus triangles are : ");
-                //for (int t : plusTriangles[i])
-                //{
-                    //std::cout << t << " ";
-                //}
-            //}
-            //std::cout << "\n\n";
-
-
-            //std::cout << "\n\nNow recomputing properly...\n";
-
-            for (int i = 0 ; i < minusTriangles.size() ; i++)
-            {
-
-                if (minusTriangles[i].empty())
-                {
-                    throw std::runtime_error("minusTriangles[i] is empty");
-                }
-
-                //std::cout << "\nHere are the roots and components : " << std::endl;
-                //for (const auto &[triangle, root] : this->componentRoot)
-                //{
-                    //printf("triangle ID = %d, rootId = %d\n", triangle, root);
-                //}
-
-
-                //std::cout << "The first minus triangle is " << minusTriangles[i][0] << std::endl;
-
-                const int rootId = this->componentRoot.at(minusTriangles[i][0]);
-
-                //std::cout << "Here are the minus triangles : \n";
-                for (auto &triangleId : minusTriangles[i])
-                {
-
-                    auto it = componentRoot.find(triangleId);
-
-                    if (it == componentRoot.end())
-                    {
-                        throw std::runtime_error("Minus triangle now found in preimage graph.");
-                    }
-
-                    //printf("triangle ID = %d\n", triangleId);
-                    // @TODO Double call
-                    if (it->second != rootId)
-                    {
-                        throw std::runtime_error( "Not all triangles are removed from the same root!");
-                    }
-
-                    this->componentRoot.erase(it);
-
-                }
-
-                //std::cout << "Here are the plus triangles : \n";
-                for (auto &triangleId : plusTriangles[i])
-                {
-                    //printf("triangle ID = %d\n", triangleId);
-                    this->componentRoot[triangleId] = rootId;
-                }
-            }
-        }
-
-        void updateConnectedComponentsEdge3(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges)
+        void updateComponentsRegular(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges)
         {
             //this->componentRoot = preimageGraphPrevious.componentRoot;
             //this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;

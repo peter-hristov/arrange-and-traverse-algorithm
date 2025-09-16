@@ -38,6 +38,9 @@ int main(int argc, char* argv[])
     bool performanceRun = false;
     cliApp.add_flag("--performanceRun, -p", performanceRun, "Only compute the Reeb space, no graphics..");
 
+    bool unitTestPreimageGraphs = false;
+    cliApp.add_flag("--unitTestPreimageGraphs, -u", unitTestPreimageGraphs, "Compute the preimage graphs with arrange and traverse and check if they are the same as with singular arrange and traverse.");
+
     bool discardFiberSeeds = false;
     cliApp.add_flag("--discardPreimageGraphs, -d", discardFiberSeeds, "Discard the seeds for generating fibers based on sheets, discard to save a bit of memory (not too much).");
 
@@ -146,18 +149,12 @@ int main(int argc, char* argv[])
     tetMesh.regularEdgesNumber -= segments.size();
     tetMesh.singularEdgesNumber += segments.size();
 
-
     Timer::start();
     singularArrangement.checkInitialAssumptions(tetMesh);
     Timer::stop("Making sure all faces are simple       :");
 
-
-
     // Before the computation assign indices
     singularArrangement.assignIndices();
-
-
-
 
 
 
@@ -263,7 +260,7 @@ int main(int argc, char* argv[])
     //std::cin.get();
 
     Timer::start();
-    reebSpace2.traverse(tetMesh, singularArrangement);
+    reebSpace2.traverse(tetMesh, singularArrangement, unitTestPreimageGraphs);
     Timer::stop("Computed singular traversal            :");
 
     //std::cout << "Press Enter to continue...";
@@ -277,41 +274,50 @@ int main(int argc, char* argv[])
 
     std::cout << "The size of the corresponde graph is " << correspondenceGraphSize << std::endl;
 
-    return 0;
-
-
-
-    Timer::start();
-    Arrangement arrangement;
-    //arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
-    Timer::stop("Arrangement                            :");
-
-    Timer::start();
-    //arrangement.computePointLocationDataStructure();
-    Timer::stop("Arrangement search structure           :");
-
-
-    Timer::start();
-    ReebSpace reebSpace;
-    //reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
-    Timer::stop("Computed {G_F} and H                   :");
-
-
-    Timer::start();
-    //reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-    Timer::stop("Comparing preimage graphs              :");
-
-
     //return 0;
 
-    
 
-    std::cout << "Postprocessing..." << std::endl;
-    Timer::start();
-    //reebSpace.computeSheetGeometry(tetMesh, arrangement);
-    //reebSpace.computeSheetArea(tetMesh, arrangement);
-    //reebSpace.printTopSheets(tetMesh, arrangement, 20);
-    Timer::stop("Computed RS(f) Postprocess             :");
+    // Keep these empty unless we want to unit test
+    ReebSpace reebSpace;
+    Arrangement arrangement;
+
+    if (unitTestPreimageGraphs)
+    {
+        Timer::start();
+        arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
+        Timer::stop("Arrangement                            :");
+
+        Timer::start();
+        //arrangement.computePointLocationDataStructure();
+        Timer::stop("Arrangement search structure           :");
+
+
+        Timer::start();
+        reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
+        Timer::stop("Computed {G_F} and H                   :");
+
+
+        Timer::start();
+        bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+        Timer::stop("Comparing preimage graphs              :");
+
+        if (false == arePreimageGraphsEqual)
+        {
+            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
+            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            return 1;
+        }
+
+        return 0;
+    }
+
+    //std::cout << "Postprocessing..." << std::endl;
+    //Timer::start();
+    ////reebSpace.computeSheetGeometry(tetMesh, arrangement);
+    ////reebSpace.computeSheetArea(tetMesh, arrangement);
+    ////reebSpace.printTopSheets(tetMesh, arrangement, 20);
+    //Timer::stop("Computed RS(f) Postprocess             :");
 
     if (performanceRun == true)
     {
