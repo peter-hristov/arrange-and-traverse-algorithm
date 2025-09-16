@@ -103,6 +103,32 @@ void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &
     }
 
 
+    int faceId = 0;
+    std::set<int> uniqueFaceIds;
+    for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit, ++faceId) 
+    {
+        fit->set_data(faceId);           // store ID in the face
+        uniqueFaceIds.insert(faceId);
+    }
+
+    if (uniqueFaceIds.size() != arr.number_of_faces())
+    {
+        throw std::runtime_error("Not all faces have unique IDs!");
+    }
+
+    int hedgeId = 0;
+    std::set<int> uniqueHalfEdgeIds;
+    for (auto heit = arr.halfedges_begin(); heit != arr.halfedges_end(); ++heit, ++hedgeId) 
+    {
+        heit->set_data(hedgeId);
+        uniqueHalfEdgeIds.insert(hedgeId);
+    }
+
+    if (uniqueHalfEdgeIds.size() != arr.number_of_halfedges())
+    {
+        throw std::runtime_error("Not all faces have unique IDs!");
+    }
+
     //for (auto currentFaceIterator = arr.faces_begin(); currentFaceIterator != arr.faces_end(); ++currentFaceIterator) 
     //{
         //Arrangement_2::Face_const_handle face = currentFaceIterator;

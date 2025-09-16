@@ -20,15 +20,16 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 //typedef CGAL::Simple_cartesian<double> K;
 
 //#include <CGAL/Arrangement_2.h>
+#include <CGAL/Arr_extended_dcel.h>
 #include <CGAL/Arrangement_with_history_2.h>
 #include <CGAL/Arr_segment_traits_2.h>
 
 #include <CGAL/Segment_2.h>
 #include <CGAL/Line_2.h>
 
-
 typedef CGAL::Arr_segment_traits_2<K> Traits_2;
-typedef CGAL::Arrangement_with_history_2<Traits_2> Arrangement_2;
+typedef CGAL::Arr_extended_dcel<Traits_2, bool, int, int> Dcel;
+typedef CGAL::Arrangement_with_history_2<Traits_2, Dcel> Arrangement_2;
 typedef K::Point_2 Point_2;
 typedef K::Segment_2 Segment_2;
 typedef K::Line_2 Line_2;
