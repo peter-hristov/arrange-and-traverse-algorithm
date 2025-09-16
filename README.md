@@ -21,26 +21,30 @@ make
 
 make -j 8 && ./fv99 -f ../data/three-sheet-toy.txt
 make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/data.vtu
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-50-tets-320.vtu -e 0.1
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu
+make -j 8 && ./fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-50-tets-320.vtu
+make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu
 
 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-40-tets-625.vtu  
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-18-400.vtu 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-15-400.vtu 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.40.90.vtu 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.30.240.vtu 
+# Big Unit Test
+bash ./unitTest.sh ./build/fv99 -f ./data/three-sheet-toy.txt -u
+bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/data.vtu -u
+
+bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu -u
+bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-18-400.vtu -u
+bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-15-875.vtu -u
+bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-12-1440.vtu -u
+bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-10-2800.vtu -u
+
+bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-40-tets-625.vtu  -u
+bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-30-tets-1080.vtu -u
+bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-20-tets-2560.vtu -u
+bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-15-tets-10985.vtu -u
+
+bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.40.90.vtu -u
+bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.30.240.vtu -u
+bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.20.720.vtu -u
 
 
 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-18-400.vtu 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-15-875.vtu 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-12-1440.vtu 
-make -j 8 && /usr/bin/time -v ./fv99 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-10-2800.vtu 
 
 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-40-tets-625.vtu  
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-30-tets-1080.vtu 
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-20-tets-2560.vtu 
- make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-15-tets-10985.vtu 

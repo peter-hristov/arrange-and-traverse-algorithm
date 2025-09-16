@@ -1,12 +1,17 @@
 # Optimisation 13.09.2025
-Use id's instead of maps with half-edge and faces.
+Unit Test the Final reeb space
+Debug nested faces
+
 Optimise the red-blue computation.
+    Done - Email Sebastien 
+    Parallelise
 
 Computing the unique components in a preimage graph (for the correspondence graph)
     Done - track the current components without O(fiber size)
     You only need them once per face.
     Use IDs in CGAL directly (get rid of all the maps).
 
+Done - Use id's instead of maps with half-edge and faces.
 
 # Refactor
 
