@@ -24,7 +24,7 @@ class ReebSpace2
         //
         // Preimage graphs and correspondence graph
         std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
-        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
+        std::map<Face_const_handle, PreimageGraph> preimageGraphs;
         std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
 

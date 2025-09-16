@@ -22,11 +22,9 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
             //this->preimageGraphs[initialHalfEdge->twin()].second
             //);
 
-    this->preimageGraphs[initialHalfEdge].second.updateConnectedComponentsEdge3(
-            tetMesh, 
-            this->edgeRegionSegments[initialHalfEdge],
-            this->preimageGraphs[initialHalfEdge].first
-            );
+    PreimageGraph &pg = this->preimageGraphs[initialHalfEdge->face()];
+
+    pg.updateConnectedComponentsEdge3(tetMesh, this->edgeRegionSegments[initialHalfEdge]);
 
     //printf("\n------------------------------------------------------------------------------------\n");
     //std::cout << "Half-edge is [" << initialHalfEdge->source()->point() << "] -> [" << initialHalfEdge->target()->point() << "]";
@@ -48,20 +46,18 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
     {
         Halfedge_const_handle previousHalfEdge = currentHalfEdge->prev();
 
-        auto &currentPreimageGraphPair = this->preimageGraphs[currentHalfEdge];
+        //auto &currentPreimageGraphPair = this->preimageGraphs[currentHalfEdge];
 
-        currentPreimageGraphPair.first.updateConnectedComponentsEdge3(
+        pg.updateConnectedComponentsEdge3(
                 tetMesh, 
                 //this->vertexRegionMinusTriangles[previousHalfEdge], 
                 //this->vertexRegionPlusTriangles[previousHalfEdge], 
-                this->vertexRegionSegments[previousHalfEdge], 
-                this->preimageGraphs[previousHalfEdge].second
+                this->vertexRegionSegments[previousHalfEdge]
                 );
 
-        currentPreimageGraphPair.second.updateConnectedComponentsEdge3(
+        pg.updateConnectedComponentsEdge3(
                 tetMesh, 
-                this->edgeRegionSegments[currentHalfEdge], 
-                currentPreimageGraphPair.first
+                this->edgeRegionSegments[currentHalfEdge]
                 );
 
 
@@ -97,10 +93,12 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
             //else
             {
                 // Seed the first half-edge in the twin
-                this->preimageGraphs[currentHalfEdge->twin()].first.updateConnectedComponents(
+
+                PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->twin()->face()];
+                pg2 = pg;
+                pg2.updateConnectedComponents(
                         tetMesh, 
-                        this->edgeCrossingSegments[currentHalfEdge],
-                        currentPreimageGraphPair.second
+                        this->edgeCrossingSegments[currentHalfEdge]
                         );
 
                 traversalQueue.push(currentHalfEdge->twin());
@@ -128,6 +126,8 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
         currentHalfEdge = currentHalfEdge->next();
 
     } while (currentHalfEdge != initialHalfEdge);
+
+    pg.clear();
 }
 
 
@@ -154,38 +154,34 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement)
     visited.insert(startingHalfedge->twin()->face());
 
     // Seed the first face
-    this->preimageGraphs[startingHalfedge->twin()].first.updateConnectedComponents(
-            tetMesh, 
-            this->edgeCrossingSegments[startingHalfedge],
-            PreimageGraph()
-            );
+    this->preimageGraphs[startingHalfedge->twin()->face()].updateConnectedComponents(tetMesh, this->edgeCrossingSegments[startingHalfedge]);
 
     while (false == traversalQueue.empty())
     {
         Halfedge_const_handle currentHalfEdge = traversalQueue.front();
         traversalQueue.pop();
 
+        correspondenceGraph[currentHalfEdge->face()] = this->preimageGraphs[currentHalfEdge->face()].getUniqueComponents();
+
         // Process neighbours and queue them
         loopFace(tetMesh, currentHalfEdge, traversalQueue, visited, singularArrangement);
 
-        correspondenceGraph[currentHalfEdge->face()] = this->preimageGraphs[currentHalfEdge].first.getUniqueComponents();
-
         // Clear the preimage graphs in the currect face.
-        Halfedge_const_handle iterator = currentHalfEdge;
-        do
-        {
-            //this->preimageGraphs[iterator].first.unitTestGetUniqueComponents();
-            //this->preimageGraphs[iterator].second.unitTestGetUniqueComponents();
+        //Halfedge_const_handle iterator = currentHalfEdge;
+        //do
+        //{
+            ////this->preimageGraphs[iterator].first.unitTestGetUniqueComponents();
+            ////this->preimageGraphs[iterator].second.unitTestGetUniqueComponents();
 
-            //this->preimageGraphsCached[iterator].first = this->preimageGraphs[iterator].first;
-            //this->preimageGraphsCached[iterator].second = this->preimageGraphs[iterator].second;
+            ////this->preimageGraphsCached[iterator].first = this->preimageGraphs[iterator].first;
+            ////this->preimageGraphsCached[iterator].second = this->preimageGraphs[iterator].second;
 
-            this->preimageGraphs[iterator].first.clear();
-            this->preimageGraphs[iterator].second.clear();
+            //this->preimageGraphs[iterator].first.clear();
+            //this->preimageGraphs[iterator].second.clear();
 
-            iterator = iterator->next();
+            //iterator = iterator->next();
 
-        } while (iterator != currentHalfEdge);
+        //} while (iterator != currentHalfEdge);
     }
 }
 

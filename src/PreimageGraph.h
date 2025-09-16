@@ -270,10 +270,10 @@ class PreimageGraph
 
 
 
-        void updateConnectedComponents(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &preimageGraphPrevious)
+        void updateConnectedComponents(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment)
         {
-            this->componentRoot = preimageGraphPrevious.componentRoot;
-            this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
+            //this->componentRoot = preimageGraphPrevious.componentRoot;
+            //this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
 
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
@@ -394,10 +394,10 @@ class PreimageGraph
             }
         }
 
-        void updateConnectedComponentsEdge3(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges, const PreimageGraph &preimageGraphPrevious)
+        void updateConnectedComponentsEdge3(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges)
         {
-            this->componentRoot = preimageGraphPrevious.componentRoot;
-            this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
+            //this->componentRoot = preimageGraphPrevious.componentRoot;
+            //this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
 
             for (const auto &[edgeId, isDirectionLowerToUpper] : intersectingEdges)
             {
