@@ -16,12 +16,12 @@ class TetMesh
     TetMesh() {}
 
     // Domain and range coordinates
-    std::vector<float> vertexCoordinatesF;
-    std::vector<float> vertexCoordinatesG;
+    std::vector<double> vertexCoordinatesF;
+    std::vector<double> vertexCoordinatesG;
     std::vector<std::array<float, 3>> vertexDomainCoordinates;
 
     // Bounding box min/max for the domain and range coordinates of all vertices
-    float minF, maxF, minG, maxG;
+    double minF, maxF, minG, maxG;
     float minX, maxX, minY, maxY, minZ, maxZ;
 
     // (Optional) indicative names for the two scalar fields and their units
@@ -63,7 +63,7 @@ class TetMesh
 
     void sortVertices();
     void printMesh();
-    void perturbRangeValues(const float &perturbationEpsilon);
+    void perturbRangeValues(const double &perturbationEpsilon);
 
 
     // We only add upperLink/lowerLink to data, the rest of data is unchagned

@@ -20,7 +20,8 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkPolyLine.h>
 #include <vtkCellArray.h>
-#include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
+
 
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridReader.h>
@@ -85,8 +86,8 @@ TetMesh io::readDataVtu(const std::string &filename)
     int numTets = mesh->GetNumberOfCells();
 
     // Initialize all the data arrays
-    tetMesh.vertexCoordinatesF = std::vector<float>(numVertices);
-    tetMesh.vertexCoordinatesG = std::vector<float>(numVertices);
+    tetMesh.vertexCoordinatesF = std::vector<double>(numVertices);
+    tetMesh.vertexCoordinatesG = std::vector<double>(numVertices);
     tetMesh.tetrahedra = std::vector<std::array<int, 4>>(numTets);
     tetMesh.vertexDomainCoordinates = std::vector<std::array<float, 3>>(numVertices);
 
@@ -182,8 +183,8 @@ TetMesh io::readDataTxt(const std::string &filename)
     dataStream >> numVertices >> numTets;
 
     // Initialize all the data arrays
-    tetMesh.vertexCoordinatesF = std::vector<float>(numVertices);
-    tetMesh.vertexCoordinatesG = std::vector<float>(numVertices);
+    tetMesh.vertexCoordinatesF = std::vector<double>(numVertices);
+    tetMesh.vertexCoordinatesG = std::vector<double>(numVertices);
     tetMesh.tetrahedra = std::vector<std::array<int, 4>>(numTets);
     tetMesh.vertexDomainCoordinates = std::vector<std::array<float, 3>>(numVertices);
 
@@ -272,7 +273,7 @@ void io::saveFibers(const std::string &outputFile, const std::vector<FiberPoint>
     // 1. Create the points
     auto points = vtkSmartPointer<vtkPoints>::New();
     auto idArray = vtkSmartPointer<vtkIntArray>::New();
-    auto colourArray = vtkSmartPointer<vtkFloatArray>::New();
+    auto colourArray = vtkSmartPointer<vtkDoubleArray>::New();
 
     idArray->SetName("SheetId");
     idArray->SetNumberOfComponents(1);
@@ -336,24 +337,24 @@ std::vector<FiberPoint> io::generatefFaceFibersForSheet(const TetMesh &tetMesh, 
     // If need only one, get it at the center
     if (numberOfFiberPoints == 1)
     {
-        const std::array<float, 2> fiberPoint = {(float)centroid.x(), (float)centroid.y()};
+        const std::array<double, 2> fiberPoint = {(double)centroid.x(), (double)centroid.y()};
         const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
         printf("The fiber size is %d\n", fiber.size());
         return fiber;
     }
 
-    std::vector<std::array<float, 2>> fiberPoints;
+    std::vector<std::array<double, 2>> fiberPoints;
 
 
     // If we need more, sample along the boundary
     for (const CartesianPoint &point : polygon) 
     {
         // Get point from CGAL (and convert to double )
-        float u = point.x();
-        float v = point.y();
+        double u = point.x();
+        double v = point.y();
 
         // Interpolate closer to the centroid to make sure we are in the sheet ( if the sheet is "convex enough")
-        const float alpha = 0.2;
+        const double alpha = 0.2;
         u = (1 - alpha) * u + alpha * centroid.x();
         v = (1 - alpha) * v + alpha * centroid.y();
 
@@ -369,7 +370,7 @@ std::vector<FiberPoint> io::generatefFaceFibersForSheet(const TetMesh &tetMesh, 
     {
         int index = static_cast<int>(i * step);
 
-        const std::array<float, 2> fiberPoint = {fiberPoints[index][0], fiberPoints[index][1]};
+        const std::array<double, 2> fiberPoint = {fiberPoints[index][0], fiberPoints[index][1]};
         const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
 
         printf("The fiber size is %d\n", fiber.size());

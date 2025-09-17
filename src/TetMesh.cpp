@@ -4,10 +4,10 @@
 #include <random>
 #include <queue>
 
-void TetMesh::perturbRangeValues(const float &epsilon)
+void TetMesh::perturbRangeValues(const double &epsilon)
 {
     static std::mt19937 gen(std::random_device{}());
-    std::uniform_real_distribution<float> dist(-epsilon, epsilon);
+    std::uniform_real_distribution<double> dist(-epsilon, epsilon);
 
     for (int i = 0; i < this->vertexCoordinatesF.size(); i++) 
     {
@@ -86,8 +86,8 @@ void TetMesh::sortVertices()
 
     // Set up copies of the originals for the swap, otherwise editin in place causes errors
     std::vector<std::array<float, 3>> vertexDomainCoordinatesOriginal = this->vertexDomainCoordinates;
-    std::vector<float> vertexCoordinatesFOriginal = this->vertexCoordinatesF;
-    std::vector<float> vertexCoordinatesGOriginal = this->vertexCoordinatesG;
+    std::vector<double> vertexCoordinatesFOriginal = this->vertexCoordinatesF;
+    std::vector<double> vertexCoordinatesGOriginal = this->vertexCoordinatesG;
 
     // Swap tet indices
     for (int i = 0 ; i < this->tetrahedra.size() ; i++)
@@ -251,7 +251,7 @@ void TetMesh::computeSingularEdgeTypes()
     this->singularEdgesNumber = this->edges.size() - this->regularEdgesNumber;
 
 
-    printf("There are %d singular edges out of %ld edges. That is %.2f%%.\n", this->singularEdgesNumber, edges.size(), 100.0 * (float)this->singularEdgesNumber / (float)edges.size());
+    printf("There are %d singular edges out of %ld edges. That is %.2f%%.\n", this->singularEdgesNumber, edges.size(), 100.0 * (double)this->singularEdgesNumber / (double)edges.size());
 }
 
 
@@ -651,7 +651,8 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
     std::reverse(path.begin(), path.end());
 
 
-    std::unordered_map<std::array<int, 2>, int, MyHash<std::array<int, 2>>> edgeSingularTypes;
+
+
 
     for (int i = 0 ; i < path.size() - 1 ; i++)
     {
@@ -669,7 +670,6 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
         }
 
     }
-
 
     return path;
 }

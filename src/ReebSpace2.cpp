@@ -219,10 +219,8 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
                 const K::Vector_2 wA = p - singularSegment.source();
                 const K::FT tA = (wA * v) / v.squared_length();
 
-                // Degerate case where more than two segments are concurrent
-                #ifndef NDEBUG
-                    assert(false == segmentRegionsOrdered.contains(tA));
-                #endif
+                // Make sure the regular intersections are well ordered
+                assert(false == segmentRegionsOrdered.contains(tA));
 
                 segmentRegionsOrdered[tA] = regularSegmentsIds[j];
             }
@@ -422,6 +420,8 @@ void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arr
             const int segmentSourceId = edge[0];
             const Point_2 &c = singularArrangement.arrangementPoints[segmentSourceId];
 
+            assert(CGAL::orientation(a, b, c) != CGAL::COLLINEAR);
+
             //std::vector<int> minusTriangles;
             //std::vector<int> plusTriangles;
 
@@ -581,6 +581,9 @@ bool ReebSpace2::ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex
 
     //std::cout << "o = " << o << "\na = " << a << "\nb = " << b << "\nc = " << c << std::endl;
 
+    assert(CGAL::orientation(o, a, c) != CGAL::COLLINEAR);
+    assert(CGAL::orientation(o, a, b) != CGAL::COLLINEAR);
+
     // Case 1. 
     //
     //      a
@@ -646,6 +649,10 @@ bool ReebSpace2::compareRegularSegments(const Halfedge_const_handle &halfEdge, c
 {
     const Point_2 &o = halfEdge->target()->point();
     const Point_2 &a = halfEdge->source()->point();
+
+    assert(CGAL::orientation(o, a, b) != CGAL::COLLINEAR);
+    assert(CGAL::orientation(o, a, c) != CGAL::COLLINEAR);
+    assert(CGAL::orientation(o, b, c) != CGAL::COLLINEAR);
 
     // Both are in the right half-plane
     if (CGAL::orientation(o, a, b) == CGAL::RIGHT_TURN)

@@ -297,6 +297,7 @@ class PreimageGraph
             // Add the plus triangles with a sentinel value
             for (auto &triangleId : plusTriangles)
             {
+                assert(false == this->componentRoot.contains(triangleId) && "Plus triangle is already in the preimage graph.");
                 this->componentRoot[triangleId] = triangleId;
             }
 
@@ -321,11 +322,26 @@ class PreimageGraph
                 const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
                 const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
 
+                if (this->componentRoot.contains(minusTriangles[0]) == false)
+                {
+                    this->printByRoot();
+                    printf("\nMinus triangles: ");
+
+                    for (auto x : minusTriangles)
+                    {
+                        std::cout << x << " ";
+                    }
+                    printf("\n");
+                }
+
+                assert(minusTriangles.size() > 0 && "Minus triangles of a regular edge are empty.");
+                assert(plusTriangles.size() > 0 && "Plus triangles of a regular edge are empty.");
+                assert(this->componentRoot.contains(minusTriangles[0]) && "First minus triangle is not in the preimage graph.");
+
                 const int rootId = this->componentRoot.at(minusTriangles[0]);
 
                 for (auto &triangleId : minusTriangles)
                 {
-
                     auto it = componentRoot.find(triangleId);
 
                     #ifndef NDEBUG
@@ -347,7 +363,7 @@ class PreimageGraph
                 //std::cout << "Here are the plus triangles : \n";
                 for (auto &triangleId : plusTriangles)
                 {
-                    //printf("triangle ID = %d\n", triangleId);
+                    assert(false == this->componentRoot.contains(triangleId) && "Plus triangle is already in the preimage graph.");
                     this->componentRoot[triangleId] = rootId;
                 }
             }

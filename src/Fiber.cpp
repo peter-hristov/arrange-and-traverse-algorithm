@@ -6,7 +6,7 @@
 #include <queue>
 
 
-std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<float, 2> &fiberPoint, const int reebSheetIdOnly = -1)
+std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<double, 2> &fiberPoint, const int reebSheetIdOnly = -1)
 {
     Face_const_handle activeFace = arrangement.getActiveFace(fiberPoint);
     const int activeFaceId = arrangement.arrangementFacesIdices[activeFace];

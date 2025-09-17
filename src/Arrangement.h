@@ -28,7 +28,7 @@ class Arrangement
     // The points of the line segments that define the arrangement, does not include new intersection points
     std::vector<Point_2> arrangementPoints;
 
-    Face_const_handle getActiveFace(const std::array<float, 2>);
+    Face_const_handle getActiveFace(const std::array<double, 2>);
 
     // The inverse map of arrangementPoints, returns the index of a point
     std::map<Point_2, int> arrangementPointIndices;

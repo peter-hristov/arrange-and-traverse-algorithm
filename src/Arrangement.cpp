@@ -1,7 +1,7 @@
 #include "./Timer.h"
 #include "./Arrangement.h"
 
-Face_const_handle Arrangement::getActiveFace(const std::array<float, 2> fiberPoint)
+Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPoint)
 {
     // The query point (u, v)
     Point_2 query_point(fiberPoint[0], fiberPoint[1]);
@@ -41,8 +41,8 @@ void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &
     this->arrangementPoints.resize(tetMesh.vertexCoordinatesF.size());
     for (int i = 0 ; i < tetMesh.vertexCoordinatesF.size() ; i++)
     {
-        const float u = tetMesh.vertexCoordinatesF[i];
-        const float v = tetMesh.vertexCoordinatesG[i];
+        const double u = tetMesh.vertexCoordinatesF[i];
+        const double v = tetMesh.vertexCoordinatesG[i];
         const Point_2 point(u, v);
 
         this->arrangementPoints[i] = point;
@@ -156,7 +156,7 @@ void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &
         //} while (curr != start);
     //}
 
-    //printf("There are %ld singular faces out of %ld faces. That is %.2f%%.\n", singularFaces.size(), arr.number_of_faces(), 100.0 * (float)singularFaces.size() / (float)arr.number_of_faces());
+    //printf("There are %ld singular faces out of %ld faces. That is %.2f%%.\n", singularFaces.size(), arr.number_of_faces(), 100.0 * (double)singularFaces.size() / (double)arr.number_of_faces());
 
 
 
