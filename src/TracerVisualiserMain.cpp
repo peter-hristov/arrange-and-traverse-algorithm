@@ -18,14 +18,6 @@
 #include "./ReebSpace2.h"
 
 
-size_t getCurrentRSS()
-{
-    std::ifstream statm("/proc/self/statm");
-    size_t size, resident;
-    statm >> size >> resident;
-    return (resident * getpagesize()) / (1024.0 * 1024.0); // MB
-}
-
 using namespace std;
 
 int main(int argc, char* argv[])
@@ -168,6 +160,11 @@ int main(int argc, char* argv[])
     Timer::start();
     reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
     Timer::stop("Edge regions plus/minus triangles      :");
+
+    Timer::start();
+    reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
+    Timer::stop("Edge 2 regions plus/minus triangles    :");
+
 
     Timer::start();
     reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);

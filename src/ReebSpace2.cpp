@@ -1,6 +1,7 @@
 #include <CGAL/enum.h>
 #include <cassert>
 #include <utility>
+#include <omp.h>
 
 #include "./io.h"
 #include "./Timer.h"
@@ -133,6 +134,105 @@ bool ReebSpace2::doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 
 
 
 void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement)
+{
+    // Set up singular half-edge segments
+    //
+    std::vector<Segment_2> singularSegments;
+    singularSegments.reserve(singularArrangement.arr.number_of_edges());
+
+    std::vector<int> singularSegmentsHalfEdgeIds;
+    singularSegmentsHalfEdgeIds.reserve(singularArrangement.arr.number_of_edges());
+
+    std::vector<Bbox> singularBoxes;
+    singularBoxes.reserve(singularArrangement.arr.number_of_edges());
+
+    for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
+    {
+        // @TODO Not entirely sure this is super stable
+        if (he < he->twin())
+        {
+            singularSegments.emplace_back(he->source()->point(), he->target()->point());
+            singularBoxes.emplace_back(singularSegments.back().bbox());
+            singularSegmentsHalfEdgeIds.emplace_back(he->data());
+        }
+    }
+
+    // Set up regular segments
+    //
+    std::vector<Segment_2> regularSegments;
+    regularSegments.reserve(tetMesh.regularEdgesNumber);
+
+    std::vector<int> regularSegmentsIds;
+    regularSegmentsIds.reserve(singularArrangement.arr.number_of_edges());
+
+    std::vector<Bbox> regularBoxes; 
+    regularBoxes.reserve(tetMesh.regularEdgesNumber);
+
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    {
+        if (type == 1)
+        {
+            const std::array<int, 2> &edgeConst = edge;
+
+            regularSegments.emplace_back(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]);
+            regularBoxes.emplace_back(regularSegments.back().bbox());
+            regularSegmentsIds.emplace_back(tetMesh.edgeIndices.at(edgeConst));
+        }
+    }
+
+    this->edgeRegionSegments.resize(singularArrangement.arr.number_of_halfedges());
+
+    #pragma omp parallel for schedule(dynamic)
+    for (int i = 0 ; i < singularBoxes.size() ; i++)
+    {
+        std::map<K::FT, int> segmentRegionsOrdered;
+
+        const Segment_2 &singularSegment = singularSegments[i];
+        const K::Vector_2 v = singularSegment.target() - singularSegment.source();
+
+        for (int j = 0 ; j < regularBoxes.size() ; j++)
+        {
+            // Quick reject using bounding boxes
+            if (!CGAL::do_overlap(singularBoxes[i], regularBoxes[j]))
+            {
+                continue;
+            }
+
+            // We are only interested in interior intersections
+            if (doSegmentEndpointsOverlap(singularSegments[i], regularSegments[j])) 
+            { 
+                continue; 
+            }
+
+            const Segment_2 &regularSegment = regularSegments[j];
+
+            std::optional<std::variant<Point_2, Segment_2>> result = CGAL::intersection(singularSegment, regularSegment);
+
+            if (!result)
+            {
+                continue;
+            }
+
+            if (std::holds_alternative<Point_2>(*result))
+            {
+                const Point_2 &p = std::get<Point_2>(*result);
+                const K::Vector_2 wA = p - singularSegment.source();
+                const K::FT tA = (wA * v) / v.squared_length();
+
+                segmentRegionsOrdered[tA] = regularSegmentsIds[j];
+            }
+        }
+
+        this->edgeRegionSegments[singularSegmentsHalfEdgeIds[i]].reserve(segmentRegionsOrdered.size());
+
+        for (const auto &[lambda, regularSegmentId] : segmentRegionsOrdered)
+        {
+            this->edgeRegionSegments[singularSegmentsHalfEdgeIds[i]].emplace_back(regularSegmentId, true);
+        }
+    }
+}
+
+void ReebSpace2::computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement &singularArrangement)
 {
     //
     // Compute the intersection point using the singular segments (not half-edges)

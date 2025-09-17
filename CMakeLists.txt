@@ -29,6 +29,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
+find_package(OpenMP REQUIRED)
 
 find_package(CGAL 6.0.1 REQUIRED)
 find_package(VTK 9.4.1 REQUIRED)
@@ -65,4 +66,5 @@ target_link_libraries(${PROJECT_NAME}
     ${GLUT_LIBRARIES}
     ${VTK_LIBRARIES}
     CGAL::CGAL
+    OpenMP::OpenMP_CXX
     )

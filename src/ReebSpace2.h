@@ -38,6 +38,8 @@ class ReebSpace2
         void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
+        void computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
         // When sorting the segments around a vertex, compare two of them
         bool compareRegularSegments(const Halfedge_const_handle &halfEdge, const Point_2& b, const Point_2& c);
         bool doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2);
