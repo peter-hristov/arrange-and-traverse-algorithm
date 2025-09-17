@@ -219,6 +219,11 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
                 const K::Vector_2 wA = p - singularSegment.source();
                 const K::FT tA = (wA * v) / v.squared_length();
 
+                // Degerate case where more than two segments are concurrent
+                #ifndef NDEBUG
+                    assert(false == segmentRegionsOrdered.contains(tA));
+                #endif
+
                 segmentRegionsOrdered[tA] = regularSegmentsIds[j];
             }
         }
@@ -566,7 +571,6 @@ bool ReebSpace2::ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex
 
     auto halfEdgeCirculatorPrevious = halfEdgeCirculator;
     const auto halfEdgeNext = ++halfEdgeCirculatorPrevious;
-
 
     // The image of the vertex is o, the endpoints of the half-edges are a and b and the other endpoints of the segment is b
     // See bellow for pictures

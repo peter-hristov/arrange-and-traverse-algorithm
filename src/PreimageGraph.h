@@ -328,6 +328,7 @@ class PreimageGraph
 
                     auto it = componentRoot.find(triangleId);
 
+                    #ifndef NDEBUG
                     if (it == componentRoot.end())
                     {
                         throw std::runtime_error("Minus triangle not found in preimage graph.");
@@ -337,6 +338,7 @@ class PreimageGraph
                     {
                         throw std::runtime_error( "Not all triangles are removed from the same root!");
                     }
+                    #endif
 
                     this->componentRoot.erase(it);
 

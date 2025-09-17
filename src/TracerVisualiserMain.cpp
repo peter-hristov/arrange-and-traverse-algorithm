@@ -165,7 +165,6 @@ int main(int argc, char* argv[])
     reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
     Timer::stop("Edge 2 regions plus/minus triangles    :");
 
-
     Timer::start();
     reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
     Timer::stop("Computed vertex regions                :");
