@@ -60,7 +60,7 @@ class ReebSpace2
 
         //
         // Compute the actual REeb space
-        void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement, const bool);
+        void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::vector<bool> &visited, const bool);
         void traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool);
 
         // 

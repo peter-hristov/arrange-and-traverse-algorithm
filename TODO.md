@@ -1,8 +1,9 @@
 # Optimisation 13.09.2025
 Unit Test the Final reeb space
 
+Read VTU and directly downsample myself (will be useful for testing later)
+
 Make an array isPseudoSingular
-Read VTU and directly downsample myself
 Optimise memory usage by my tetMesh class
 
 Done - Debug nested faces
