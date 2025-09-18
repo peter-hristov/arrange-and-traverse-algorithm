@@ -30,11 +30,13 @@ class TracerVisualiserWidget : public QOpenGLWidget
     //bool drawVertices = false;
 
     // Higher is slower zoom out.
-    bool drawEdges = 1;
+    bool drawEdges = 0;
     bool drawFaces = 0;
-    bool drawVertices = 1;
+    bool drawVertices = 0;
 
+    // Depricated
     bool showUIsosurface = false;
+    // Depricated
     bool showVIsosurface = false;
 
     float edgeOpacity = 0.8;

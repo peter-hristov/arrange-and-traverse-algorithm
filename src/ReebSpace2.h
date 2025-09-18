@@ -23,6 +23,8 @@ class ReebSpace2
         std::vector<std::vector<std::pair<int, bool>>> vertexRegionSegments;
         std::vector<std::vector<std::pair<int, bool>>> edgeRegionSegments;
 
+        std::vector<bool> isHalfEdgePseudoSingular;
+
         //
         // Preimage graphs and correspondence graph
         std::vector<std::vector<int>> correspondenceGraph;
@@ -51,6 +53,9 @@ class ReebSpace2
         void computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
+        // @TODO Move this to the TetMesh
+        void assignHalfEdgePseudoSingular(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
 
         //

@@ -93,11 +93,16 @@ class TetMesh
 
         return this->edgeSingularTypes[edge];
     }
-    int computeSingularSetConnectivity();
 
+
+    const std::vector<int> findShortestPath(const std::vector<int> &source, const std::set<int> &sink) const;
+    void markPseudoSingularEdges(const std::vector<int> &shortestPath);
+
+
+
+    // Not currently used
+    int computeSingularSetConnectivity();
     void singularTraversalBFS(const std::vector<int> &roots, std::vector<bool> &visited);
     int computeSingularSetConnectivity2();
-
-    std::vector<int> findShortestPath(const std::vector<int> &source, const std::set<int> &sink);
 
 };

@@ -44,13 +44,13 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
             //std::cout << "Queue Half-edge is [" << currentHalfEdge->twin()->source()->point() << "] -> [" << currentHalfEdge->twin()->target()->point() << "]";
             //printf("\n------------------------------------------------------------------------------------\n");
 
-            const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(currentHalfEdge);
-            const std::array<int, 2> edge = {
-                singularArrangement.arrangementPointIndices.at(segment.source()), 
-                singularArrangement.arrangementPointIndices.at(segment.target())
-            };
+            //const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(currentHalfEdge);
+            //const std::array<int, 2> edge = {
+                //singularArrangement.arrangementPointIndices.at(segment.source()), 
+                //singularArrangement.arrangementPointIndices.at(segment.target())
+            //};
 
-            if (tetMesh.edgeSingularTypes.at(edge) == -1)
+            if (this->isHalfEdgePseudoSingular[currentHalfEdge->data()])
             {
                 //std::cerr << "Processing pseudo-singular edge-----------------------------------------------------------------------------------------------------!\n";
                 PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->twin()->face()->data()];
@@ -160,13 +160,13 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
     // Set up regular segments
     //
     std::vector<Segment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber);
 
     std::vector<int> regularSegmentsIds;
-    regularSegmentsIds.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularSegmentsIds.reserve(tetMesh.regularEdgesNumber);
 
     std::vector<Bbox> regularBoxes; 
-    regularBoxes.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularBoxes.reserve(tetMesh.regularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -292,10 +292,10 @@ void ReebSpace2::computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement 
     // Set up regular segments
     //
     std::vector<MySegment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber);
 
     std::vector<Box> regularBoxes; 
-    regularBoxes.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularBoxes.reserve(tetMesh.regularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -687,7 +687,7 @@ void ReebSpace2::computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement
     // @TODO
     // Remaking these is not efficient
     std::vector<MySegment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -1053,10 +1053,10 @@ void ReebSpace2::unitTest(const TetMesh &tetMesh, Arrangement &singularArrangeme
     }
 
     std::vector<MySegment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber);
 
     std::vector<Box> regularBoxes; 
-    regularBoxes.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
+    regularBoxes.reserve(tetMesh.regularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -1252,6 +1252,32 @@ bool segmentsOverlap(const Segment_2& s1, const Segment_2& s2)
 
     // Point intersection is not considered overlap
     return false;
+}
+
+void ReebSpace2::assignHalfEdgePseudoSingular(const TetMesh &tetMesh, Arrangement &singularArrangement)
+{
+    this->isHalfEdgePseudoSingular.resize(singularArrangement.arr.number_of_halfedges());
+
+    // @TODO Find a way to parallize this
+    //#pragma omp parallel for schedule(dynamic)
+    for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
+    {
+        const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(halfEdge);
+        const std::array<int, 2> edge = {
+            singularArrangement.arrangementPointIndices.at(segment.source()), 
+            singularArrangement.arrangementPointIndices.at(segment.target())
+        };
+
+        if (tetMesh.edgeSingularTypes.at(edge) == -1)
+        {
+            this->isHalfEdgePseudoSingular[halfEdge->data()] = true;
+        }
+        else
+        {
+            this->isHalfEdgePseudoSingular[halfEdge->data()] = false;
+        }
+    }
+
 }
 
 std::pair<Halfedge_const_handle, Halfedge_const_handle>  findHalfEdges(const Halfedge_const_handle &singularHalfEdge,  Arrangement &singularArrangement, Arrangement &regularArrangement)

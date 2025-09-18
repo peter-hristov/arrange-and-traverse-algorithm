@@ -75,6 +75,11 @@ int main(int argc, char* argv[])
         std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
+
+    //
+    // TetMesh computation
+    //
+
     Timer::start();
     tetMesh.perturbRangeValues(perturbationEpsilon);
     Timer::stop("Perturbing range values                :");
@@ -101,66 +106,34 @@ int main(int argc, char* argv[])
 
 
 
+    //
+    // Arrangement Computation
+    //
+
     Timer::start();
     Arrangement singularArrangementInitial;
     singularArrangementInitial.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
-    Timer::stop("Singular Arrangement                   :");
+    Timer::stop("Initial Singular Arrangement           :");
 
-
-
-    //std::cout << "Press Enter to continue...";
-    //std::cin.get();
-
-
+    // The initial computation may have nested faces, we need to connect them
     Timer::start();
-    singularArrangementInitial.checkInitialAssumptions(tetMesh);
+    singularArrangementInitial.connectNestedFaces(tetMesh);
     Timer::stop("Making sure all faces are simple       :");
 
-    std::cout << "\n------------------------------------------------------------- A FRESH START.\n";
-
-
-    // Add the pseudo-singular edges to the arrangement
-    //
-    //std::vector<Segment_2> pseudoSingularSegments;
-    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
-    //{
-        //if (type == -1)
-        //{
-            //pseudoSingularSegments.push_back(Segment_2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]));
-        //}
-
-    //}
-
-    //Timer::start();
-    //CGAL::insert(singularArrangement.arr, pseudoSingularSegments.begin(), pseudoSingularSegments.end());
-
-    //std::cout << "We have added " << pseudoSingularSegments.size() << " new segments to the arrangement.\n";
-    //std::cout << "The arrangement size:"
-        //<< "   |V| = " << singularArrangement.arr.number_of_vertices()
-        //<< ",  |E| = " << singularArrangement.arr.number_of_edges()
-        //<< ",  |F| = " << singularArrangement.arr.number_of_faces() << std::endl << std::endl;
-    //Timer::stop("Singular Arrangement 2                 :");
-
-    //tetMesh.pseudoSingularEdgesNumber = pseudoSingularSegments.size();
-
-    //Timer::start();
-    //singularArrangement.checkInitialAssumptions(tetMesh);
-    //Timer::stop("Making sure all faces are simple       :");
-
-
-
+    // Recompute the arrangement with enough new segments to avoid connect all nested faces
     Timer::start();
     Arrangement singularArrangement;
     singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
     Timer::stop("Singular Arrangement                   :");
 
-
-    // Before the computation assign indices
+    Timer::start();
     singularArrangement.assignIndices();
+    Timer::stop("Assigning indices to the arrangement   :");
 
 
-
-    // New computation
+    //
+    // Reeb space computation.
+    //
     ReebSpace2 reebSpace2;
 
     Timer::start();
@@ -170,10 +143,6 @@ int main(int argc, char* argv[])
     Timer::start();
     reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
     Timer::stop("Edge regions plus/minus triangles      :");
-
-    Timer::start();
-    reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
-    Timer::stop("Edge 2 regions plus/minus triangles    :");
 
     Timer::start();
     reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
@@ -187,103 +156,26 @@ int main(int argc, char* argv[])
     reebSpace2.computeEdgeCrossingMinusPlusTriangles(tetMesh, singularArrangement);
     Timer::stop("Edge crossing plus/minus triangles     :");
 
-
-    //Timer::start();
-    //reebSpace2.unitTest(tetMesh, singularArrangement, arrangement);
-    //Timer::stop("Geometric computation unit tests       :");
-
-
-    //std::map<std::array<int, 2>, std::vector<int>> upperStarTriangles;
-    //std::map<std::array<int, 2>, std::vector<int>> lowerStarTriangles;
-    
-    //for (const auto& [edge, triangles] : tetMesh.upperStarTriangles)
-    //{
-        //printf("\n----------------------------------------------\n");
-        ////std::cout << "Edge edge [" << he->source()->point() << " -> " << he->target()->point() << "]";
-        //printf("Edge [%f, %f] -> [%f, %f]\n", tetMesh.vertexCoordinatesF[edge[0]], tetMesh.vertexCoordinatesG[edge[0]], tetMesh.vertexCoordinatesF[edge[1]], tetMesh.vertexCoordinatesG[edge[1]]);
-        //printf("Edge %d -> %d\n", edge[0], edge[1]);
-        //printf("\n----------------------------------------------\n\n");
-
-        //std::cout << "Upper star triangles:\n";
-        //for (const int &triangleId : tetMesh.upperStarTriangles[edge])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-        //std::cout << "Lower star triangles:\n";
-        //for (const int &triangleId : tetMesh.lowerStarTriangles[edge])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-    //}
-
-    //for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
-    //{
-        //printf("\n----------------------------------------------\n");
-        //std::cout << "Half edge [" << he->source()->point() << " -> " << he->target()->point() << "]";
-        //printf("\n----------------------------------------------\n\n");
-
-        //std::cout << "Edge region minus triangles:\n";
-        //for (const int &triangleId : reebSpace2.edgeRegionMinusTriangles[he])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-        //std::cout << "\n\nEdge region plus triangles:\n";
-        //for (const int &triangleId : reebSpace2.edgeRegionPlusTriangles[he])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-        //std::cout << "\n\nEdge crossing minus triangles:\n";
-        //for (const int &triangleId : reebSpace2.edgeCrossingMinusTriangles[he])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-        //std::cout << "\n\nEdge crossing plus triangles:\n";
-        //for (const int &triangleId : reebSpace2.edgeCrossingPlusTriangles[he])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-        //std::cout << "\n\nVertex region minus triangles:\n";
-        //for (const int &triangleId : reebSpace2.vertexRegionMinusTriangles[he])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-        //std::cout << "\n\nVertex region plus triangles:\n";
-        //for (const int &triangleId : reebSpace2.vertexRegionPlusTriangles[he])
-        //{
-            //io::printTriangle(tetMesh, triangleId);
-        //}
-
-    //}
-
-
-    //std::cout << "Press Enter to continue...";
-    //std::cin.get();
+    Timer::start();
+    reebSpace2.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
+    Timer::stop("Assigning pseudosingular edges         :");
 
     Timer::start();
     reebSpace2.traverse(tetMesh, singularArrangement, unitTestPreimageGraphs);
     Timer::stop("Computed singular traversal            :");
 
-    //std::cout << "Press Enter to continue...";
-    //std::cin.get();
 
     int correspondenceGraphSize = 0;
-    //for (const auto &[faceHandle, correspondenceGraph] : reebSpace2.correspondenceGraph)
+    for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
     {
-        //correspondenceGraphSize += correspondenceGraph.size();
+        correspondenceGraphSize += correspondenceGraph.size();
     }
 
     std::cout << "The size of the corresponde graph is " << correspondenceGraphSize << std::endl;
 
-    //return 0;
 
-
-    // Keep these empty unless we want to unit test
+    // This is the old computation, keep these empty unless we want to unit test
+    //
     ReebSpace reebSpace;
     Arrangement arrangement;
 

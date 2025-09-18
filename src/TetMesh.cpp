@@ -589,8 +589,7 @@ int TetMesh::computeSingularSetConnectivity2()
 
 
 
-
-std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const std::set<int> &sink)
+const std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const std::set<int> &sink) const
 {
     std::vector<int> parent(this->vertexCoordinatesF.size(), -1);
 
@@ -646,7 +645,7 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
     }
 
     // Assemble path
-    std::vector<int> path;
+    std::vector<int> shortestPath;
 
     int currentVertexId = firstFound;
 
@@ -654,21 +653,24 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
     while (parent[currentVertexId] != currentVertexId)
     {
         printf("%d ", currentVertexId);
-        path.push_back(currentVertexId);
+        shortestPath.push_back(currentVertexId);
         currentVertexId = parent[currentVertexId];
     }
     printf("%d", currentVertexId);
 
-    path.push_back(currentVertexId); // finally push the root
-    std::reverse(path.begin(), path.end());
+    shortestPath.push_back(currentVertexId); // finally push the root
+    std::reverse(shortestPath.begin(), shortestPath.end());
 
+    return shortestPath;
+}
 
-
-    printf("\nAdding the following edges : ");
-    for (int i = 0 ; i < path.size() - 1 ; i++)
+void TetMesh::markPseudoSingularEdges(const std::vector<int> &shortestPath)
+{
+    printf("\nMarking the following edges as pseudo-singular : ");
+    for (int i = 0 ; i < shortestPath.size() - 1 ; i++)
     {
-        int vertexA = path[i];
-        int vertexB = path[i+1];
+        int vertexA = shortestPath[i];
+        int vertexB = shortestPath[i+1];
 
         if (vertexA > vertexB)
         {
@@ -679,15 +681,16 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
         {
             printf("[%d, %d] ", vertexA, vertexB);
             this->edgeSingularTypes[{vertexA, vertexB}] = -1;
+
+            // A regular edge becomes pseudo-singular
             this->pseudoSingularEdgesNumber++;
+            this->regularEdgesNumber--;
         }
 
     }
     printf("\n");
     printf("\n");
     printf("\n");
-
-    return path;
 }
 
 

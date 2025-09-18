@@ -169,7 +169,7 @@ void Arrangement::computePointLocationDataStructure()
     this->pl = std::make_unique<Point_location>(this->arr);
 }
 
-void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
+void Arrangement::connectNestedFaces(TetMesh &tetMesh)
 {
     int faceBoundarySizeTotal = 0;
     int innerFaces = 0;
@@ -223,7 +223,7 @@ void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
                )
             {
 
-                std::vector<std::set<int>> innerBoundaryVertices;
+                std::vector<std::set<int>> innerBoundaries;
 
                 int innerFaceBoundarySize = 0;
                 for (auto icit = fit->inner_ccbs_begin(); icit != fit->inner_ccbs_end(); ++icit) {
@@ -242,7 +242,7 @@ void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
                         innerFaceBoundarySize++;
                     } while (circ != start);
 
-                    innerBoundaryVertices.push_back(innerBoundary);
+                    innerBoundaries.push_back(innerBoundary);
                 }
 
                 // count inner face boundary
@@ -257,10 +257,11 @@ void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
                 std::cerr << "Is fictitious?: " << fit->is_fictitious() << std::endl;
                 //throw std::runtime_error("An inner face is degenerate!");
 
-                for (const auto &innerBoundary : innerBoundaryVertices)
+
+                for (const auto &innerBoundary : innerBoundaries)
                 {
-                    std::vector<int> shortestPath = tetMesh.findShortestPath(ounterBoundaryVertices, innerBoundary);
-                    std::cerr << "The shortes path between the two has " << shortestPath.size() << " vertices." << std::endl;
+                    const std::vector<int> shortestPath = tetMesh.findShortestPath(ounterBoundaryVertices, innerBoundary);
+                    tetMesh.markPseudoSingularEdges(shortestPath);
                 }
             }
         }

@@ -49,7 +49,7 @@ class Arrangement
     void computeArrangement(const TetMesh&, const SegmentMode&);
     void computePointLocationDataStructure();
 
-    void checkInitialAssumptions(TetMesh &tetMesh);
+    void connectNestedFaces(TetMesh &tetMesh);
 
     void assignIndices();
 
