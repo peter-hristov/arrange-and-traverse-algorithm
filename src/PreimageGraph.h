@@ -284,7 +284,7 @@ class PreimageGraph
 
                 if (it == componentRoot.end())
                 {
-                    throw std::runtime_error("Minus triangle not found in preimage graph.");
+                    throw std::runtime_error("Minus triangle not found in preimage graph for singular.");
                 }
 
                 // This connected component will no longer exist
@@ -322,20 +322,28 @@ class PreimageGraph
                 const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
                 const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
 
-                if (this->componentRoot.contains(minusTriangles[0]) == false)
-                {
-                    this->printByRoot();
-                    printf("\nMinus triangles: ");
-
-                    for (auto x : minusTriangles)
-                    {
-                        std::cout << x << " ";
-                    }
-                    printf("\n");
-                }
-
                 assert(minusTriangles.size() > 0 && "Minus triangles of a regular edge are empty.");
                 assert(plusTriangles.size() > 0 && "Plus triangles of a regular edge are empty.");
+
+                //if (this->componentRoot.contains(minusTriangles[0]) == false)
+                //{
+                    //this->printByRoot();
+                    //printf("\nMinus triangles: ");
+                    //for (auto x : minusTriangles)
+                    //{
+                        //std::cout << x << " ";
+                    //}
+                    //printf("\n");
+                    //printf("\nPlus triangles: ");
+                    //for (auto x : plusTriangles)
+                    //{
+                        //std::cout << x << " ";
+                    //}
+                    //printf("\n");
+                    //fflush(stdout);
+                    //return;
+                //}
+
                 assert(this->componentRoot.contains(minusTriangles[0]) && "First minus triangle is not in the preimage graph.");
 
                 const int rootId = this->componentRoot.at(minusTriangles[0]);
@@ -347,6 +355,20 @@ class PreimageGraph
                     #ifndef NDEBUG
                     if (it == componentRoot.end())
                     {
+                        //this->printByRoot();
+                        //printf("\nMinus triangles: ");
+                        //for (auto x : minusTriangles)
+                        //{
+                            //std::cout << x << " ";
+                        //}
+                        //printf("\n");
+                        //printf("\nPlus triangles: ");
+                        //for (auto x : plusTriangles)
+                        //{
+                            //std::cout << x << " ";
+                        //}
+                        //printf("\n");
+                        //fflush(stdout);
                         throw std::runtime_error("Minus triangle not found in preimage graph.");
                     }
 

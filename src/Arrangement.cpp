@@ -267,7 +267,6 @@ void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
     }
 
     double averageFaceBoundarySize = (double)faceBoundarySizeTotal / (double)innerFaces;
-
     std::cerr << "There is this number of average faces in a boundary " << averageFaceBoundarySize << std::endl;
 
 
@@ -280,9 +279,6 @@ void Arrangement::checkInitialAssumptions(TetMesh &tetMesh)
             std::cerr << "\nA half-edge has the same face as it's twin!!!\n";
         }
     }
-
-
-
 }
 
 

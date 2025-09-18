@@ -14,9 +14,12 @@
 // The halfEdge is in the twin face, it's second is our initial preimage graph
 void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::set<Face_const_handle> &visited, Arrangement &singularArrangement, const bool cachePreimageGraphs)
 {
+
+    //std::cerr << "Processing REGULAR edge-----------------------------------------------------------------------------------------------------!\n";
     PreimageGraph &pg = this->preimageGraphs[initialHalfEdge->face()->data()];
     if (cachePreimageGraphs) { preimageGraphsCached[initialHalfEdge].first = pg; }
 
+    //std::cerr << "Processing REGULAR edge-----------------------------------------------------------------------------------------------------!\n";
     pg.updateComponentsRegular(tetMesh, this->edgeRegionSegments[initialHalfEdge->data()]);
     if (cachePreimageGraphs) { preimageGraphsCached[initialHalfEdge].second = pg; }
 
@@ -25,9 +28,11 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
     {
         Halfedge_const_handle previousHalfEdge = currentHalfEdge->prev();
 
+        //std::cerr << "Processing REGULAR edge-----------------------------------------------------------------------------------------------------!\n";
         pg.updateComponentsRegular(tetMesh, this->vertexRegionSegments[previousHalfEdge->data()]);
         if (cachePreimageGraphs) { preimageGraphsCached[currentHalfEdge].first = pg; }
 
+        //std::cerr << "Processing REGULAR edge-----------------------------------------------------------------------------------------------------!\n";
         pg.updateComponentsRegular(tetMesh, this->edgeRegionSegments[currentHalfEdge->data()]);
         if (cachePreimageGraphs) { preimageGraphsCached[currentHalfEdge].second = pg; }
 
@@ -39,30 +44,25 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
             //std::cout << "Queue Half-edge is [" << currentHalfEdge->twin()->source()->point() << "] -> [" << currentHalfEdge->twin()->target()->point() << "]";
             //printf("\n------------------------------------------------------------------------------------\n");
 
+            const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(currentHalfEdge);
+            const std::array<int, 2> edge = {
+                singularArrangement.arrangementPointIndices.at(segment.source()), 
+                singularArrangement.arrangementPointIndices.at(segment.target())
+            };
 
-
-            //const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(currentHalfEdge);
-            //const std::array<int, 2> edge = {
-                //singularArrangement.arrangementPointIndices.at(segment.source()), 
-                //singularArrangement.arrangementPointIndices.at(segment.target())
-            //};
-
-            //if (tetMesh.edgeSingularTypes.at(edge) == -1)
-            //{
-                //// Seed the first half-edge in the twin
-                //this->preimageGraphs[currentHalfEdge->twin()].first.updateConnectedComponentsEdge2(
-                        //tetMesh, 
-                        //{this->edgeCrossingMinusTriangles[currentHalfEdge]}, 
-                        //{this->edgeCrossingPlusTriangles[currentHalfEdge]}, 
-                        //currentPreimageGraphPair.second
-                        //);
-
-                //traversalQueue.push(currentHalfEdge->twin());
-                //visited.insert(currentHalfEdge->twin()->face());
-
-            //}
-            //else
+            if (tetMesh.edgeSingularTypes.at(edge) == -1)
             {
+                //std::cerr << "Processing pseudo-singular edge-----------------------------------------------------------------------------------------------------!\n";
+                PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->twin()->face()->data()];
+                pg2 = pg;
+                pg2.updateComponentsRegular(tetMesh, {this->edgeCrossingSegments[currentHalfEdge->data()]});
+
+                traversalQueue.push(currentHalfEdge->twin());
+                visited.insert(currentHalfEdge->twin()->face());
+            }
+            else
+            {
+                //std::cerr << "Processing singular edge-----------------------------------------------------------------------------------------------------!\n";
                 // Seed the first half-edge in the twin
 
                 PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->twin()->face()->data()];
@@ -160,13 +160,13 @@ void ReebSpace2::computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &
     // Set up regular segments
     //
     std::vector<Segment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     std::vector<int> regularSegmentsIds;
-    regularSegmentsIds.reserve(singularArrangement.arr.number_of_edges());
+    regularSegmentsIds.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     std::vector<Bbox> regularBoxes; 
-    regularBoxes.reserve(tetMesh.regularEdgesNumber);
+    regularBoxes.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -292,10 +292,10 @@ void ReebSpace2::computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement 
     // Set up regular segments
     //
     std::vector<MySegment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     std::vector<Box> regularBoxes; 
-    regularBoxes.reserve(tetMesh.regularEdgesNumber);
+    regularBoxes.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -687,7 +687,7 @@ void ReebSpace2::computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement
     // @TODO
     // Remaking these is not efficient
     std::vector<MySegment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -1053,10 +1053,10 @@ void ReebSpace2::unitTest(const TetMesh &tetMesh, Arrangement &singularArrangeme
     }
 
     std::vector<MySegment_2> regularSegments;
-    regularSegments.reserve(tetMesh.regularEdgesNumber);
+    regularSegments.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     std::vector<Box> regularBoxes; 
-    regularBoxes.reserve(tetMesh.regularEdgesNumber);
+    regularBoxes.reserve(tetMesh.regularEdgesNumber - tetMesh.pseudoSingularEdgesNumber);
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {

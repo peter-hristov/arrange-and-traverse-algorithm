@@ -102,8 +102,8 @@ int main(int argc, char* argv[])
 
 
     Timer::start();
-    Arrangement singularArrangement;
-    singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
+    Arrangement singularArrangementInitial;
+    singularArrangementInitial.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
     Timer::stop("Singular Arrangement                   :");
 
 
@@ -113,37 +113,47 @@ int main(int argc, char* argv[])
 
 
     Timer::start();
-    singularArrangement.checkInitialAssumptions(tetMesh);
+    singularArrangementInitial.checkInitialAssumptions(tetMesh);
     Timer::stop("Making sure all faces are simple       :");
 
     std::cout << "\n------------------------------------------------------------- A FRESH START.\n";
 
-    std::vector<Segment_2> segments;
-    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
-    {
-        if (type == -1)
-        {
-            segments.push_back(Segment_2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]));
-        }
 
-    }
+    // Add the pseudo-singular edges to the arrangement
+    //
+    //std::vector<Segment_2> pseudoSingularSegments;
+    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    //{
+        //if (type == -1)
+        //{
+            //pseudoSingularSegments.push_back(Segment_2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]));
+        //}
+
+    //}
+
+    //Timer::start();
+    //CGAL::insert(singularArrangement.arr, pseudoSingularSegments.begin(), pseudoSingularSegments.end());
+
+    //std::cout << "We have added " << pseudoSingularSegments.size() << " new segments to the arrangement.\n";
+    //std::cout << "The arrangement size:"
+        //<< "   |V| = " << singularArrangement.arr.number_of_vertices()
+        //<< ",  |E| = " << singularArrangement.arr.number_of_edges()
+        //<< ",  |F| = " << singularArrangement.arr.number_of_faces() << std::endl << std::endl;
+    //Timer::stop("Singular Arrangement 2                 :");
+
+    //tetMesh.pseudoSingularEdgesNumber = pseudoSingularSegments.size();
+
+    //Timer::start();
+    //singularArrangement.checkInitialAssumptions(tetMesh);
+    //Timer::stop("Making sure all faces are simple       :");
+
+
 
     Timer::start();
-    CGAL::insert(singularArrangement.arr, segments.begin(), segments.end());
+    Arrangement singularArrangement;
+    singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
+    Timer::stop("Singular Arrangement                   :");
 
-    std::cout << "We have added " << segments.size() << " new segments to the arrangement.\n";
-    std::cout << "The arrangement size:"
-        << "   |V| = " << singularArrangement.arr.number_of_vertices()
-        << ",  |E| = " << singularArrangement.arr.number_of_edges()
-        << ",  |F| = " << singularArrangement.arr.number_of_faces() << std::endl << std::endl;
-    Timer::stop("Singular Arrangement 2                 :");
-
-    tetMesh.regularEdgesNumber -= segments.size();
-    tetMesh.singularEdgesNumber += segments.size();
-
-    Timer::start();
-    singularArrangement.checkInitialAssumptions(tetMesh);
-    Timer::stop("Making sure all faces are simple       :");
 
     // Before the computation assign indices
     singularArrangement.assignIndices();

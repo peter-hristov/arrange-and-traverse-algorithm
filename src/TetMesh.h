@@ -53,8 +53,9 @@ class TetMesh
     const std::vector<int>& getMinusTriangles(const int &edgeId, const bool &isDirectionLowerToUpper) const;
     const std::vector<int>& getPlusTriangles(const int &edgeId, const bool &isDirectionLowerToUpper) const;
 
-    int singularEdgesNumber;
-    int regularEdgesNumber;
+    int singularEdgesNumber = 0;
+    int pseudoSingularEdgesNumber = 0;
+    int regularEdgesNumber = 0;
 
 
     void computeBoundingBoxes();

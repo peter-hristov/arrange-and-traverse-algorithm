@@ -594,11 +594,19 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
 {
     std::vector<int> parent(this->vertexCoordinatesF.size(), -1);
 
+    printf("\nThe source is              : ");
     std::queue<int> q;
     for (int s : source)
     {
+        printf("%d ", s);
         q.push(s);
         parent[s] = s;
+    }
+
+    printf("\nThe sink is                : ");
+    for (int s : sink)
+    {
+        printf("%d ", s);
     }
 
     int firstFound = -1;
@@ -642,18 +650,21 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
 
     int currentVertexId = firstFound;
 
+    printf("\nThe path is                : ");
     while (parent[currentVertexId] != currentVertexId)
     {
+        printf("%d ", currentVertexId);
         path.push_back(currentVertexId);
         currentVertexId = parent[currentVertexId];
     }
+    printf("%d", currentVertexId);
+
     path.push_back(currentVertexId); // finally push the root
     std::reverse(path.begin(), path.end());
 
 
 
-
-
+    printf("\nAdding the following edges : ");
     for (int i = 0 ; i < path.size() - 1 ; i++)
     {
         int vertexA = path[i];
@@ -666,10 +677,15 @@ std::vector<int> TetMesh::findShortestPath(const std::vector<int> &source, const
 
         if (this->edgeSingularTypes[{vertexA, vertexB}] == 1)
         {
+            printf("[%d, %d] ", vertexA, vertexB);
             this->edgeSingularTypes[{vertexA, vertexB}] = -1;
+            this->pseudoSingularEdgesNumber++;
         }
 
     }
+    printf("\n");
+    printf("\n");
+    printf("\n");
 
     return path;
 }
