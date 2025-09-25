@@ -100,3 +100,13 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 #include <CGAL/centroid.h>
 #include <CGAL/enum.h>
 #include <CGAL/number_utils.h>
+
+
+
+#include <CGAL/Boolean_set_operations_2.h>
+
+typedef CGAL::Polygon_2<K>                           PolygonE_2;
+
+#include <CGAL/Polygon_with_holes_2.h>
+typedef CGAL::Polygon_with_holes_2<K>                PolygonE_with_holes_2;
+typedef CGAL::General_polygon_with_holes_2<PolygonE_2> GeneralPwh;

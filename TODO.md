@@ -1,11 +1,17 @@
 # Optimisation 13.09.2025
+
+Sheet Postprocessing (assemble the faces of a sheet into a polygon)
+Flexible fiber extraction.
+
 Unit Test the Final reeb space
 
 Read VTU and directly downsample myself (will be useful for testing later)
+    Could leave it for later, when it's being applied
 
-Make an array isPseudoSingular
 Optimise memory usage by my tetMesh class
+    Could leave it for later, when it's being applied
 
+Done - Make an array isPseudoSingular
 Done - Debug nested faces
 Done - Optimise the red-blue computation.
     Done - Email Sebastien 

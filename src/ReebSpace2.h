@@ -62,10 +62,14 @@ class ReebSpace2
         // Compute the actual REeb space
         void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::vector<bool> &visited, const bool);
         void traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool);
+        void postprocessSheets(TetMesh &tetMesh, Arrangement &singularArrangement);
+        void postprocessSheets2(TetMesh &tetMesh, Arrangement &singularArrangement);
 
         // 
         // Unit Tests
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         bool unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
         bool areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b);
+
+        void bfs(TetMesh &tetMesh, Arrangement &singularArrangement, Face_const_handle startingFace, int sheetId, std::function<void(Face_const_handle)> callback);
 };

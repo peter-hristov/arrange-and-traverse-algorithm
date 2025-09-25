@@ -104,6 +104,42 @@ int main(int argc, char* argv[])
     tetMesh.computeSingularEdgeTypes();
     Timer::stop("Computing singular edges               :");
 
+    std::vector<int> vertexDegrees(tetMesh.vertexCoordinatesF.size(), 0);
+    std::vector<std::vector<int>> vertexDegreesTypes(tetMesh.vertexCoordinatesF.size());
+
+    for (const auto &[edge, singularType] : tetMesh.edgeSingularTypes)
+    {
+        if (singularType != 1 && singularType != -1)
+        {
+            vertexDegrees[edge[0]]++;
+            vertexDegrees[edge[1]]++;
+            vertexDegreesTypes[edge[0]].push_back(singularType);
+            vertexDegreesTypes[edge[1]].push_back(singularType);
+        }
+    }
+
+    printf("There are %ld vertices in the mesh.\n", tetMesh.vertexCoordinatesF.size());
+
+    for (int i = 0 ; i < vertexDegrees.size() ; i++)
+    {
+        if (vertexDegrees[i] % 2 == 1)
+        {
+            printf("Vetex %d has degree %d\n", i, vertexDegrees[i]);
+
+            printf("The type of the vertex is : ");
+
+            for (const int &singularType : vertexDegreesTypes[i])
+            {
+                printf("%d ", singularType);
+            }
+            printf("\n");
+        }
+
+        //assert(vertexDegrees[i] % 2 == 0);
+    }
+
+    return 0;
+
 
 
     //
@@ -164,6 +200,9 @@ int main(int argc, char* argv[])
     reebSpace2.traverse(tetMesh, singularArrangement, unitTestPreimageGraphs);
     Timer::stop("Computed singular traversal            :");
 
+    Timer::start();
+    reebSpace2.postprocessSheets2(tetMesh, singularArrangement);
+    Timer::stop("Computed sheet postprocessing          :");
 
     int correspondenceGraphSize = 0;
     for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)

@@ -8,8 +8,208 @@
 #include "./ReebSpace2.h"
 #include "./DisjointSet.h"
 #include "./PreimageGraph.h"
-#include "src/CGALTypedefs.h"
+//#include "src/CGALTypedefs.h"
 
+PolygonE_2 face_to_polygon(Arrangement_2::Face_const_handle f)
+{
+    PolygonE_2 poly;
+
+    if (!f->is_unbounded())
+    {
+        // A face can have multiple outer CCBs (connected components of the boundary)
+        auto ccb = f->outer_ccbs_begin();
+        Arrangement_2::Ccb_halfedge_const_circulator curr = *ccb;
+
+        do {
+            poly.push_back(curr->source()->point());
+            ++curr;
+        } while (curr != *ccb);
+    }
+
+    return poly;
+}
+
+
+void ReebSpace2::bfs(TetMesh &tetMesh, Arrangement &singularArrangement, Face_const_handle startingFace, int sheetId, std::function<void(Face_const_handle)> callback)
+{
+    std::queue<Face_const_handle> traversalQueue;
+    std::vector<bool> visited(singularArrangement.arr.number_of_faces(), false);
+
+    traversalQueue.push(startingFace);
+    visited[startingFace->data()] = true;
+
+    while (false == traversalQueue.empty())
+    {
+        Face_const_handle currentFace = traversalQueue.front();
+        traversalQueue.pop();
+
+        auto circ = currentFace->outer_ccb();
+        const auto start = circ;
+        do
+        {
+            Face_const_handle twinFace = circ->twin()->face();
+            const int &twinFaceId = twinFace->data();
+
+            const bool doesTwinFaceHaveSheet = std::ranges::find(this->correspondenceGraph[twinFaceId], sheetId) != this->correspondenceGraph[twinFaceId].end();
+
+            if (false == visited[twinFaceId] && doesTwinFaceHaveSheet)
+            {
+                callback(twinFace);
+                traversalQueue.push(twinFace);
+                visited[twinFaceId] = true;
+            }
+
+            ++circ;
+        } while (circ != start);
+    }
+}
+
+void ReebSpace2::postprocessSheets2(TetMesh &tetMesh, Arrangement &singularArrangement)
+{
+
+    std::vector<PolygonE_2> facePolygons(singularArrangement.arr.number_of_faces());
+
+    for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face)
+    {
+        facePolygons[face->data()] = face_to_polygon(face);
+    }
+
+    //std::vector<PolygonE_with_holes_2> polygonsPerSheet(PreimageGraph::componentCount);
+
+    std::vector<PolygonE_with_holes_2> sheetPolygon(PreimageGraph::componentCount);
+    std::vector<bool> processedSheets(PreimageGraph::componentCount, false);
+
+
+    for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face)
+    {
+        const int &faceId = face->data();
+        const PolygonE_2 &facePolygon = facePolygons[faceId];
+
+        const std::vector<int> &faceSheetIds = this->correspondenceGraph[faceId];
+
+        for (const int &sheetId : faceSheetIds)
+        {
+            //std::cout << "The sheet Id is " << sheetId << " out of " << PreimageGraph::componentCount << std::endl;
+            if (processedSheets[sheetId] == false)
+            {
+                bfs(tetMesh, singularArrangement, face, sheetId,
+                        [&sheetPolygon, &facePolygon, &sheetId](Face_const_handle f) {
+                        //CGAL::join(facePolygon, facePolygon, sheetPolygon[sheetId]);
+                        });
+            }
+            else
+            {
+                processedSheets[sheetId] = true;
+            }
+        }
+    }
+
+    return;
+
+    for (int i = 0 ; i < sheetPolygon.size() ; i++)
+    {
+        const PolygonE_with_holes_2 &pwh = sheetPolygon[i];
+
+        // Outer boundary
+        const PolygonE_2& outer = pwh.outer_boundary();
+
+        std::cout << "Printing polygon " << i << std::endl;
+
+        // Iterate over outer vertices
+        for (auto vit = outer.vertices_begin(); vit != outer.vertices_end(); ++vit) 
+        {
+            std::cout << vit->x() << " " << vit->y() << "\n";
+        }
+
+        // Holes
+        for (auto hit = pwh.holes_begin(); hit != pwh.holes_end(); ++hit) 
+        {
+            const PolygonE_2& hole = *hit;
+            std::cout << "Hole:\n";
+            for (auto vit = hole.vertices_begin(); vit != hole.vertices_end(); ++vit) 
+            {
+                std::cout << vit->x() << " " << vit->y() << "\n";
+            }
+        }
+
+    }
+
+
+
+
+}
+
+void ReebSpace2::postprocessSheets(TetMesh &tetMesh, Arrangement &singularArrangement)
+{
+    // 1. Find the boundary faces of each sheet
+    std::vector<std::set<int>> sheetBoundaryFaces(PreimageGraph::componentCount);
+
+    std::vector<std::set<int>> correspondenceGraphSet(singularArrangement.arr.number_of_faces());
+    for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face)
+    {
+        const int &faceId = face->data();
+        correspondenceGraphSet[face->data()] = std::set(this->correspondenceGraph[faceId].begin(), this->correspondenceGraph[faceId].end());
+    }
+
+    for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face)
+    {
+        if (face->is_unbounded())
+        {
+            continue;
+        }
+
+        const int &faceId = face->data();
+        const std::set<int> &faceSheets = correspondenceGraphSet[faceId];
+
+        std::set<int> boundarySheets;
+
+        auto circ = face->outer_ccb();
+        const auto start = circ;
+        do
+        {
+            const int &twinFaceId = circ->twin()->face()->data();
+            const std::set<int> &twinFaceSheets = correspondenceGraphSet[twinFaceId];
+
+            // If a sheet is in the face, but not in the twin, then it must be on the boundary
+            // Otherwise all neighbouring faces will also have that sheet
+            std::set_difference(
+                    faceSheets.begin(), faceSheets.end(),
+                    twinFaceSheets.begin(), twinFaceSheets.end(),
+                    std::inserter(boundarySheets, boundarySheets.begin()));
+
+            ++circ;
+        } while (circ != start);
+
+        for (const int &sheetId : boundarySheets)
+        {
+            sheetBoundaryFaces[sheetId].insert(faceId);
+        }
+    }
+
+
+    // Count all faces per sheet
+    std::vector<std::set<int>> sheetFaces(PreimageGraph::componentCount);
+    for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face)
+    {
+        if (face->is_unbounded())
+        {
+            continue;
+        }
+
+        const int &faceId = face->data();
+        const std::set<int> &faceSheets = correspondenceGraphSet[faceId];
+
+        for (const int &sheetId : faceSheets)
+        {
+            sheetFaces[sheetId].insert(faceId);
+        }
+    }
+
+    //for (int i = 0 ; i < PreimageGraph::componentCount ; i++)
+    //{
+        //printf("Sheet with ID %d has %ld faces and %ld boundary faces.\n", i, sheetFaces[i].size(), sheetBoundaryFaces[i].size());
+    //}
+}
  
 void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::vector<bool> &visited, const bool cachePreimageGraphs)
 {
