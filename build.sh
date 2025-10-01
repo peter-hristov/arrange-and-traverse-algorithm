@@ -1,26 +1,48 @@
-# Outdated
+#!/bin/bash
 
+# Build dependencies
+projectFolder="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "The current folder is $projectFolder"
 
-# Store the project directory
-DIRECTORY=$(cd `dirname $0` && pwd)
+rm -rf $projectFolder/librarires
+mkdir $projectFolder/librarires
 
-# Add submodules
-cd $DIRECTORY
-git submodule update --init --recursive
+# VTK 
+echo "Building VTK"
 
-# Make netcdf build and install directories
-cd $DIRECTORY/external/build
-rm -rf netcdf-c
-mkdir -p netcdf-c/build netcdf/install
+cd $projectFolder/librarires
+git clone --recursive https://gitlab.kitware.com/vtk/vtk.git VTK-9.4.1
+cd ./VTK-9.4.1
+git checkout v9.4.1 
 
-# Build and install netcdf
-cd $DIRECTORY/external/build/netcdf-c/build
-cmake -D CMAKE_INSTALL_PREFIX="$DIRECTORY/external/build/netcdf-c/install" "$DIRECTORY/external/netcdf-c"
-make
+mkdir build install
+cd build
+
+cmake -DCMAKE_INSTALL_PREFIX="$projectFolder/librarires/VTK-9.4.1/install" -DCMAKE_BUILD_TYPE="Release" ..
+make -j 4
+make install
+    
+
+## CGAL
+echo "CGAL"
+
+cd $projectFolder/librarires
+git clone --recursive https://github.com/CGAL/cgal cgal
+cd ./cgal
+git checkout v6.0.1 
+
+mkdir build install
+cd build
+
+cmake -DCMAKE_INSTALL_PREFIX="$projectFolder/librarires/cgal/install" -DCMAKE_BUILD_TYPE="Release" ..
+make -j 4
 make install
 
-## Build tv9k
-cd $DIRECTORY/build
-rm -rf *
-cmake -D CMAKE_PREFIX_PATH="$DIRECTORY/external/build/netcdf-c/install" ..
-make
+# Build application
+echo "Reeb Space Project"
+
+cd $projectFolder
+cd build
+
+cmake -DCMAKE_PREFIX_PATH="$projectFolder/librarires/cgal/install;$projectFolder/librarires/VTK-9.4.1/install" -DCMAKE_BUILD_TYPE="Release" ..
+make -j 4
