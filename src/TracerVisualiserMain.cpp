@@ -111,20 +111,25 @@ int main(int argc, char* argv[])
     //
 
     Timer::start();
-    Arrangement singularArrangementInitial;
-    singularArrangementInitial.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
+    Arrangement singularArrangement;
+    singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
     Timer::stop("Initial Singular Arrangement           :");
 
     // The initial computation may have nested faces, we need to connect them
     Timer::start();
-    singularArrangementInitial.connectNestedFaces(tetMesh);
+    singularArrangement.connectNestedFaces(tetMesh);
     Timer::stop("Making sure all faces are simple       :");
 
-    // Recompute the arrangement with enough new segments to avoid connect all nested faces
-    Timer::start();
-    Arrangement singularArrangement;
-    singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
-    Timer::stop("Singular Arrangement                   :");
+    // Recompute arrangement if needed
+    if (tetMesh.pseudoSingularEdgesNumber > 0)
+    {
+        singularArrangement = Arrangement();
+
+        // Recompute the arrangement with enough new segments to avoid connect all nested faces
+        Timer::start();
+        singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
+        Timer::stop("Singular Arrangement                   :");
+    }
 
     Timer::start();
     singularArrangement.assignIndices();
