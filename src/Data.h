@@ -1,24 +1,11 @@
 #pragma once
 
-#include <GL/gl.h>
-#include <unordered_map>
-#ifdef __APPLE__
-#include <OpenGL/glu.h>
-#include <OpenGL/gl.h>
-#else
-#include <GL/glu.h>
-#include <GL/gl.h>
-#endif
-
 #include <cassert>
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <qpoint.h>
-#include <qvector.h>
 
 #include "./FiberPoint.h"
 #include "./TetMesh.h"

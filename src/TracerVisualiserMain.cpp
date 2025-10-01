@@ -4,18 +4,15 @@
 #include <filesystem>
 #include <fstream>
 
-#include <GL/glut.h>
-#include <QApplication>
-
 #include "./io.h"
 #include "./Timer.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
 #include "./Data.h"
 #include "./Arrangement.h"
-#include "./utility/CLI11.hpp"
-#include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
+
+#include "./utility/CLI11.hpp"
 
 
 using namespace std;
@@ -248,30 +245,6 @@ int main(int argc, char* argv[])
             return 1;
         }
     }
-
-
-    // Set up QT Application
-    QApplication app(argc, argv);
-    glutInit(&argc, argv);
-
-    // Package all my data for visualisation
-    Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
-
-    // Create the widget
-    TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);
-    window->setWindowTitle("Fiber Visualiser");
-
-    // Make the window full screen by default
-    window->showMaximized();
-
-    // Show the label
-    window->show();
-
-    // start it running
-    app.exec();
-
-    // clean up
-    delete window;
 
     // return to caller
     return 0;
