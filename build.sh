@@ -46,3 +46,7 @@ cd build
 
 cmake -DCMAKE_PREFIX_PATH="$projectFolder/librarires/cgal/install;$projectFolder/librarires/VTK-9.4.1/install" -DCMAKE_BUILD_TYPE="Release" ..
 make -j 4
+
+
+# Try this on HPC Tetralight
+#cmake -DCMAKE_PREFIX_PATH="/proj/reeb-space-storage/users/x_pethr/librarires/cgal-6.0.1/install;/proj/reeb-space-storage/users/x_pethr/librarires/vtk-9.4.1/install;/proj/reeb-space-storage/users/x_pethr/librarires/boost_1_88_0/install" -DCMAKE_BUILD_TYPE="Release" ..
