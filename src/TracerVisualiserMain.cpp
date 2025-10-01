@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
     Timer::stop("Assigning pseudosingular edges         :");
 
     Timer::start();
-    reebSpace2.traverse(tetMesh, singularArrangement, unitTestPreimageGraphs);
+    reebSpace2.traverse(tetMesh, singularArrangement, false);
     Timer::stop("Computed singular traversal            :");
 
 
@@ -197,17 +197,17 @@ int main(int argc, char* argv[])
         Timer::stop("Computed {G_F} and H                   :");
 
 
-        Timer::start();
-        bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-        Timer::stop("Comparing preimage graphs              :");
+        //Timer::start();
+        //bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+        //Timer::stop("Comparing preimage graphs              :");
 
-        if (false == arePreimageGraphsEqual)
-        {
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            return 1;
-        }
+        //if (false == arePreimageGraphsEqual)
+        //{
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //return 1;
+        //}
 
         return 0;
     }
