@@ -8,7 +8,7 @@
 #include "./ReebSpace2.h"
 #include "./DisjointSet.h"
 #include "./PreimageGraph.h"
-#include "src/CGALTypedefs.h"
+#include "./LoadingBar.hpp"
 
  
 void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::vector<bool> &visited, const bool cachePreimageGraphs)
@@ -82,6 +82,11 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
     // Make sure the outer face is visited as well, no need to go back
     visited[startingHalfedge->face()->data()] = true;
 
+
+    LoadingBar bar(40, "Computing Reeb space (SAT)...");
+    int computedFaces = 1; // outside face has already been processed
+    const int totalFaces = singularArrangement.arr.number_of_faces();
+
     while (false == traversalQueue.empty())
     {
         Halfedge_const_handle currentHalfEdge = traversalQueue.front();
@@ -89,6 +94,10 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
         correspondenceGraph[currentHalfEdge->face()->data()] = this->preimageGraphs[currentHalfEdge->face()->data()].getUniqueComponents();
         loopFace(tetMesh, currentHalfEdge, traversalQueue, visited,  cachePreimageGraphs);
+
+        computedFaces++;
+        //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
+        bar.update((100 * computedFaces) / totalFaces);
     }
 }
 
