@@ -339,7 +339,7 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
 
         // Dispose of the preimage graph we will no longer need it
-        //this->preimageGraphs[currentFaceID].clear();
+        this->preimageGraphs[currentFaceID].clear();
         //graphsInMemory--;
     }
 
