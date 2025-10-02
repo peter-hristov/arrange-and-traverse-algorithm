@@ -7,8 +7,6 @@
 #include <mutex>
 #include <string>
 
-#include "./utility/indicators.hpp"
-
 class Timer {
 public:
     static void start() {
@@ -34,25 +32,6 @@ public:
               //<< message << ": "
               //<< std::setw(3) << elapsed.count() << " s"
               //<< " (" << std::setw(4) << getCurrentRSS() << " MB)\n";
-    }
-
-    static std::unique_ptr<indicators::ProgressBar> getLoadingBar()
-    {
-        using namespace indicators;
-
-        auto bar = std::make_unique<ProgressBar>(
-                option::BarWidth{50},
-                option::Start{"["},
-                option::Fill{"■"},
-                option::Lead{"■"},
-                option::Remainder{"-"},
-                option::End{" ]"},
-                option::PostfixText{"Computing Reeb space."},
-                option::ShowPercentage{true},
-                option::ShowElapsedTime{true}
-                );
-
-        return bar;
     }
 
 private:

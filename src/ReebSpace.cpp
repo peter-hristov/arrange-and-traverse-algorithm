@@ -9,6 +9,8 @@
 #include <unordered_map>
 
 #include "./Timer.h"
+#include "./LoadingBar.hpp"
+
 #include "./DisjointSet.h"
 #include "./ReebSpace.h"
 
@@ -273,10 +275,12 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         this->fiberSeeds.resize(arrangement.arrangementFacesIdices.size());
     }
 
-    auto bar = Timer::getLoadingBar();
+    LoadingBar bar(40, "Computing Reeb space (AT)...");
     int graphsInMemory = 0;
     float averageAraphsInMemory = 0;
-    int barTickThreshold = arrangement.arrangementFacesIdices.size() / 50;
+
+    int computedFaces = 1; // outside face has already been processed
+    const int totalFaces = arrangement.arr.number_of_faces();
 
     while (false == traversalQueue.empty())
     {
@@ -327,14 +331,12 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
 
         } while (currentHalfedge != startingHalfedge);
 
-        averageAraphsInMemory = averageAraphsInMemory + ((float)graphsInMemory - (float)averageAraphsInMemory) / (float)orderIndex;
+        //averageAraphsInMemory = averageAraphsInMemory + ((float)graphsInMemory - (float)averageAraphsInMemory) / (float)orderIndex;
 
-        // Update the loading bar
-        if (barTickThreshold > 0 && order[currentFaceID] % barTickThreshold == 0)
-        {
-            if (false == bar->is_completed()) {  bar->tick(); }
-            if (false == bar->is_completed()) {  bar->tick(); }
-        }
+
+        computedFaces++;
+        bar.update((100 * computedFaces) / totalFaces);
+        //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
 
         // Dispose of the preimage graph we will no longer need it
         //this->preimageGraphs[currentFaceID].clear();
@@ -343,8 +345,7 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
 
     this->correspondenceGraph.finalise();
 
-    bar->set_progress(100); // all done
-    printf("\n\nThere is an average of %f / %ld active preimage graphs.\n", averageAraphsInMemory, this->preimageGraphs.size());
+    //printf("\n\nThere is an average of %f / %ld active preimage graphs.\n", averageAraphsInMemory, this->preimageGraphs.size());
     printf("The correspondence graphs has %ld vertices and the Reeb space has %ld sheets.\n\n", this->correspondenceGraph.data.size(), this->correspondenceGraph.getComponentRepresentatives().size());
 }
 
