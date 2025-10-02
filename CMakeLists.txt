@@ -3,9 +3,6 @@ cmake_minimum_required(VERSION 3.18)
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Instruct CMake to run moc automatically when needed
-set(CMAKE_AUTOMOC ON)
-
 set(PROJECT_NAME fv99)
 
 project(${PROJECT_NAME})
