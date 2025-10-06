@@ -3,7 +3,6 @@
 #include <vtkSmartPointer.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
-#include <vtkPoints.h>
 #include <vtkCell.h>
 #include <vtkDataArray.h>
 #include <vtkPointData.h>
@@ -21,6 +20,15 @@
 #include <vtkPolyLine.h>
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
+
+//#include <vtkPolygon.h>
+#include <vtkIntArray.h>
+#include <vtkCellData.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkTriangleFilter.h>
+
+
+
 
 
 #include <vtkXMLPolyDataWriter.h>
@@ -216,51 +224,133 @@ TetMesh io::readDataTxt(const std::string &filename)
 }
 
 
+void io::saveSheets2(const TetMesh &tetMesh,
+                        const Arrangement &arrangement,
+                        const ReebSpace2 &reebSpace,
+                        const std::string &outputSheetPolygonsFilename)
+{
+    auto points = vtkSmartPointer<vtkPoints>::New();
+    auto polys = vtkSmartPointer<vtkCellArray>::New();
+    auto sheetIds = vtkSmartPointer<vtkIntArray>::New();
+    auto faceIds = vtkSmartPointer<vtkIntArray>::New();
+
+    sheetIds->SetName("SheetId");
+    faceIds->SetName("FaceId");
+
+
+    std::map<Vertex_const_handle, int> vertexIdMap;
+
+    for (auto v = arrangement.arr.vertices_begin(); v != arrangement.arr.vertices_end(); ++v)
+    {
+        const Point_2 &p = v->point();
+        vtkIdType id = points->InsertNextPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y()), 0.0);
+
+        vertexIdMap[v] = vertexIdMap.size();
+    }
+
+
+    std::cout << "---------------------------------------- Outputting sheets\n";
+
+    for (auto fit = arrangement.arr.faces_begin(); fit != arrangement.arr.faces_end(); ++fit)
+    {
+        if (fit->is_unbounded())
+            continue;
+
+        const int faceId = fit->data();
+
+        std::vector<vtkIdType> ptIds;
+
+        auto circ = fit->outer_ccb();
+        auto start = circ;
+        do
+        {
+            const int pointId = vertexIdMap.at(circ->target());
+            ptIds.push_back(pointId);
+            ++circ;
+        } while (circ != start);
+
+        for (const int &sheetId : reebSpace.correspondenceGraph[faceId])
+        {
+            // Insert the polygon directly into vtkCellArray
+            polys->InsertNextCell(ptIds.size(), ptIds.data());
+            sheetIds->InsertNextValue(sheetId);
+            faceIds->InsertNextValue(faceId);
+        }
+    }
+
+    // Create polydata
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetPolys(polys);
+    polyData->GetCellData()->AddArray(sheetIds);
+    polyData->GetCellData()->AddArray(faceIds);
+
+    // --- Triangulate polygons --- // very important, otherwise paraview will triangulate and can sometimes fill in missing polygons
+    auto triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
+    triangleFilter->SetInputData(polyData);
+    triangleFilter->Update();
+    auto triangulatedPolyData = triangleFilter->GetOutput();
+
+    // Write triangulated polydata
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(outputSheetPolygonsFilename.c_str());
+    writer->SetInputData(triangulatedPolyData);
+    writer->SetDataModeToAscii(); // optional for debugging
+    writer->Write();
+
+    std::cout << "Saved " << polys->GetNumberOfCells() 
+        << " polygons to " << outputSheetPolygonsFilename << std::endl;
+}
 
 void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename)
 {
-    // Save all the polygons
-    std::filesystem::path filePathOutput(outputSheetPolygonsFilename);
+    auto points = vtkSmartPointer<vtkPoints>::New();
+    auto polys = vtkSmartPointer<vtkCellArray>::New();
+    auto sheetIds = vtkSmartPointer<vtkIntArray>::New();
 
-    // Write to the file
-    std::ofstream outFile(filePathOutput);
-    if (!outFile) 
-    {
-        throw std::runtime_error("Error: Could not open file for writing: " + filePathOutput.string());
-    }
+    sheetIds->SetName("SheetId");
 
-    outFile << reebSpace.sheetPolygon.size() << std::endl;
 
     for (const auto &[sheetId, polygon] : reebSpace.sheetPolygon)
     {
-        outFile << "SheetId = " << sheetId << std::endl;
+        std::vector<vtkIdType> ptIds;
 
-        // Compute the controid so that we can pull all verties towards it
-        CartesianPoint centroid = CGAL::centroid(polygon.vertices_begin(), polygon.vertices_end());
-
-        outFile << "[";
         for (int i = 0 ; i < polygon.size() ; i++)
         {
             const CartesianPoint &point = polygon[i];
             double u = point.x();
             double v = point.y();
 
-            // Interpolate closer to the centroid
-            const double alpha = 0.5;
-            u = (1 - alpha) * u + alpha * centroid.x();
-            v = (1 - alpha) * v + alpha * centroid.y();
-
-            outFile << u << ", " << v << ", " << 0;
-            if (i < polygon.size() - 1)
-            {
-                outFile << ", ";
-
-            }
+            vtkIdType id = points->InsertNextPoint(u, v, 0.0);
+            ptIds.push_back(id);
         }
-        outFile << "]" << std::endl;
+
+        polys->InsertNextCell(ptIds.size(), ptIds.data());
+        sheetIds->InsertNextValue(reebSpace.sheetConsequitiveIndices.at(sheetId));
     }
 
-    outFile.close();
+    // Create polydata
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetPolys(polys);
+    polyData->GetCellData()->AddArray(sheetIds);
+
+    // --- Triangulate polygons --- // very important, otherwise paraview will triangulate and can sometimes fill in missing polygons
+    auto triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
+    triangleFilter->SetInputData(polyData);
+    triangleFilter->Update();
+    auto triangulatedPolyData = triangleFilter->GetOutput();
+
+    // Write triangulated polydata
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(outputSheetPolygonsFilename.c_str());
+    writer->SetInputData(triangulatedPolyData);
+    writer->SetDataModeToAscii(); // optional for debugging
+    writer->Write();
+
+    std::cout << "Saved " << polys->GetNumberOfCells() 
+        << " polygons to " << outputSheetPolygonsFilename << std::endl;
+
 }
 
 

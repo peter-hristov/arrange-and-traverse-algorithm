@@ -169,14 +169,15 @@ int main(int argc, char* argv[])
     reebSpace2.traverse(tetMesh, singularArrangement, unitTestPreimageGraphs);
     Timer::stop("Computed singular traversal            :");
 
+    Timer::start();
+    //reebSpace2.computeSheets(singularArrangement);
+    Timer::stop("Postprocessing                         :");
 
     int correspondenceGraphSize = 0;
     for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
     {
         correspondenceGraphSize += correspondenceGraph.size();
     }
-
-    std::cout << "The size of the corresponde graph is " << correspondenceGraphSize << std::endl;
 
 
     // This is the old computation, keep these empty unless we want to unit test
@@ -191,7 +192,7 @@ int main(int argc, char* argv[])
         Timer::stop("Arrangement                            :");
 
         Timer::start();
-        //arrangement.computePointLocationDataStructure();
+        arrangement.computePointLocationDataStructure();
         Timer::stop("Arrangement search structure           :");
 
 
@@ -212,15 +213,20 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        return 0;
+        std::cout << "Postprocessing..." << std::endl;
+        Timer::start();
+        reebSpace.computeSheetGeometry(tetMesh, arrangement);
+        reebSpace.computeSheetArea(tetMesh, arrangement);
+        reebSpace.printTopSheets(tetMesh, arrangement, 20);
+        Timer::stop("Computed RS(f) Postprocess             :");
+
+        //return 0;
     }
 
-    //std::cout << "Postprocessing..." << std::endl;
-    //Timer::start();
-    ////reebSpace.computeSheetGeometry(tetMesh, arrangement);
-    ////reebSpace.computeSheetArea(tetMesh, arrangement);
-    ////reebSpace.printTopSheets(tetMesh, arrangement, 20);
-    //Timer::stop("Computed RS(f) Postprocess             :");
+    std::cout << "The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
+    std::cout << "The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
+
+    return 0;
 
     if (performanceRun == true)
     {
@@ -231,7 +237,8 @@ int main(int argc, char* argv[])
     {
         try
         {
-            io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename);
+            io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtm");
+            io::saveSheets2(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename);
         }
         catch (const std::exception &e)
         {

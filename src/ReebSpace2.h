@@ -8,6 +8,7 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./PreimageGraph.h"
+#include "src/DisjointSet.h"
 
 class ReebSpace2
 {
@@ -23,12 +24,18 @@ class ReebSpace2
         std::vector<std::vector<std::pair<int, bool>>> vertexRegionSegments;
         std::vector<std::vector<std::pair<int, bool>>> edgeRegionSegments;
 
+        std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
+
         std::vector<bool> isHalfEdgePseudoSingular;
 
+        int numberOfSheets;
+
         //
-        // Preimage graphs and correspondence graph
+        // For a face, which sheets does it have
         std::vector<std::vector<int>> correspondenceGraph;
         std::vector<PreimageGraph> preimageGraphs;
+
+        DisjointSet<int> correspondenceGraphDS;
 
         //std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
         //std::map<Face_const_handle, PreimageGraph> preimageGraphs;
@@ -68,4 +75,6 @@ class ReebSpace2
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         bool unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
         bool areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b);
+
+        void computeSheets(Arrangement &singularArrangement);
 };

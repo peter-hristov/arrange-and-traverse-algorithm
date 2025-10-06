@@ -15,9 +15,17 @@
 class PreimageGraph
 {
     public:
-        std::unordered_map<int, int> componentRoot;
-        std::unordered_set<int> uniqueComponentIds;
 
+        // Which triangles belong to which root
+        std::unordered_map<int, int> componentRoot;
+
+        // For each component save a representatives so that we can do correspondence
+        std::unordered_map<int, int> componentRepresentative;
+
+        // All the unique components in this preimage graphs (effectively the unique values in componentRoot)
+        //std::unordered_set<int> uniqueComponentIds;
+
+        // The number of components found so far
         inline static int componentCount = 0; // declaration inside class
 
         PreimageGraph() { }
@@ -30,7 +38,8 @@ class PreimageGraph
         void clear()
         {
             this->componentRoot  = std::unordered_map<int, int>();
-            this->uniqueComponentIds  = std::unordered_set<int>();
+            this->componentRepresentative  = std::unordered_map<int, int>();
+            //this->uniqueComponentIds  = std::unordered_set<int>();
         }
 
         bool areEqual(PreimageGraph &p)
@@ -127,29 +136,38 @@ class PreimageGraph
 
         std::vector<int> getUniqueComponents()
         {
-            return std::vector<int>(this->uniqueComponentIds.begin(), this->uniqueComponentIds.end());
+            //return std::vector<int>(this->uniqueComponentIds.begin(), this->uniqueComponentIds.end());
+            std::vector<int> keys;
+            keys.reserve(componentRepresentative.size());  // optional, avoids reallocations
+
+            for (const auto &pair : componentRepresentative)
+            {
+                keys.push_back(pair.first);
+            }
+
+            return keys;
         }
 
         void unitTestGetUniqueComponents()
         {
-            std::set<int> componentIdsA;
+            //std::set<int> componentIdsA;
 
-            for (const auto &[triangleId, componentId] : this->componentRoot)
-            {
-                componentIdsA.insert(componentId);
-            }
+            //for (const auto &[triangleId, componentId] : this->componentRoot)
+            //{
+                //componentIdsA.insert(componentId);
+            //}
 
-            std::set<int> componentIdsB;
-            for (const auto &componentId : this->uniqueComponentIds)
-            {
-                componentIdsB.insert(componentId);
+            //std::set<int> componentIdsB;
+            //for (const auto &componentId : this->uniqueComponentIds)
+            //{
+                //componentIdsB.insert(componentId);
 
-            }
+            //}
 
-            if (componentIdsA != componentIdsB)
-            {
-                throw std::runtime_error( "Unique componentIds not computed correctly.");
-            }
+            //if (componentIdsA != componentIdsB)
+            //{
+                //throw std::runtime_error( "Unique componentIds not computed correctly.");
+            //}
         }
 
         std::unordered_map<int, std::set<int>> groupComponents()
@@ -219,8 +237,10 @@ class PreimageGraph
             // All new components will have this as their root
             this->componentRoot[root] = componentId;
 
+            this->componentRepresentative[componentId] = root;
+
             // This is a new component now
-            this->uniqueComponentIds.insert(componentId);
+            //this->uniqueComponentIds.insert(componentId);
 
             //std::cout << "\nConnected component with root " << componentId << "...\n";
             //std::cerr << "\nComponent FAST INSIDE: ";
@@ -278,6 +298,7 @@ class PreimageGraph
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
 
+
             for (auto &triangleId : minusTriangles)
             {
                 auto it = componentRoot.find(triangleId);
@@ -288,10 +309,13 @@ class PreimageGraph
                 }
 
                 // This connected component will no longer exist
-                uniqueComponentIds.erase(it->second);
+                //this->uniqueComponentIds.erase(it->second);
+
+                // This component is over, no need to keep its representative
+                this->componentRepresentative.erase(it->second);
 
                 // Remove it from the list
-                componentRoot.erase(it);
+                this->componentRoot.erase(it);
             }
 
             // Add the plus triangles with a sentinel value
@@ -310,6 +334,33 @@ class PreimageGraph
                     this->bfsSearch(triangleId, visited, tetMesh);
                 }
             }
+        }
+
+        std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &pg2)
+        {
+            const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
+            const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
+
+            std::unordered_set<int> affectedComponents;
+
+            // These are all affected components, all other have a 1-1 correspondence
+            for (const int &triangle : minusTriangles)
+            {
+                affectedComponents.insert(this->componentRoot.at(triangle));
+            }
+
+            std::vector<std::pair<int, int>> componentCorrespondence;
+
+            for (const auto &[componentId, representativeTriangleId] : this->componentRepresentative)
+            {
+                // If this component is not affected
+                if (false == affectedComponents.contains(componentId))
+                {
+                    componentCorrespondence.push_back({componentId, pg2.componentRoot.at(representativeTriangleId)});
+                }
+            }
+
+            return componentCorrespondence;
         }
 
         void updateComponentsRegular(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges)
@@ -346,7 +397,7 @@ class PreimageGraph
 
                 assert(this->componentRoot.contains(minusTriangles[0]) && "First minus triangle is not in the preimage graph.");
 
-                const int rootId = this->componentRoot.at(minusTriangles[0]);
+                const int componentId = this->componentRoot.at(minusTriangles[0]);
 
                 for (auto &triangleId : minusTriangles)
                 {
@@ -372,7 +423,7 @@ class PreimageGraph
                         throw std::runtime_error("Minus triangle not found in preimage graph.");
                     }
 
-                    if (it->second != rootId)
+                    if (it->second != componentId)
                     {
                         throw std::runtime_error( "Not all triangles are removed from the same root!");
                     }
@@ -382,12 +433,18 @@ class PreimageGraph
 
                 }
 
+                // Make sure the component representative is a triangle in the preimage graph (in case we deleted it with minus triangles)
+                this->componentRepresentative[componentId] = plusTriangles[0];
+
                 //std::cout << "Here are the plus triangles : \n";
                 for (auto &triangleId : plusTriangles)
                 {
                     assert(false == this->componentRoot.contains(triangleId) && "Plus triangle is already in the preimage graph.");
-                    this->componentRoot[triangleId] = rootId;
+                    this->componentRoot[triangleId] = componentId;
                 }
             }
         }
+
+
+            
 };
