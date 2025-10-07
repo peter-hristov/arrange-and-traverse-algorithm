@@ -417,27 +417,26 @@ class PreimageGraph
             }
         }
 
-        std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &pg2)
+        const std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &pg2) const
         {
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
 
             std::unordered_set<int> affectedComponents;
 
-            printf("Affected roots...");
+            //printf("Affected roots...");
             // These are all affected components, all other have a 1-1 correspondence
             for (const int &triangle : minusTriangles)
             {
                 affectedComponents.insert(this->componentRoot.at(triangle));
-                printf("%d ", this->componentRoot.at(triangle));
+                //printf("%d ", this->componentRoot.at(triangle));
             }
 
 
-            printf("\n\nOur preimage graph...\n");
-            this->printByRoot();
-            printf("\nTheir preimage graph...\n");
-            pg2.printByRoot();
-            printf("\n\n");
+            //printf("\n\nOur preimage graph...\n");
+            //this->printByRoot();
+            //printf("\nTheir preimage graph...\n");
+            //pg2.printByRoot();
 
             std::vector<std::pair<int, int>> componentCorrespondence;
 
@@ -446,9 +445,12 @@ class PreimageGraph
                 // If this component is not affected
                 if (false == affectedComponents.contains(componentId))
                 {
-                    //componentCorrespondence.push_back({componentId, pg2.componentRoot.at(representativeTriangleId)});
+                    //printf("FOUND CORRESPONDENCE - Component %d corresponds to component %d\n", componentId, pg2.componentRoot.at(representativeTriangleId));
+                    componentCorrespondence.push_back({componentId, pg2.componentRoot.at(representativeTriangleId)});
                 }
             }
+
+            //printf("\n\n");
 
             return componentCorrespondence;
         }

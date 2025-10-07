@@ -200,6 +200,16 @@ int main(int argc, char* argv[])
         reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
         Timer::stop("Computed {G_F} and H                   :");
 
+        if (reebSpace2.numberOfSheets != reebSpace.correspondenceGraph.getComponentRepresentatives().size())
+        {
+            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            std::cerr << "--------------------------------- NUMBER OF SHEETS IS NOT EQUAL!!!-----------------------------------------------\n";
+            std::cerr << "---------------------The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
+            std::cerr << "---------------------The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
+            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            return 1;
+        }
+
 
         Timer::start();
         bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
@@ -213,6 +223,7 @@ int main(int argc, char* argv[])
             return 1;
         }
 
+
         std::cout << "Postprocessing..." << std::endl;
         Timer::start();
         reebSpace.computeSheetGeometry(tetMesh, arrangement);
@@ -220,11 +231,12 @@ int main(int argc, char* argv[])
         reebSpace.printTopSheets(tetMesh, arrangement, 20);
         Timer::stop("Computed RS(f) Postprocess             :");
 
+        std::cout << "The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
+        std::cout << "The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
+
         return 0;
     }
 
-    std::cout << "The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
-    std::cout << "The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
 
     //return 0;
 
