@@ -354,8 +354,9 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 order[currentHalfEdge->twin()->face()->data()] = ++(this->orderIndex);
             }
 
+            // @TODO should be else if, optimise
             // Compute correspondence
-            else if (order[faceId] < order[twinFaceId])
+            if (order[faceId] < order[twinFaceId])
             {
                 const PreimageGraph &pgFace = this->preimageGraphsAll[currentHalfEdge->data()].second;
                 const PreimageGraph &pgTwinFace = this->preimageGraphsAll[currentHalfEdge->twin()->data()].first;
@@ -375,8 +376,11 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
             // We no longer need the preimage graphs, we can clear them
             if (false == cachePreimageGraphs)
             {
-                this->preimageGraphsAll[initialHalfEdge->data()].first = PreimageGraph();
-                this->preimageGraphsAll[initialHalfEdge->data()].second = PreimageGraph();
+                this->preimageGraphsAll[currentHalfEdge->data()].first = PreimageGraph();
+                this->preimageGraphsAll[currentHalfEdge->data()].second = PreimageGraph();
+
+                //this->preimageGraphsAll[currentHalfEdge->data()].first.clear();
+                //this->preimageGraphsAll[currentHalfEdge->data()].second.clear();
             }
 
             currentHalfEdge = currentHalfEdge->next();
@@ -386,7 +390,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
         computedFaces++;
         //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
-        bar.update((100 * computedFaces) / totalFaces);
+        //bar.update((100 * computedFaces) / totalFaces);
     }
 
     //printf("\n\n\n\nPrinting all preimage graphs.\n\n\n\n");

@@ -116,14 +116,23 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         //for (const int componentId : componentIds)
         for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
         {
-            polygonsPerSheet[componentId].push_back(qPolygon);
+            polygonsPerSheet[data.reebSpace2.correspondenceGraphDS.findElement(componentId)].push_back(qPolygon);
         }
     }
+
+    vector<bool> componentDrawn(data.reebSpace2.numberOfSheets, false);
 
     // Draw the polygons for each sheet
     for (int componentId = 0 ; componentId < PreimageGraph::componentCount ; componentId++)
     {
-        for (const auto &qPolygon : polygonsPerSheet[componentId])
+        const int sheetId = data.reebSpace2.correspondenceGraphDS.findElement(componentId);
+
+        if (componentDrawn[sheetId])
+        {
+            continue;
+        }
+
+        for (const auto &qPolygon : polygonsPerSheet[sheetId])
         {
             const array<float, 3> colorF = fiber::fiberColours[componentId % fiber::fiberColours.size()];
 
@@ -314,6 +323,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         //}
         //else if (type == 1)
         //{
+            //continue;
             ////p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
             //p.setPen(QPen(Qt::black, 5.0, Qt::SolidLine));
         //}
@@ -343,7 +353,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
     //}
 
 
-    //// Draw all singular vertices
+    // Draw all singular vertices
     //for (auto vit = data.singularArrangement.arr.vertices_begin(); vit != data.singularArrangement.arr.vertices_end(); ++vit) 
     //{
         //const float u = CGAL::to_double(vit->point().x());

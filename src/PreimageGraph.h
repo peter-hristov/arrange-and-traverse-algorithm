@@ -432,13 +432,33 @@ class PreimageGraph
                 //printf("%d ", this->componentRoot.at(triangle));
             }
 
+            //printf("Affected roots twin...");
+            std::unordered_set<int> twinAffectedComponents;
+            for (const int &triangle : plusTriangles)
+            {
+                twinAffectedComponents.insert(pg2.componentRoot.at(triangle));
+                //printf("%d ", pg2.componentRoot.at(triangle));
+            }
+
 
             //printf("\n\nOur preimage graph...\n");
             //this->printByRoot();
             //printf("\nTheir preimage graph...\n");
             //pg2.printByRoot();
 
+
             std::vector<std::pair<int, int>> componentCorrespondence;
+
+            // 1-1 with either a twist or open at the boundary
+            if (twinAffectedComponents.size() == 1 && affectedComponents.size() == 1)
+            {
+                //printf("--------------------------------------------------------------------- SPECIAL CASE HAPPENING!\n");
+                const int affectedComponentId = *affectedComponents.begin();
+                const int twinAffectedComponentId = *twinAffectedComponents.begin();
+
+                componentCorrespondence.push_back({affectedComponentId, twinAffectedComponentId});
+            }
+
 
             for (const auto &[componentId, representativeTriangleId] : this->componentRepresentative)
             {
