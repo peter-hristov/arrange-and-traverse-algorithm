@@ -220,13 +220,13 @@ int main(int argc, char* argv[])
         reebSpace.printTopSheets(tetMesh, arrangement, 20);
         Timer::stop("Computed RS(f) Postprocess             :");
 
-        //return 0;
+        return 0;
     }
 
     std::cout << "The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
     std::cout << "The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
 
-    return 0;
+    //return 0;
 
     if (performanceRun == true)
     {

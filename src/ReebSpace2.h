@@ -33,13 +33,16 @@ class ReebSpace2
         //
         // For a face, which sheets does it have
         std::vector<std::vector<int>> correspondenceGraph;
-        std::vector<PreimageGraph> preimageGraphs;
+        //std::vector<PreimageGraph> preimageGraphs;
+
+        std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphsAll;
 
         DisjointSet<int> correspondenceGraphDS;
+        int orderIndex = 0;
 
         //std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
         //std::map<Face_const_handle, PreimageGraph> preimageGraphs;
-        std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
+        //std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
 
         //
@@ -67,7 +70,8 @@ class ReebSpace2
 
         //
         // Compute the actual REeb space
-        void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, std::queue<Halfedge_const_handle> &traversalQueue, std::vector<bool> &visited, const bool);
+        void seedFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, const bool);
+        void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge, const bool);
         void traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool);
 
         // 

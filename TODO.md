@@ -1,3 +1,14 @@
+# Big Changes
+
+Reeb space 2
+    Order instead of visited
+
+Preimage Graph
+    componentRepresentative instead of uniqueComponentIds;
+
+
+
+
 # Optimisation 13.09.2025
 Unit Test the Final reeb space
 

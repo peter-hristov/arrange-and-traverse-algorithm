@@ -136,16 +136,14 @@ class PreimageGraph
 
         std::vector<int> getUniqueComponents()
         {
-            //return std::vector<int>(this->uniqueComponentIds.begin(), this->uniqueComponentIds.end());
-            std::vector<int> keys;
-            keys.reserve(componentRepresentative.size());  // optional, avoids reallocations
+            std::set<int> keys;
 
             for (const auto &pair : componentRepresentative)
             {
-                keys.push_back(pair.first);
+                keys.insert(pair.first);
             }
 
-            return keys;
+            return std::vector<int>(keys.begin(), keys.end());
         }
 
         void unitTestGetUniqueComponents()
@@ -170,7 +168,7 @@ class PreimageGraph
             //}
         }
 
-        std::unordered_map<int, std::set<int>> groupComponents()
+        const std::unordered_map<int, std::set<int>> groupComponents() const
         {
             std::unordered_map<int, std::set<int>> grouped;
 
@@ -182,7 +180,7 @@ class PreimageGraph
             return grouped;
         }
 
-        void printByRoot()
+        const void printByRoot() const
         {
             const std::unordered_map<int, std::set<int>> grouped = groupComponents();
 
@@ -336,33 +334,6 @@ class PreimageGraph
             }
         }
 
-        std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &pg2)
-        {
-            const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
-            const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
-
-            std::unordered_set<int> affectedComponents;
-
-            // These are all affected components, all other have a 1-1 correspondence
-            for (const int &triangle : minusTriangles)
-            {
-                affectedComponents.insert(this->componentRoot.at(triangle));
-            }
-
-            std::vector<std::pair<int, int>> componentCorrespondence;
-
-            for (const auto &[componentId, representativeTriangleId] : this->componentRepresentative)
-            {
-                // If this component is not affected
-                if (false == affectedComponents.contains(componentId))
-                {
-                    componentCorrespondence.push_back({componentId, pg2.componentRoot.at(representativeTriangleId)});
-                }
-            }
-
-            return componentCorrespondence;
-        }
-
         void updateComponentsRegular(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges)
         {
             //this->componentRoot = preimageGraphPrevious.componentRoot;
@@ -443,6 +414,42 @@ class PreimageGraph
                     this->componentRoot[triangleId] = componentId;
                 }
             }
+        }
+
+        std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &pg2)
+        {
+            const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
+            const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
+
+            std::unordered_set<int> affectedComponents;
+
+            printf("Affected roots...");
+            // These are all affected components, all other have a 1-1 correspondence
+            for (const int &triangle : minusTriangles)
+            {
+                affectedComponents.insert(this->componentRoot.at(triangle));
+                printf("%d ", this->componentRoot.at(triangle));
+            }
+
+
+            printf("\n\nOur preimage graph...\n");
+            this->printByRoot();
+            printf("\nTheir preimage graph...\n");
+            pg2.printByRoot();
+            printf("\n\n");
+
+            std::vector<std::pair<int, int>> componentCorrespondence;
+
+            for (const auto &[componentId, representativeTriangleId] : this->componentRepresentative)
+            {
+                // If this component is not affected
+                if (false == affectedComponents.contains(componentId))
+                {
+                    //componentCorrespondence.push_back({componentId, pg2.componentRoot.at(representativeTriangleId)});
+                }
+            }
+
+            return componentCorrespondence;
         }
 
 
