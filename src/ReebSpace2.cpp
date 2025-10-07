@@ -194,7 +194,6 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     }
     else
     {
-        const int componentsBefore = PreimageGraph::componentCount;
 
         //std::cout << "Preimage graphs after crossing from " << currentHalfEdge->face()->data() << " to " << currentHalfEdge->twin()->face()->data() << std::endl;
         //std::cout << "Before...\n";
@@ -205,6 +204,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
         //std::cout << "After...\n";
         //pg2.printByRoot();
 
+        // const int componentsBefore = PreimageGraph::componentCount;
 
         // Add the new components to the correspondence graph
         //const int componentsAfter = PreimageGraph::componentCount;
@@ -331,6 +331,8 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
         //printf("\n\n\nCurrently at face %d\n", initialHalfEdge->face()->data());
 
+        correspondenceGraph[initialHalfEdge->face()->data()] = this->preimageGraphsAll[initialHalfEdge->data()].first.getUniqueComponents();
+
         // Loop through the neighbours
         Halfedge_const_handle currentHalfEdge = initialHalfEdge;
         do
@@ -343,9 +345,15 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 seedFace(tetMesh, currentHalfEdge, cachePreimageGraphs);
                 loopFace(tetMesh, currentHalfEdge->twin(), cachePreimageGraphs);
 
-
                 traversalQueue.push(currentHalfEdge->twin());
                 order[currentHalfEdge->twin()->face()->data()] = ++(this->orderIndex);
+            }
+
+            // We no longer need the preimage graphs, we can clear them
+            if (false == cachePreimageGraphs)
+            {
+                this->preimageGraphsAll[initialHalfEdge->data()].first = PreimageGraph();
+                this->preimageGraphsAll[initialHalfEdge->data()].second = PreimageGraph();
             }
 
             currentHalfEdge = currentHalfEdge->next();
@@ -353,12 +361,9 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
         } while (currentHalfEdge != initialHalfEdge);
 
 
-
-        correspondenceGraph[initialHalfEdge->face()->data()] = this->preimageGraphsAll[initialHalfEdge->data()].first.getUniqueComponents();
-
         computedFaces++;
         //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
-        //bar.update((100 * computedFaces) / totalFaces);
+        bar.update((100 * computedFaces) / totalFaces);
     }
 
     //printf("\n\n\n\nPrinting all preimage graphs.\n\n\n\n");

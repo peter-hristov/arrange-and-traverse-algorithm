@@ -34,6 +34,7 @@ class PreimageGraph
         PreimageGraph(const std::unordered_map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
 
 
+        // Depricated
         // @TODO Refactor with a better clear
         void clear()
         {
