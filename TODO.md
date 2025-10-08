@@ -2,14 +2,19 @@
 
 
 Squeeze out more performance.
+Make an array isPseudoSingular
+Optimise memory usage by my tetMesh class
 
-Done - Unit Test the Final reeb space.
-Done - Compute the correct correspondence graph for the Reeb space.
+
 
 Read VTU and directly downsample myself (will be useful for testing later)
 
-Make an array isPseudoSingular
-Optimise memory usage by my tetMesh class
+
+
+
+
+Done - Unit Test the Final reeb space.
+Done - Compute the correct correspondence graph for the Reeb space.
 
 Done - Debug nested faces
 Done - Optimise the red-blue computation.
