@@ -8,7 +8,8 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./PreimageGraph.h"
-#include "src/DisjointSet.h"
+
+#include "DisjointSetSimple.h"
 
 class ReebSpace2
 {
@@ -37,7 +38,11 @@ class ReebSpace2
 
         std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphsAll;
 
-        DisjointSet<int> correspondenceGraphDS;
+        DisjointSetSimple correspondenceGraphDS;
+
+
+        //CGAL::Union_find<int> correspondenceGraphDS;
+
         int orderIndex = 0;
 
         //std::map<Face_const_handle, std::vector<int>> correspondenceGraph;

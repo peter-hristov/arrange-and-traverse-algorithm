@@ -210,10 +210,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
         // Add the new components to the correspondence graph
         const int componentsAfter = PreimageGraph::componentCount;
 
-        for (int i = componentsBefore ; i < componentsAfter ; i++)
-        {
-            this->correspondenceGraphDS.addElement(i);
-        }
+        this->correspondenceGraphDS.add(componentsAfter - componentsBefore);
     }
 
 
@@ -369,7 +366,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
                 for (const auto &[componentIdA, componentIdB] : componentPairs)
                 {
-                    this->correspondenceGraphDS.unionElements(componentIdA, componentIdB);
+                    this->correspondenceGraphDS.unify(componentIdA, componentIdB);
                 }
             }
 
@@ -407,7 +404,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
         //this->preimageGraphsAll[currentHalfEdge->data()].second.printByRoot();
     //}
 
-    this->numberOfSheets = this->correspondenceGraphDS.getComponentRepresentatives().size();
+    this->numberOfSheets = this->correspondenceGraphDS.countComponents();
 }
 
 bool ReebSpace2::doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2)

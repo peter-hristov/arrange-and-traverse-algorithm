@@ -116,7 +116,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         //for (const int componentId : componentIds)
         for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
         {
-            polygonsPerSheet[data.reebSpace2.correspondenceGraphDS.findElement(componentId)].push_back(qPolygon);
+            polygonsPerSheet[data.reebSpace2.correspondenceGraphDS.find(componentId)].push_back(qPolygon);
         }
     }
 
@@ -125,7 +125,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
     // Draw the polygons for each sheet
     for (int componentId = 0 ; componentId < PreimageGraph::componentCount ; componentId++)
     {
-        const int sheetId = data.reebSpace2.correspondenceGraphDS.findElement(componentId);
+        const int sheetId = data.reebSpace2.correspondenceGraphDS.find(componentId);
 
         if (componentDrawn[sheetId])
         {

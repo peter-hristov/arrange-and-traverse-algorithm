@@ -100,3 +100,6 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 #include <CGAL/centroid.h>
 #include <CGAL/enum.h>
 #include <CGAL/number_utils.h>
+
+
+#include <CGAL/Union_find.h>

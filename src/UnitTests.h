@@ -101,7 +101,7 @@ namespace unitTests
 
                 for (const auto &componentId : reebSpaceS.correspondenceGraph[currentFaceID])
                 {
-                    const int sheetId = reebSpaceS.correspondenceGraphDS.findElement(componentId);
+                    const int sheetId = reebSpaceS.correspondenceGraphDS.find(componentId);
 
                     pointsPerSheetS[sheetId].insert(v->point());
                 }
