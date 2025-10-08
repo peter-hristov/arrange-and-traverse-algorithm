@@ -16,6 +16,7 @@
 #include "./utility/CLI11.hpp"
 #include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
+#include "./UnitTests.h"
 
 
 using namespace std;
@@ -210,6 +211,18 @@ int main(int argc, char* argv[])
             return 1;
         }
 
+        Timer::start();
+        bool areSheetsEqual = unitTests::testAreSheetsIdentical(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
+        Timer::stop("Determinig whether the sheet are equal :");
+
+        if (false == areSheetsEqual)
+        {
+            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            std::cerr << "--------------------------------- THE SHEETS ARE NOT EQUAL!!!--------------------------------------------------\n";
+            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            return 1;
+        }
+
 
         Timer::start();
         bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
@@ -224,12 +237,12 @@ int main(int argc, char* argv[])
         }
 
 
-        std::cout << "Postprocessing..." << std::endl;
-        Timer::start();
-        reebSpace.computeSheetGeometry(tetMesh, arrangement);
-        reebSpace.computeSheetArea(tetMesh, arrangement);
-        reebSpace.printTopSheets(tetMesh, arrangement, 20);
-        Timer::stop("Computed RS(f) Postprocess             :");
+        //std::cout << "Postprocessing..." << std::endl;
+        //Timer::start();
+        //reebSpace.computeSheetGeometry(tetMesh, arrangement);
+        //reebSpace.computeSheetArea(tetMesh, arrangement);
+        //reebSpace.printTopSheets(tetMesh, arrangement, 20);
+        //Timer::stop("Computed RS(f) Postprocess             :");
 
         std::cout << "The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
         std::cout << "The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
@@ -249,7 +262,8 @@ int main(int argc, char* argv[])
     {
         try
         {
-            io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtm");
+            printf("SAVING SHEETS--------------------");
+            io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtp");
             io::saveSheets2(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename);
         }
         catch (const std::exception &e)

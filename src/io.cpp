@@ -326,7 +326,7 @@ void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, cons
         }
 
         polys->InsertNextCell(ptIds.size(), ptIds.data());
-        sheetIds->InsertNextValue(reebSpace.sheetConsequitiveIndices.at(sheetId));
+        sheetIds->InsertNextValue(sheetId);
     }
 
     // Create polydata
