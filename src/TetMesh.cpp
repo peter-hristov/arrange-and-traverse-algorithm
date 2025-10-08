@@ -228,7 +228,17 @@ void TetMesh::computeSingularEdgeTypes()
         // Indefinite edge
         else
         {
-            type = 2;
+            if (upperLinkComponents != lowerLinkComponents)
+            {
+                std::cerr << "----------------- " << upperLinkComponents << " - " << lowerLinkComponents << std::endl;
+                //throw std::runtime_error("Upper and lower link have different number of components.");       
+                type = -1 * (upperLinkComponents + lowerLinkComponents);
+            }
+            else
+            {
+                type = lowerLinkComponents;
+            }
+
         }
 
         //printf("Currently at the edge [%d, %d].\n", edge[0], edge[1]);
