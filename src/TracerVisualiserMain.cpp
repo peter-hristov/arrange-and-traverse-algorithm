@@ -180,7 +180,6 @@ int main(int argc, char* argv[])
         correspondenceGraphSize += correspondenceGraph.size();
     }
 
-
     // This is the old computation, keep these empty unless we want to unit test
     //
     ReebSpace reebSpace;

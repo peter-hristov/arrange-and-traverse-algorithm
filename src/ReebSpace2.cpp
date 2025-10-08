@@ -358,6 +358,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 const PreimageGraph &pgFace = this->preimageGraphsAll[currentHalfEdge->data()].second;
                 const PreimageGraph &pgTwinFace = this->preimageGraphsAll[currentHalfEdge->twin()->data()].first;
 
+                // Inline data to save time
                 const std::vector<std::pair<int, int>> componentPairs = pgFace.establishCorrespondence(
                         tetMesh, 
                         this->edgeCrossingSegments[currentHalfEdge->data()],

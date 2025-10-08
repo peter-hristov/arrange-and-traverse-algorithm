@@ -1,16 +1,10 @@
-# Big Changes
-
-Reeb space 2
-    Order instead of visited
-
-Preimage Graph
-    componentRepresentative instead of uniqueComponentIds;
-
-
-
-
 # Optimisation 13.09.2025
-Unit Test the Final reeb space
+
+
+Squeeze out more performance.
+
+Done - Unit Test the Final reeb space.
+Done - Compute the correct correspondence graph for the Reeb space.
 
 Read VTU and directly downsample myself (will be useful for testing later)
 
