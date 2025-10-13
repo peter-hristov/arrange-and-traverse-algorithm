@@ -142,8 +142,46 @@ int main(int argc, char* argv[])
     //
     ReebSpace2 reebSpace2;
 
+
+
+    std::ofstream outFile("output.txt"); // open for writing (creates/truncates file)
+    if (!outFile) 
+    {
+        std::cerr << "Error opening file for writing\n";
+        return 1;
+    }
+
+    outFile << tetMesh.vertexCoordinatesF.size() << " " << tetMesh.singularEdgesNumber << " " << tetMesh.regularEdgesNumber << std::endl;
+
+    for (int i = 0 ; i < tetMesh.vertexCoordinatesF.size() ; i++)
+    {
+        outFile << tetMesh.vertexCoordinatesF[i] << " " << tetMesh.vertexCoordinatesG[i] << "\n";
+    }
+
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes)
+    {
+        if (type == 0 || type == 2)
+        {
+            outFile << edge[0] <<  " " << edge[1] << "\n";
+        }
+
+    }
+
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes)
+    {
+        if (type == 1)
+        {
+            outFile << edge[0] <<  " " << edge[1] << "\n";
+        }
+
+    }
+
+    outFile.close(); // optional — happens automatically on destruction
+
+
+
     Timer::start();
-    reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
+    reebSpace2.computeEdgeRegionSegments2(tetMesh, singularArrangement);
     Timer::stop("Computed red/blud intersetions         :");
 
     Timer::start();
