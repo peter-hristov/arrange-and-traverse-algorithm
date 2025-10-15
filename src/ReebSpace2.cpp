@@ -404,6 +404,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
         //this->preimageGraphsAll[currentHalfEdge->data()].second.printByRoot();
     //}
 
+    this->correspondenceGraphDS.finalise();
     this->numberOfSheets = this->correspondenceGraphDS.countComponents();
 }
 

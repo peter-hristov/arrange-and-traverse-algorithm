@@ -86,13 +86,16 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
 
 void PlotWidget::drawReebSpaceBackground(QPainter &p)
 {
-    // Collect the polygons for each sheet
-    std::vector<std::vector<QPolygonF>> polygonsPerSheet(PreimageGraph::componentCount);
-
     //for (const auto &[faceHandle, componentIds] : data.reebSpace2.correspondenceGraph)
     for (auto faceHandle = data.singularArrangement.arr.faces_begin(); faceHandle != data.singularArrangement.arr.faces_end(); ++faceHandle) 
     {
         if (faceHandle->is_unbounded()) { continue; }
+
+
+
+        //
+        // Assemble the polygon
+        //
         QVector<QPointF> points;
 
         //printf("\nFace with ID = %d has these points\n", data.singularArrangement.arrangementFacesIdices[faceHandle]);
@@ -113,34 +116,29 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
         QPolygonF qPolygon(points);
 
-        //for (const int componentId : componentIds)
+
+        //
+        // Draw a polygon per face
+        //
         for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
         {
-            polygonsPerSheet[data.reebSpace2.correspondenceGraphDS.find(componentId)].push_back(qPolygon);
-        }
-    }
+            const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
 
-    vector<bool> componentDrawn(data.reebSpace2.numberOfSheets, false);
-
-    // Draw the polygons for each sheet
-    for (int componentId = 0 ; componentId < PreimageGraph::componentCount ; componentId++)
-    {
-        const int sheetId = data.reebSpace2.correspondenceGraphDS.find(componentId);
-
-        if (componentDrawn[sheetId])
-        {
-            continue;
-        }
-
-        for (const auto &qPolygon : polygonsPerSheet[sheetId])
-        {
-            const array<float, 3> colorF = fiber::fiberColours[componentId % fiber::fiberColours.size()];
+            const array<float, 3> colorF = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
             p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], 0.292f));
             p.setPen(Qt::NoPen);
             p.drawPolygon(qPolygon);
         }
     }
+
+
+
+
+
+
+
+
 
     //for (const auto &[faceHandle, componentIds] : data.reebSpace2.correspondenceGraph)
 
