@@ -73,6 +73,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    std::cout << "Processing file : " << filename << std::endl;
+
     //
     // TetMesh computation
     //
