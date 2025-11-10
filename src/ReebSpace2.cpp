@@ -168,7 +168,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 
 
 
-void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &currentHalfEdge, const bool cachePreimageGraphs)
+void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &currentHalfEdge)
 {
     //printf("\n--------------------------------------------------------------------------------------\n");
     //std::cout << "Seeding face " << currentHalfEdge->twin()->face()->data();
@@ -222,7 +222,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
 
 
 
-void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge, const bool cachePreimageGraphs)
+void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initialHalfEdge)
 {
     //printf("\n--------------------------------------------------------------------------------------\n");
     //std::cout << "Looping face " << initialHalfEdge->face()->data();
@@ -305,8 +305,8 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
 
     // Seed the first face and loop it
-    seedFace(tetMesh, startingHalfedge, cachePreimageGraphs);
-    loopFace(tetMesh, startingHalfedge->twin(), cachePreimageGraphs);
+    seedFace(tetMesh, startingHalfedge);
+    loopFace(tetMesh, startingHalfedge->twin());
 
     // Seed the first face
     //this->preimageGraphs[startingHalfedge->twin()->face()->data()].updateComponentsSingular(tetMesh, this->edgeCrossingSegments[startingHalfedge->data()]);
@@ -344,8 +344,8 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
             {
                 //printf("Computing face %d\n", currentHalfEdge->twin()->face()->data());
 
-                seedFace(tetMesh, currentHalfEdge, cachePreimageGraphs);
-                loopFace(tetMesh, currentHalfEdge->twin(), cachePreimageGraphs);
+                seedFace(tetMesh, currentHalfEdge);
+                loopFace(tetMesh, currentHalfEdge->twin());
 
                 traversalQueue.push(currentHalfEdge->twin());
                 order[currentHalfEdge->twin()->face()->data()] = ++(this->orderIndex);

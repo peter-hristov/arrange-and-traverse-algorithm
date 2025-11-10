@@ -333,14 +333,13 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
 
         //averageAraphsInMemory = averageAraphsInMemory + ((float)graphsInMemory - (float)averageAraphsInMemory) / (float)orderIndex;
 
-
         computedFaces++;
         bar.update((100 * computedFaces) / totalFaces);
         //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
 
         // Dispose of the preimage graph we will no longer need it
-        //this->preimageGraphs[currentFaceID].clear();
-        //graphsInMemory--;
+        this->preimageGraphs[currentFaceID].clear();
+        graphsInMemory--;
     }
 
     this->correspondenceGraph.finalise();

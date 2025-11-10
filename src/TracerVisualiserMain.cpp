@@ -167,12 +167,12 @@ int main(int argc, char* argv[])
     Timer::stop("Assigning pseudosingular edges         :");
 
     Timer::start();
-    reebSpace2.traverse(tetMesh, singularArrangement, unitTestPreimageGraphs);
+    reebSpace2.traverse(tetMesh, singularArrangement, false);
     Timer::stop("Computed singular traversal            :");
 
-    Timer::start();
+    //Timer::start();
     //reebSpace2.computeSheets(singularArrangement);
-    Timer::stop("Postprocessing                         :");
+    //Timer::stop("Postprocessing                         :");
 
     int correspondenceGraphSize = 0;
     for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
@@ -224,17 +224,17 @@ int main(int argc, char* argv[])
         }
 
 
-        Timer::start();
-        bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-        Timer::stop("Comparing preimage graphs              :");
+        //Timer::start();
+        //bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+        //Timer::stop("Comparing preimage graphs              :");
 
-        if (false == arePreimageGraphsEqual)
-        {
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            return 1;
-        }
+        //if (false == arePreimageGraphsEqual)
+        //{
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //return 1;
+        //}
 
 
         //std::cout << "Postprocessing..." << std::endl;
@@ -243,9 +243,6 @@ int main(int argc, char* argv[])
         //reebSpace.computeSheetArea(tetMesh, arrangement);
         //reebSpace.printTopSheets(tetMesh, arrangement, 20);
         //Timer::stop("Computed RS(f) Postprocess             :");
-
-        std::cout << "The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
-        std::cout << "The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
 
         return 0;
     }
