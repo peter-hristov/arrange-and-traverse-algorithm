@@ -275,7 +275,7 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         this->fiberSeeds.resize(arrangement.arrangementFacesIdices.size());
     }
 
-    LoadingBar bar(40, "Computing Reeb space (AT)...");
+    //LoadingBar bar(40, "Computing Reeb space (AT)...");
     int graphsInMemory = 0;
     float averageAraphsInMemory = 0;
 
@@ -334,7 +334,7 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         //averageAraphsInMemory = averageAraphsInMemory + ((float)graphsInMemory - (float)averageAraphsInMemory) / (float)orderIndex;
 
         computedFaces++;
-        bar.update((100 * computedFaces) / totalFaces);
+        //bar.update((100 * computedFaces) / totalFaces);
         //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
 
         // Dispose of the preimage graph we will no longer need it

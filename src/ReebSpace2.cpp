@@ -318,7 +318,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
     // Make sure the outer face is visited as well, no need to go back
     order[startingHalfedge->face()->data()] = ++(this->orderIndex);
 
-    LoadingBar bar(40, "Computing Reeb space (SAT)...");
+    //LoadingBar bar(40, "Computing Reeb space (SAT)...");
     int computedFaces = 1; // outside face has already been processed
     const int totalFaces = singularArrangement.arr.number_of_faces();
 
