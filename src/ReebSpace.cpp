@@ -345,7 +345,7 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
     this->correspondenceGraph.finalise();
 
     //printf("\n\nThere is an average of %f / %ld active preimage graphs.\n", averageAraphsInMemory, this->preimageGraphs.size());
-    printf("The correspondence graphs has %ld vertices and the Reeb space has %ld sheets.\n\n", this->correspondenceGraph.data.size(), this->correspondenceGraph.getComponentRepresentatives().size());
+    //printf("The correspondence graphs has %ld vertices and the Reeb space has %ld sheets.\n\n", this->correspondenceGraph.data.size(), this->correspondenceGraph.getComponentRepresentatives().size());
 }
 
 void ReebSpace::computeSheetGeometry(const TetMesh &tetMesh, const Arrangement &arrangement)

@@ -26,7 +26,9 @@ public:
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end_time - start_time;
 
-        printf("%s :: %.3f s (%.2f Mb)\n", message.c_str(), elapsed.count(), getCurrentRSS());
+        //printf("%s :: %.3f s (%.2f Mb)\n", message.c_str(), elapsed.count(), getCurrentRSS());
+        
+        printf("%.3f\t%.2f\t", elapsed.count(), getCurrentRSS());
 
         //std::cout << std::right
               //<< message << ": "

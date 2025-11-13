@@ -251,7 +251,7 @@ void TetMesh::computeSingularEdgeTypes()
     this->singularEdgesNumber = this->edges.size() - this->regularEdgesNumber;
 
 
-    printf("There are %d singular edges out of %ld edges. That is %.2f%%.\n", this->singularEdgesNumber, edges.size(), 100.0 * (double)this->singularEdgesNumber / (double)edges.size());
+    //printf("There are %d singular edges out of %ld edges. That is %.2f%%.\n", this->singularEdgesNumber, edges.size(), 100.0 * (double)this->singularEdgesNumber / (double)edges.size());
 }
 
 

@@ -59,13 +59,13 @@ int main(int argc, char* argv[])
         discardFiberSeeds = true;
     }
 
+    Timer::start();
+
     // Read, perturb and sort the indices of the vertices lexicographically (by their range position).
     TetMesh tetMesh;
     try
     {
-        Timer::start();
         tetMesh = io::readData(filename);
-        Timer::stop("Reading input data                     :");
     }
     catch (const std::exception &e)
     {
@@ -74,34 +74,16 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Processing file : " << filename << std::endl;
+    std::cout << "Preamble, SAT Geometry (s), SAT Geometry (Mb), SAT Reeb Space (s), SAT Reeb Space (Mb), AT Geometry (s), AT Geometry (Mb), AT Reeb Space (s), AT Reeb Space (Mb)\n";
 
-    //
-    // TetMesh computation
-    //
-
-    Timer::start();
     tetMesh.perturbRangeValues(perturbationEpsilon);
-    Timer::stop("Perturbing range values                :");
-
-    Timer::start();
     tetMesh.sortVertices();
-    Timer::stop("Sorting range points                   :");
-
-    Timer::start();
     tetMesh.computeBoundingBoxes();
-    Timer::stop("Computing bounding boxes               :");
-
-    Timer::start();
     tetMesh.computeCombinatorialStructure();
-    Timer::stop("Computing edges, triangles and tets    :");
-
-    Timer::start();
     tetMesh.computeUpperLowerLinkAndStar();
-    Timer::stop("Computing upper/lower links and stars  :");
-
-    Timer::start();
     tetMesh.computeSingularEdgeTypes();
-    Timer::stop("Computing singular edges               :");
+
+    Timer::stop("Computing preamble               :");
 
 
 
@@ -112,12 +94,9 @@ int main(int argc, char* argv[])
     Timer::start();
     Arrangement singularArrangement;
     singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
-    Timer::stop("Initial Singular Arrangement           :");
 
     // The initial computation may have nested faces, we need to connect them
-    Timer::start();
     singularArrangement.connectNestedFaces(tetMesh);
-    Timer::stop("Making sure all faces are simple       :");
 
     // Recompute arrangement if needed
     if (tetMesh.pseudoSingularEdgesNumber > 0)
@@ -125,14 +104,10 @@ int main(int argc, char* argv[])
         singularArrangement = Arrangement();
 
         // Recompute the arrangement with enough new segments to avoid connect all nested faces
-        Timer::start();
         singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
-        Timer::stop("Singular Arrangement                   :");
     }
 
-    Timer::start();
     singularArrangement.assignIndices();
-    Timer::stop("Assigning indices to the arrangement   :");
 
 
     //
@@ -140,37 +115,23 @@ int main(int argc, char* argv[])
     //
     ReebSpace2 reebSpace2;
 
-    Timer::start();
-    reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
-    Timer::stop("Computed red/blud intersetions         :");
-
-    Timer::start();
+    reebSpace2.computeEdgeRegionSegments2(tetMesh, singularArrangement);
     reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
-    Timer::stop("Edge regions plus/minus triangles      :");
-
-    Timer::start();
     reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
-    Timer::stop("Computed vertex regions                :");
-
-    Timer::start();
     reebSpace2.computeVertexRegionMinusPlusTriangles(tetMesh, singularArrangement);
-    Timer::stop("Vertex regions plus/minus triangles    :");
-
-    Timer::start();
     reebSpace2.computeEdgeCrossingMinusPlusTriangles(tetMesh, singularArrangement);
-    Timer::stop("Edge crossing plus/minus triangles     :");
-
-    Timer::start();
     reebSpace2.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
-    Timer::stop("Assigning pseudosingular edges         :");
+
+    Timer::stop("Computed singular traversal            :");
+
+
+
+
 
     Timer::start();
     reebSpace2.traverse(tetMesh, singularArrangement, false);
     Timer::stop("Computed singular traversal            :");
 
-    //Timer::start();
-    //reebSpace2.computeSheets(singularArrangement);
-    //Timer::stop("Postprocessing                         :");
 
     int correspondenceGraphSize = 0;
     for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
@@ -190,10 +151,6 @@ int main(int argc, char* argv[])
         arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
         Timer::stop("Arrangement                            :");
 
-        Timer::start();
-        arrangement.computePointLocationDataStructure();
-        Timer::stop("Arrangement search structure           :");
-
 
         Timer::start();
         reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
@@ -209,9 +166,7 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        Timer::start();
         bool areSheetsEqual = unitTests::testAreSheetsIdentical(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
-        Timer::stop("Determinig whether the sheet are equal :");
 
         if (false == areSheetsEqual)
         {
@@ -242,9 +197,11 @@ int main(int argc, char* argv[])
         //reebSpace.printTopSheets(tetMesh, arrangement, 20);
         //Timer::stop("Computed RS(f) Postprocess             :");
 
+        std::cout << "\n";
         return 0;
     }
 
+    std::cout << "\n";
 
     //return 0;
 

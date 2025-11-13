@@ -80,10 +80,10 @@ void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &
     //}
     //Timer::stop("Computed arrangement sequantially      :");
 
-    std::cout << "The arrangement size:"
-        << "   |V| = " << this->arr.number_of_vertices()
-        << ",  |E| = " << this->arr.number_of_edges()
-        << ",  |F| = " << this->arr.number_of_faces() << std::endl << std::endl;
+    //std::cout << "The arrangement size:"
+        //<< "   |V| = " << this->arr.number_of_vertices()
+        //<< ",  |E| = " << this->arr.number_of_edges()
+        //<< ",  |F| = " << this->arr.number_of_faces() << std::endl << std::endl;
 
     // Set up the indices and their reverse lookup for all faces
     int counter = 0;
@@ -268,7 +268,7 @@ void Arrangement::connectNestedFaces(TetMesh &tetMesh)
     }
 
     double averageFaceBoundarySize = (double)faceBoundarySizeTotal / (double)innerFaces;
-    std::cerr << "There is this number of average faces in a boundary " << averageFaceBoundarySize << std::endl;
+    //std::cerr << "There is this number of average faces in a boundary " << averageFaceBoundarySize << std::endl;
 
 
 
