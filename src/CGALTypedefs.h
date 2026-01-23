@@ -27,8 +27,14 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 #include <CGAL/Segment_2.h>
 #include <CGAL/Line_2.h>
 
+struct HalfEdgeData
+{
+    int id;
+    bool isPseudoSingular;
+};
+
 typedef CGAL::Arr_segment_traits_2<K> Traits_2;
-typedef CGAL::Arr_extended_dcel<Traits_2, bool, int, int> Dcel;
+typedef CGAL::Arr_extended_dcel<Traits_2, bool, HalfEdgeData, int> Dcel;
 typedef CGAL::Arrangement_with_history_2<Traits_2, Dcel> Arrangement_2;
 typedef K::Point_2 Point_2;
 typedef K::Segment_2 Segment_2;

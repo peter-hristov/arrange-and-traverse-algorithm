@@ -57,7 +57,6 @@ class TetMesh
     int pseudoSingularEdgesNumber = 0;
     int regularEdgesNumber = 0;
 
-
     void computeBoundingBoxes();
     void computeDomainBoundingBox();
     void computeRangeBoundingBox();

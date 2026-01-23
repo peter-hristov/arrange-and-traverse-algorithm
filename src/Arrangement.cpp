@@ -85,7 +85,7 @@ void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &
         << ",  |E| = " << this->arr.number_of_edges()
         << ",  |F| = " << this->arr.number_of_faces() << std::endl << std::endl;
 
-    // Set up the indices and their reverse lookup for all faces
+    // Set up the indices and their reverse lookup for all faces and vertices
     int counter = 0;
     this->arrangementIndexToFace.resize(this->arr.number_of_faces());
     for (auto f = this->arr.faces_begin(); f != this->arr.faces_end(); ++f) 
@@ -101,67 +101,6 @@ void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &
         Vertex_const_handle vertexHandle = vit;
         arrangementPointHandles[vertexHandle->point()] = vertexHandle;
     }
-
-
-//<<<<<<< Updated upstream
-    //int faceId = 0;
-    //std::set<int> uniqueFaceIds;
-    //for (auto fit = arr.faces_begin(); fit != arr.faces_end(); ++fit, ++faceId) 
-    //{
-        //fit->set_data(faceId);           // store ID in the face
-        //uniqueFaceIds.insert(faceId);
-    //}
-
-    //if (uniqueFaceIds.size() != arr.number_of_faces())
-    //{
-        //throw std::runtime_error("Not all faces have unique IDs!");
-    //}
-
-    //int hedgeId = 0;
-    //std::set<int> uniqueHalfEdgeIds;
-    //for (auto heit = arr.halfedges_begin(); heit != arr.halfedges_end(); ++heit, ++hedgeId) 
-    //{
-        //heit->set_data(hedgeId);
-        //uniqueHalfEdgeIds.insert(hedgeId);
-    //}
-
-    //if (uniqueHalfEdgeIds.size() != arr.number_of_halfedges())
-    //{
-        //throw std::runtime_error("Not all faces have unique IDs!");
-    //}
-//=======
-//>>>>>>> Stashed changes
-
-    //for (auto currentFaceIterator = arr.faces_begin(); currentFaceIterator != arr.faces_end(); ++currentFaceIterator) 
-    //{
-        //Arrangement_2::Face_const_handle face = currentFaceIterator;
-        //if (face->is_unbounded()) { continue; }
-
-        //Arrangement_2::Ccb_halfedge_const_circulator start = face->outer_ccb();
-        //Arrangement_2::Ccb_halfedge_const_circulator curr = start;
-
-        //do {
-            //// Make sure there is only one originating curve (sanity check)
-            //const Segment_2 &segment = *arr.originating_curves_begin(curr);
-
-            //const int aIndex = arrangementPointIndices.at(segment.source());
-            //const int bIndex = arrangementPointIndices.at(segment.target());
-
-            //if (tetMesh.edgeSingularTypes.at({aIndex, bIndex}) != 1)
-            //{
-                //singularFaces.insert(face);
-            //}
-
-            //++curr;
-        //} while (curr != start);
-    //}
-
-    //printf("There are %ld singular faces out of %ld faces. That is %.2f%%.\n", singularFaces.size(), arr.number_of_faces(), 100.0 * (double)singularFaces.size() / (double)arr.number_of_faces());
-
-
-
-
-
 }
 
 void Arrangement::computePointLocationDataStructure()
@@ -303,7 +242,7 @@ void Arrangement::assignIndices()
     std::set<int> uniqueHalfEdgeIds;
     for (auto heit = arr.halfedges_begin(); heit != arr.halfedges_end(); ++heit, ++hedgeId) 
     {
-        heit->set_data(hedgeId);
+        heit->set_data({hedgeId, false});
         uniqueHalfEdgeIds.insert(hedgeId);
     }
 
@@ -311,4 +250,31 @@ void Arrangement::assignIndices()
     {
         throw std::runtime_error("Not all faces have unique IDs!");
     }
+}
+
+
+void Arrangement::assignHalfEdgePseudoSingular(const TetMesh &tetMesh, Arrangement &singularArrangement)
+{
+    this->isHalfEdgePseudoSingular.resize(singularArrangement.arr.number_of_halfedges());
+
+    // @TODO Find a way to parallize this
+    //#pragma omp parallel for schedule(dynamic)
+    for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
+    {
+        const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(halfEdge);
+        const std::array<int, 2> edge = {
+            singularArrangement.arrangementPointIndices.at(segment.source()), 
+            singularArrangement.arrangementPointIndices.at(segment.target())
+        };
+
+        if (tetMesh.edgeSingularTypes.at(edge) == -1)
+        {
+            halfEdge->data().isPseudoSingular = true;
+        }
+        else
+        {
+            halfEdge->data().isPseudoSingular = false;
+        }
+    }
+
 }

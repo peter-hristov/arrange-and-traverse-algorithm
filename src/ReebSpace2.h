@@ -15,43 +15,52 @@ class ReebSpace2
 {
     public:
 
-        //
-        // Geometric computation, which segments intersect which others, in which order and whether their upper/lower triangles are flipped
-        //std::map<Halfedge_const_handle, std::pair<int, bool>> edgeCrossingSegments2;
-        //std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> edgeRegionSegments2;
-        //std::map<Halfedge_const_handle, std::vector<std::pair<int, bool>>> vertexRegionSegments22;
-
+        // Index by half-edge ID, 
+        // For each half-edge $e$, get its originating segment ID and whether it is left-to-right and right-to-left (direction of travel)
         std::vector<std::pair<int, bool>> edgeCrossingSegments;
-        std::vector<std::vector<std::pair<int, bool>>> vertexRegionSegments;
+
+        // Indexed by half-edge ID
+        // For each helf-edge $e$, get the ordered list of regular segment IDs that intersect the "edge region" and whether they are left-to-right (direction of travel)
+        // The "edge region" is defined as the interior of the half-edge and the order is linear along the half-edge
         std::vector<std::vector<std::pair<int, bool>>> edgeRegionSegments;
+
+        // Indexed by half-edge ID
+        // For each helf-edge $e$, get the ordered list of regular segment IDs that intersect the vertex region (have the same source as $e$) and whether they are left-to-right (direction of travel)
+        // The vertex region is defined as the area between $e$ and $e->next$ around $e->source$, the order is CCW  as per CGAL convention
+        std::vector<std::vector<std::pair<int, bool>>> vertexRegionSegments;
+
+
+        // Index by singular face Id in the singular arrangement
+        // For each singular face get the list of fiber graph class component (FGCC) Ids
+        // If two FGCCs have the same ID, they are in the same sheet, if they have different IDs check in correspondenceGraphDS whether they are in the same sheets
+        std::vector<std::vector<int>> correspondenceGraph;
+
+        // Indexed by fiber graph class ID
+        // For each fiber graph class component (FGCC), get the Reeb space sheet it belonds to
+        DisjointSetSimple correspondenceGraphDS;
+
+
 
         std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
 
-        std::vector<bool> isHalfEdgePseudoSingular;
 
         int numberOfSheets;
 
         //
         // For a face, which sheets does it have
-        std::vector<std::vector<int>> correspondenceGraph;
         //std::vector<PreimageGraph> preimageGraphs;
 
         std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphsAll;
 
-        DisjointSetSimple correspondenceGraphDS;
 
 
-        //CGAL::Union_find<int> correspondenceGraphDS;
 
         int orderIndex = 0;
 
-        //std::map<Face_const_handle, std::vector<int>> correspondenceGraph;
-        //std::map<Face_const_handle, PreimageGraph> preimageGraphs;
-        //std::map<Halfedge_const_handle, std::pair<PreimageGraph, PreimageGraph>> preimageGraphsCached;
 
 
+        // <Geometric computation>
         //
-        // Geometric computation
         void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
@@ -63,27 +72,37 @@ class ReebSpace2
         bool ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment);
         Halfedge_const_handle getSegmentRegion(Vertex_const_handle &vertexHandle, const Segment_2 &segment);
 
-        //
         // Plus/Minus triangles for each region
         void computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
-        // @TODO Move this to the TetMesh
-        void assignHalfEdgePseudoSingular(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
-
         //
-        // Compute the actual REeb space
+        // </Geometric computation>
+
+
+
+
+        // Compute the actual Reeb space with "singular arrange and traverse"
         void seedFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge);
         void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge);
         void traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool);
 
-        // 
         // Unit Tests
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         bool unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
         bool areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b);
 
         void computeSheets(Arrangement &singularArrangement);
+
 };
+
+
+
+
+
+
+
+
+
+

@@ -51,6 +51,13 @@ class Arrangement
 
     void connectNestedFaces(TetMesh &tetMesh);
 
+    // Index by half-edge Id
+    // For each half-edge, get whether it's originating from a psudo-singular segment
+    std::vector<bool> isHalfEdgePseudoSingular;
+
+    // @TODO Move this to the TetMesh
+    void assignHalfEdgePseudoSingular(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
     void assignIndices();
 
 };

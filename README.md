@@ -16,6 +16,9 @@ cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/ho
 
 make
 
+# Data Sets with disconnected Singular sets in the range
+~/Projects/data/reeb-space-test-data/ttk/downsample-2-384800.vtu
+~/Projects/data/reeb-space-test-data/nana/hpc/downsamples/step_01080.cropped.1.1540000.vtu
 
 # Test
 

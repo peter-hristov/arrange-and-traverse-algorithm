@@ -136,6 +136,10 @@ int main(int argc, char* argv[])
     singularArrangement.assignIndices();
     Timer::stop("Assigning indices to the arrangement   :");
 
+    Timer::start();
+    singularArrangement.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
+    Timer::stop("Assigning pseudosingular edges         :");
+
 
     //
     // Reeb space computation.
@@ -161,10 +165,6 @@ int main(int argc, char* argv[])
     Timer::start();
     reebSpace2.computeEdgeCrossingMinusPlusTriangles(tetMesh, singularArrangement);
     Timer::stop("Edge crossing plus/minus triangles     :");
-
-    Timer::start();
-    reebSpace2.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
-    Timer::stop("Assigning pseudosingular edges         :");
 
     Timer::start();
     reebSpace2.traverse(tetMesh, singularArrangement, false);

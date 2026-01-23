@@ -1,3 +1,27 @@
+# TODO
+
+Remove mouse events so that it doesn't crash.
+
+Modify terminal output to more easy to parse.
+    Separate the SAT and AT sections.
+    Output that the outputs are equal.
+    Make the timings comparable preprocessing/traversal.
+
+Remove the 3D left window in the GUI and control panel.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Big Changes
 
 Reeb space 2

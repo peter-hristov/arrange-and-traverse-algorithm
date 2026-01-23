@@ -685,6 +685,7 @@ void TetMesh::markPseudoSingularEdges(const std::vector<int> &shortestPath)
             // A regular edge becomes pseudo-singular
             this->pseudoSingularEdgesNumber++;
             this->regularEdgesNumber--;
+
         }
 
     }
