@@ -8,165 +8,151 @@
 #include "./DisjointSet.h"
 #include "./PreimageGraph.h"
 #include "./LoadingBar.hpp"
+#include "src/CGALTypedefs.h"
 
-//void ReebSpace2::computeSheets(Arrangement &singularArrangement)
-//{
-    //// Assemble the half-edge per sheet
-    //std::vector<std::set<Halfedge_const_handle>> halfEdgesPerSheet(PreimageGraph::componentCount);
+void ReebSpace2::computeSheets(Arrangement &singularArrangement)
+{
+    std::map<int, std::set<Halfedge_const_handle>> halfEdgePerSheet;
 
-    //for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
-    //{
-        //assert(false == he->face()->is_fictitious());
+    for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
+    {
+        if (true == he->face()->is_fictitious() || true == he->face()->is_unbounded())
+        {
+            continue;
+        }
 
-        ////if (true == he->face()->is_fictitious())
-        ////{
-            ////std::cout << "Face with ID " << he->face()->data() << " is fictious.\n";
-            ////continue;
-        ////}
+        // Collect face sheets
+        //
+        const int faceId = he->face()->data();
+        std::set<int> faceSheets;
+        for (const int &componentId : this->correspondenceGraph[faceId])
+        {
+            const int sheetId = this->correspondenceGraphDS.find(componentId);
+            faceSheets.insert(sheetId);
+        }
 
-        ////printf("\n\nCurrently at he : ");
-        ////printf("%d (twin: %d) (face: %d): ", he->data(), he->twin()->data(), he->face()->data());
-
-        //if (he->face()->is_unbounded() || he->face() == he->twin()->face())
-        //{
-            //continue;
-        //}
-
-        //// Get the sheets in this face
-        //for (const int &sheetId : this->correspondenceGraph[he->face()->data()])
-        //{
-
-            //bool isBoundaryHalfEdge = true;
-
-            //// If the twin has the same sheet, then this is not a boundary half-edge
-            //for (const int &twinSheetId : this->correspondenceGraph[he->twin()->face()->data()])
-            //{
-                //if (twinSheetId == sheetId)
-                //{
-                    //isBoundaryHalfEdge = false;
-                //}
-            //}
-
-            //if (isBoundaryHalfEdge)
-            //{
-                //halfEdgesPerSheet[sheetId].insert(he);
-            //}
+        // Collect twin face sheets
+        //
+        const int twinFaceId = he->twin()->face()->data();
+        std::set<int> twinFaceSheets;
+        for (const int &componentId : this->correspondenceGraph[twinFaceId])
+        {
+            const int sheetId = this->correspondenceGraphDS.find(componentId);
+            twinFaceSheets.insert(sheetId);
+        }
 
 
-            ////if (halfEdgesPerSheet[sheetId].contains(he->twin()))
-            ////{
-                ////printf("Removing... from sheet %d\n", sheetId);
-                ////printf("%d (%d) : ", he->twin()->data(), he->twin()->face()->data());
-                ////std::cout << "(" << he->twin()->source()->point() << ") -> " << "( " << he->twin()->target()->point() << " )\n";
-
-                ////halfEdgesPerSheet[sheetId].erase(he->twin());
-            ////}
-            ////else
-            ////{
-
-                ////printf("Adding... from sheet %d\n", sheetId);
-                ////printf("%d (%d) : ", he->data(), he->face()->data());
-                ////std::cout << "(" << he->source()->point() << ") -> " << "( " << he->target()->point() << " )\n";
-
-                ////halfEdgesPerSheet[sheetId].insert(he);
-            ////}
-        //}
-    //}
-
-    ////for (int i = 0 ; i < halfEdgesPerSheet.size() ; i++)
-    ////{
-        ////printf("\nSheet %d has the following half-edges : \n", i);
-        ////for (const Halfedge_const_handle &he : halfEdgesPerSheet[i])
-        ////{
-            ////printf("%d (%d) : ", he->data(), he->face()->data());
-            ////std::cout << "(" << he->source()->point() << ") -> " << "( " << he->target()->point() << " )\n";
-        ////}
-    ////}
-
-    //std::vector<std::map<Halfedge_const_handle, Halfedge_const_handle>> halfEdgesPerSheetNext(PreimageGraph::componentCount);
-
-    //for (int sheetId = 0 ; sheetId < halfEdgesPerSheet.size() ; sheetId++)
-    //{
-        //printf("\n\nAt sheet %d\n", sheetId);
-
-        //// For each half-edge
-        //for (const Halfedge_const_handle &he : halfEdgesPerSheet[sheetId])
-        //{
-            //printf("\n\n\nAt he : ");
-            //printf("%d (twin: %d) (face: %d) (sheet: %d): ", he->data(), he->twin()->data(), he->face()->data(), sheetId);
-            //std::cout << "(" << he->source()->point() << ") -> " << "( " << he->target()->point() << " )\n";
-
-            //int counter = 0;
-
-            //// Find the next
-            //auto circ = he->target()->incident_halfedges();
-            //auto done = circ;
-            //do 
-            //{
-                //Halfedge_const_handle neighbourHe = circ->twin();
-
-                //printf("Neighbour he : ");
-                //printf("%d (%d) : ", circ->data(), circ->face()->data());
-                //std::cout << "(" << circ->source()->point() << ") -> " << "( " << circ->target()->point() << " )\n";
-
-                //if (neighbourHe->twin() != he && halfEdgesPerSheet[sheetId].contains(neighbourHe))
-                //{
-                    //printf("Found one.\n");
-                    //counter++;
-                    ////assert(false == halfEdgesPerSheetNext[sheetId].contains(he));
-
-                    //halfEdgesPerSheetNext[sheetId][he] = neighbourHe;
-                //}
+        // If this face has a sheet, that the twin does not, it's on the boundary
+        for (const int sheetId : faceSheets)
+        {
+            if (false == twinFaceSheets.contains(sheetId))
+            {
+                halfEdgePerSheet[sheetId].insert(he);
+            }
+        }
+    }
 
 
-                //++circ;
-            //} while (circ != done);
+    // Sanity check, make sure the boundary is a simple polygon, each vertex has in and out degree 1
+    //
+    std::map<int, std::map<Vertex_const_handle, std::vector<Halfedge_const_handle>>> sourceCountPerSheet;
+    std::map<int, std::map<Vertex_const_handle, std::vector<Halfedge_const_handle>>> targetCountPerSheet;
 
-            //if (counter != 1)
-            //{
-                //printf("The counter is %d\n", counter);
-                //return;
-                //assert(counter == 1);
-            //}
-        //}
-    //}
-
-    //this->sheetBoundary.resize(PreimageGraph::componentCount);
-
-    //for (int sheetId = 0 ; sheetId < halfEdgesPerSheet.size() ; sheetId++)
-    //{
-        //Halfedge_const_handle start = *halfEdgesPerSheet[sheetId].begin();
-        //Halfedge_const_handle curr  = start;
-
-        ////printf("For sheet Id %d the cycle is :\n", sheetId);
-        //int cycleSize = 0;
-        //do
-        //{
-            //cycleSize++;
-
-            //const float u = CGAL::to_double(curr->source()->point().x());
-            //const float v = CGAL::to_double(curr->source()->point().y());
-            //this->sheetBoundary[sheetId].push_back({u, v});
-
-            ////printf("%d (start = %d)\n", curr->data(), start->data());
-            //curr = halfEdgesPerSheetNext[sheetId][curr];
-
-        //} while (curr != start);
-
-        ////printf("Cycle is %d and halfEdges in the face are %ld\n", cycleSize, halfEdgesPerSheetNext[sheetId].size());
-
-        //assert(cycleSize == halfEdgesPerSheetNext[sheetId].size());
-
-        //// now you can move curr around
-    //}
-//}
-
- 
+    for (const auto& [sheetId, halfEdges] : halfEdgePerSheet)
+    {
+        for (Halfedge_const_handle he : halfEdges)
+        {
+            sourceCountPerSheet[sheetId][he->source()].push_back(he);
+            targetCountPerSheet[sheetId][he->target()].push_back(he);
+        }
+    }
 
 
+    for (const auto& [sheetId, sourceVertexDegrees] : sourceCountPerSheet)
+    {
+        for (const auto& [vertex, halfEdges] : sourceVertexDegrees)
+        {
+            const int sourceDegree = halfEdges.size();
+            const int targetDegree = targetCountPerSheet[sheetId][vertex].size();
+
+            if (sourceDegree != targetDegree)
+            {
+                std::cout << "------------------------------ ERROR --------------------------------\n";
+                std::cout << "\n\nSheet with ID = " << sheetId << std::endl;
+                std::cout << "Source degree " << sourceDegree << " and target degree " << targetDegree << " for vertex " << vertex->point() << std::endl;
+
+                for (const Halfedge_const_handle he : halfEdges)
+                {
+
+                    std::cout << "Half edge from " << he->source()->point() << " to " << he->target()->point() << std::endl;
+                }
+                std::cout << "\n\n\n";
+            }
+
+            //assert(degree == 1 && targetDegree == 1);
+        }
+
+    }
 
 
+    std::map<int, double> sheetArea;
 
+    for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face) 
+    {
+        if (face->is_unbounded() || !face->has_outer_ccb())
+        {
+            continue;
+        }
+
+        const int faceId = face->data();
+        double faceArea = 0.0;
+
+
+        CartesianPolygon_2 poly;
+
+        auto circ = face->outer_ccb();
+        auto curr = circ;
+        do {
+            // Get point from CGAL (and convert to double )
+            const double u = CGAL::to_double(curr->source()->point().x());
+            const double v = CGAL::to_double(curr->source()->point().y());
+
+            poly.push_back({u, v});
+        } while (++curr != circ);
+
+
+        faceArea += poly.area();
+
+
+        // For each component in this face
+        for (const int &componentId : this->correspondenceGraph[faceId])
+        {
+            const int sheetId = this->correspondenceGraphDS.find(componentId);
+            sheetArea[sheetId] += faceArea;
+        }
+    }
+
+    // Print out the sheets in sorted order
+    std::vector<std::pair<int, double>> sortedSheets;
+
+    sortedSheets.reserve(sheetArea.size());
+    for (const auto& [id, area] : sheetArea)
+        sortedSheets.emplace_back(id, area);
+
+    std::sort(sortedSheets.begin(), sortedSheets.end(),
+            [](const auto& a, const auto& b)
+            {
+            return a.second > b.second; // ascending by area
+            });
+
+    for (int i = 0 ; i < sortedSheets.size() ; i++)
+    {
+        const auto &[sheetId, area] = sortedSheets[i];
+        std::cout << i << ": sheet " << sheetId << " has area " << area << std::endl;
+    }
+
+
+}
 
 void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &currentHalfEdge)
 {
@@ -175,7 +161,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     //printf("\n--------------------------------------------------------------------------------------\n");
 
     // This one has already been computed
-    PreimageGraph &pg = this->preimageGraphsAll[currentHalfEdge->data().id].second;
+    PreimageGraph &pg = this->preimageGraphs[currentHalfEdge->data().id].second;
 
 
     //printf("\n-----------------------------------------------------\n");
@@ -185,7 +171,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     //pg.printByRoot();
 
     // This one is empty and we need to compute it
-    PreimageGraph &pg2 = this->preimageGraphsAll[currentHalfEdge->twin()->data().id].first;
+    PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->twin()->data().id].first;
     pg2 = pg;
 
     if (currentHalfEdge->data().isPseudoSingular)
@@ -232,13 +218,13 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
     //std::cout << "Half-edge is [" << initialHalfEdge->source()->point() << "] -> [" << initialHalfEdge->target()->point() << "]";
     //printf("\n-----------------------------------------------------\n");
 
-    PreimageGraph pg = this->preimageGraphsAll[initialHalfEdge->data().id].first;
+    PreimageGraph pg = this->preimageGraphs[initialHalfEdge->data().id].first;
 
     //std::cout << "First preimage graph is: \n";
     //pg.printByRoot();
 
     pg.updateComponentsRegular(tetMesh, this->edgeRegionSegments[initialHalfEdge->data().id]);
-    this->preimageGraphsAll[initialHalfEdge->data().id].second = pg;
+    this->preimageGraphs[initialHalfEdge->data().id].second = pg;
 
     //std::cout << "\nSecond preimage graph is: \n";
     //pg.printByRoot();
@@ -247,19 +233,19 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
     do
     {
         pg.updateComponentsRegular(tetMesh, this->vertexRegionSegments[currentHalfEdge->prev()->data().id]);
-        this->preimageGraphsAll[currentHalfEdge->data().id].first = pg;
+        this->preimageGraphs[currentHalfEdge->data().id].first = pg;
 
         pg.updateComponentsRegular(tetMesh, this->edgeRegionSegments[currentHalfEdge->data().id]);
-        this->preimageGraphsAll[currentHalfEdge->data().id].second = pg;
+        this->preimageGraphs[currentHalfEdge->data().id].second = pg;
 
 
         //printf("\n-----------------------------------------------------\n");
         //std::cout << "Half-edge is [" << currentHalfEdge->source()->point() << "] -> [" << currentHalfEdge->target()->point() << "]";
         //printf("\n-----------------------------------------------------\n");
         //std::cout << "First preimage graph is: \n";
-        //this->preimageGraphsAll[currentHalfEdge->data()].first.printByRoot();
+        //this->preimageGraphs[currentHalfEdge->data()].first.printByRoot();
         //std::cout << "\nSecond preimage graph is: \n";
-        //this->preimageGraphsAll[currentHalfEdge->data()].second.printByRoot();
+        //this->preimageGraphs[currentHalfEdge->data()].second.printByRoot();
 
 
         currentHalfEdge = currentHalfEdge->next();
@@ -272,7 +258,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 {
     this->correspondenceGraph.resize(singularArrangement.arr.number_of_faces());
     //this->preimageGraphs.resize(singularArrangement.arr.number_of_faces());
-    this->preimageGraphsAll.resize(singularArrangement.arr.number_of_halfedges());
+    this->preimageGraphs.resize(singularArrangement.arr.number_of_halfedges());
 
     // Find the outside face
     Halfedge_const_handle startingHalfedge;
@@ -300,7 +286,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
     // Seed the first face
     //this->preimageGraphs[startingHalfedge->twin()->face()->data()].updateComponentsSingular(tetMesh, this->edgeCrossingSegments[startingHalfedge->data()]);
-    //this->preimageGraphsAll[startingHalfedge->twin()->data()].first = this->preimageGraphs[startingHalfedge->twin()->face()->data()];
+    //this->preimageGraphs[startingHalfedge->twin()->data()].first = this->preimageGraphs[startingHalfedge->twin()->face()->data()];
 
     // Update the correspondence graph with the new component
     //this->correspondenceGraphDS.addElement(0);
@@ -321,9 +307,9 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
         //printf("\n\n\nCurrently at face %d\n", initialHalfEdge->face()->data());
 
-        correspondenceGraph[initialHalfEdge->face()->data()] = this->preimageGraphsAll[initialHalfEdge->data().id].first.getUniqueComponents();
+        correspondenceGraph[initialHalfEdge->face()->data()] = this->preimageGraphs[initialHalfEdge->data().id].first.getUniqueComponents();
 
-        // Loop through the neighbours
+        // Loop around the face
         Halfedge_const_handle currentHalfEdge = initialHalfEdge;
         do
         {
@@ -342,11 +328,11 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
             }
 
             // @TODO should be else if, optimise
-            // Compute correspondence
+            // Compute correspondence with the neighbour
             if (order[faceId] < order[twinFaceId])
             {
-                const PreimageGraph &pgFace = this->preimageGraphsAll[currentHalfEdge->data().id].second;
-                const PreimageGraph &pgTwinFace = this->preimageGraphsAll[currentHalfEdge->twin()->data().id].first;
+                const PreimageGraph &pgFace = this->preimageGraphs[currentHalfEdge->data().id].second;
+                const PreimageGraph &pgTwinFace = this->preimageGraphs[currentHalfEdge->twin()->data().id].first;
 
                 const std::vector<std::pair<int, int>> componentPairs = pgFace.establishCorrespondence(
                         tetMesh, 
@@ -363,11 +349,11 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
             // We no longer need the preimage graphs, we can clear them
             if (false == cachePreimageGraphs)
             {
-                this->preimageGraphsAll[currentHalfEdge->data().id].first = PreimageGraph();
-                this->preimageGraphsAll[currentHalfEdge->data().id].second = PreimageGraph();
+                this->preimageGraphs[currentHalfEdge->data().id].first = PreimageGraph();
+                this->preimageGraphs[currentHalfEdge->data().id].second = PreimageGraph();
 
-                //this->preimageGraphsAll[currentHalfEdge->data()].first.clear();
-                //this->preimageGraphsAll[currentHalfEdge->data()].second.clear();
+                //this->preimageGraphs[currentHalfEdge->data()].first.clear();
+                //this->preimageGraphs[currentHalfEdge->data()].second.clear();
             }
 
             currentHalfEdge = currentHalfEdge->next();
@@ -389,9 +375,9 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
         //std::cout << "Half-edge is [" << currentHalfEdge->source()->point() << "] -> [" << currentHalfEdge->target()->point() << "]";
         //printf("\n-----------------------------------------------------\n");
         //std::cout << "First preimage graph is: \n";
-        //this->preimageGraphsAll[currentHalfEdge->data()].first.printByRoot();
+        //this->preimageGraphs[currentHalfEdge->data()].first.printByRoot();
         //std::cout << "\nSecond preimage graph is: \n";
-        //this->preimageGraphsAll[currentHalfEdge->data()].second.printByRoot();
+        //this->preimageGraphs[currentHalfEdge->data()].second.printByRoot();
     //}
 
     this->correspondenceGraphDS.finalise();
@@ -1577,7 +1563,7 @@ bool ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
         std::pair<Face_const_handle, Face_const_handle> foundFaces =  {foundHalfEdges.first->face(), foundHalfEdges.second->face()};
         std::pair<int, int> foundFaceIds =  {regularArrangement.arrangementFacesIdices.at(foundFaces.first), regularArrangement.arrangementFacesIdices.at(foundFaces.second)};
 
-        std::pair<PreimageGraph, PreimageGraph> &singularPreimageGraphs = this->preimageGraphsAll[halfEdge->data().id];
+        std::pair<PreimageGraph, PreimageGraph> &singularPreimageGraphs = this->preimageGraphs[halfEdge->data().id];
         std::pair<DisjointSet<int>, DisjointSet<int>> regularPreimageGraphs = {rs.preimageGraphs[foundFaceIds.first], rs.preimageGraphs[foundFaceIds.second]};
 
         //assert(singularPreimageGraphs.first == regularPreimageGraphs.first);
@@ -1624,4 +1610,3 @@ bool ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
     }
     return true;
 }
-

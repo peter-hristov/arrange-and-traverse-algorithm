@@ -226,7 +226,7 @@ TetMesh io::readDataTxt(const std::string &filename)
 
 void io::saveSheets2(const TetMesh &tetMesh,
                         const Arrangement &arrangement,
-                        const ReebSpace2 &reebSpace,
+                        ReebSpace2 &reebSpace,
                         const std::string &outputSheetPolygonsFilename)
 {
     auto points = vtkSmartPointer<vtkPoints>::New();
@@ -269,8 +269,10 @@ void io::saveSheets2(const TetMesh &tetMesh,
             ++circ;
         } while (circ != start);
 
-        for (const int &sheetId : reebSpace.correspondenceGraph[faceId])
+        for (const int &componentId : reebSpace.correspondenceGraph[faceId])
         {
+            const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+
             // Insert the polygon directly into vtkCellArray
             polys->InsertNextCell(ptIds.size(), ptIds.data());
             sheetIds->InsertNextValue(sheetId);

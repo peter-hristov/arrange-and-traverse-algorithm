@@ -170,9 +170,12 @@ int main(int argc, char* argv[])
     reebSpace2.traverse(tetMesh, singularArrangement, false);
     Timer::stop("Computed singular traversal            :");
 
-    //Timer::start();
-    //reebSpace2.computeSheets(singularArrangement);
-    //Timer::stop("Postprocessing                         :");
+    Timer::start();
+    reebSpace2.computeSheets(singularArrangement);
+    Timer::stop("Postprocessing                         :");
+
+
+    std::cout << "\nThe Reeb space has this many sheets " << reebSpace2.correspondenceGraphDS.countComponents() << std::endl;
 
     int correspondenceGraphSize = 0;
     for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
@@ -260,7 +263,7 @@ int main(int argc, char* argv[])
         try
         {
             printf("SAVING SHEETS--------------------");
-            io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtp");
+            //io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtp");
             io::saveSheets2(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename);
         }
         catch (const std::exception &e)

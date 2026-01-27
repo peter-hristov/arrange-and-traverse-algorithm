@@ -47,10 +47,7 @@ class ReebSpace2
         int numberOfSheets;
 
         //
-        // For a face, which sheets does it have
-        //std::vector<PreimageGraph> preimageGraphs;
-
-        std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphsAll;
+        std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
 
 
 
