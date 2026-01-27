@@ -12,6 +12,8 @@
 
 void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 {
+    std::map<Vertex_const_handle, std::vector<int>> sheetsPerVertex;
+
     std::map<int, std::set<Halfedge_const_handle>> halfEdgePerSheet;
 
     for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
@@ -48,9 +50,26 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
             if (false == twinFaceSheets.contains(sheetId))
             {
                 halfEdgePerSheet[sheetId].insert(he);
+
+                sheetsPerVertex[he->source()].push_back(sheetId);
+                sheetsPerVertex[he->target()].push_back(sheetId);
             }
         }
     }
+
+
+    for (const auto &[vertexHandle, sheets] : sheetsPerVertex)
+    {
+        for (int i = 0 ; i < sheets.size() ; i++)
+        {
+            for (int j = i + 1 ; j < sheets.size() ; j++)
+            {
+                this->areSheetsConnected.insert({sheets[i], sheets[j]});
+            }
+        }
+    }
+
+
 
 
     // Sanity check, make sure the boundary is a simple polygon, each vertex has in and out degree 1
@@ -95,7 +114,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
     }
 
 
-    std::map<int, double> sheetArea;
+    double totalArea;
 
     for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face) 
     {
@@ -122,6 +141,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 
 
         faceArea += poly.area();
+        totalArea += faceArea;
 
 
         // For each component in this face
@@ -130,6 +150,13 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
             const int sheetId = this->correspondenceGraphDS.find(componentId);
             sheetArea[sheetId] += faceArea;
         }
+    }
+
+
+    for (const auto &[sheetId, area] : this->sheetArea)
+    {
+        this->sheetAreaProportion[sheetId] = area /  totalArea;
+
     }
 
     // Print out the sheets in sorted order
@@ -148,7 +175,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
     for (int i = 0 ; i < sortedSheets.size() ; i++)
     {
         const auto &[sheetId, area] = sortedSheets[i];
-        std::cout << i << ": sheet " << sheetId << " has area " << area << std::endl;
+        std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
     }
 
 

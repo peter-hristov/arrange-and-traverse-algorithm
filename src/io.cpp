@@ -574,3 +574,45 @@ void io::printTriangle(const TetMesh &tetMesh, const int &triangleId)
     }
     printf("--------\n");
 }
+
+
+
+
+
+void io::saveSheetGraph(ReebSpace2 &reebSpace, const std::string &filename)
+{
+    const double minSize = 1.0;  // inches
+    const double maxSize = 10.0;
+
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        throw std::runtime_error("Cannot open file: " + filename);
+    }
+
+    out << "graph G {\n";
+    out << "    overlap=false;\n";
+    out << "    splines=true;\n";
+    out << "    node [shape=circle, style=filled, fillcolor=lightblue, color=blue];\n";
+
+    for (const auto &[node, prop] : reebSpace.sheetAreaProportion)
+    {
+        double size = minSize + prop * (maxSize - minSize);
+
+        out << "    " << node
+            << " [width=" << size
+            << ", height=" << size
+            << ", fixedsize=true];\n";
+    }
+
+    // Write edges
+    for (const auto &edgeSet : reebSpace.areSheetsConnected) {
+        auto it = edgeSet.begin();
+        int a = *it++;
+        int b = *it;
+        out << "    " << a << " -- " << b << ";\n";
+    }
+
+    out << "}\n";
+    out.close();
+}
+

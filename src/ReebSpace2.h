@@ -54,6 +54,8 @@ class ReebSpace2
         std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
 
         std::vector<PreimageGraph> preimageGraphPerFace;
+        
+        std::set<std::set<int>> areSheetsConnected;
 
 
         std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
@@ -61,6 +63,9 @@ class ReebSpace2
 
         std::map<int, std::vector<int>> trianglesPerSheet;
         int numberOfSheets;
+
+        std::map<int, double> sheetArea;
+        std::map<int, double> sheetAreaProportion;
 
 
         // <Geometric computation>
