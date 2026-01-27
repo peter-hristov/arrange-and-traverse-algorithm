@@ -26,7 +26,7 @@
 #include <vtkCellData.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkTriangleFilter.h>
-
+#include <vtkTriangle.h>
 
 
 
@@ -223,6 +223,61 @@ TetMesh io::readDataTxt(const std::string &filename)
     return tetMesh;
 }
 
+
+void io::saveSheetsFeatures(const TetMesh &tetMesh,
+                        const Arrangement &arrangement,
+                        ReebSpace2 &reebSpace2,
+                        const std::string &filename)
+{
+
+    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray> triangles = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkIntArray> sheetIdsArray = vtkSmartPointer<vtkIntArray>::New();
+
+    sheetIdsArray->SetName("SheetID");
+    sheetIdsArray->SetNumberOfComponents(1);
+
+    // Add all points (assume all unique, in order)
+    for (const auto& v : tetMesh.vertexDomainCoordinates)
+    {
+        points->InsertNextPoint(v[0], v[1], v[2]);
+    }
+
+    for (const auto& [sheetId, triangleIds] : reebSpace2.trianglesPerSheet)
+    {
+        for (int triangleId : triangleIds)
+        {
+            const std::set<int>& triangle = tetMesh.triangles[triangleId];
+
+            vtkIdType ids[3];
+            int idx = 0;
+            for (int vertexId : triangle)
+                ids[idx++] = vertexId;
+
+            vtkSmartPointer<vtkTriangle> tri = vtkSmartPointer<vtkTriangle>::New();
+            tri->GetPointIds()->SetId(0, ids[0]);
+            tri->GetPointIds()->SetId(1, ids[1]);
+            tri->GetPointIds()->SetId(2, ids[2]);
+
+            triangles->InsertNextCell(tri);
+            sheetIdsArray->InsertNextValue(sheetId);
+        }
+    }
+
+    // Build polydata
+    polyData->SetPoints(points);
+    polyData->SetPolys(triangles);
+
+    // Attach sheet ID array to cell data
+    polyData->GetCellData()->AddArray(sheetIdsArray);
+
+    // Write to file
+    vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(polyData);
+    writer->Write();
+}
 
 void io::saveSheets2(const TetMesh &tetMesh,
                         const Arrangement &arrangement,

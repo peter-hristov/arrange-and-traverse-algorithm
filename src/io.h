@@ -19,6 +19,7 @@ namespace io
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveFibers(const std::string&, const std::vector<FiberPoint>&);
 
+    void saveSheetsFeatures(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
 
     std::vector<FiberPoint> generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints);
     void generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string);

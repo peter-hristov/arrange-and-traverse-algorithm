@@ -29,7 +29,6 @@ class ReebSpace2
         // The vertex region is defined as the area between $e$ and $e->next$ around $e->source$, the order is CCW  as per CGAL convention
         std::vector<std::vector<std::pair<int, bool>>> vertexRegionSegments;
 
-
         // Index by singular face Id in the singular arrangement
         // For each singular face get the list of fiber graph class component (FGCC) Ids
         // If two FGCCs have the same ID, they are in the same sheet, if they have different IDs check in correspondenceGraphDS whether they are in the same sheets
@@ -40,20 +39,28 @@ class ReebSpace2
         DisjointSetSimple correspondenceGraphDS;
 
 
-
-        std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
-
-
-        int numberOfSheets;
-
+        //  \    .    .   .   .    .    /
+        //   \   .   .    .    .   .   /
+        //    \  .  .     .     .  .  /
+        //     \ . .  o1  .  o2  . . /
+        //      \.________.________./
+        //       a        .         b 
+        //                .
         //
+        // Indexed by half-edge ID
+        // For a half-edge $ab$, where "\, _, /" represent singular segments and ... represent regular ones,
+        // The first preimage graph is o1: at the source $a$, after all regular segments
+        // The second preimage graph is o2: at the target $b$, before all regular segments
         std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
 
+        std::vector<PreimageGraph> preimageGraphPerFace;
 
 
-
+        std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
         int orderIndex = 0;
 
+        std::map<int, std::vector<int>> trianglesPerSheet;
+        int numberOfSheets;
 
 
         // <Geometric computation>

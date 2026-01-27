@@ -152,7 +152,76 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
     }
 
 
+
+
+
+    // Can we get some fibers for each
+    // How many non-empty fiber graphs are t here? should be the same as the number of faces
+
+
+    int nonEmptyFiberGraphs = 0;
+    for (const auto &[firstFG, secondFG] : this->preimageGraphs)
+    {
+        if (firstFG.componentRoot.size() != 0)
+        {
+            nonEmptyFiberGraphs++;
+        }
+
+    }
+
+    // For every face face
+    for (int faceId = 0 ; faceId < this->preimageGraphPerFace.size(); faceId++)
+    {
+
+        // For every sheet in the face
+        for (const int &componentId : this->correspondenceGraph[faceId])
+        {
+            const int sheetId = this->correspondenceGraphDS.find(componentId);
+
+
+            // For every thiangle in the preimage graph
+            for (const auto &[triangleId, triangleComponentId] : preimageGraphPerFace[faceId].componentRoot)
+            {
+
+                // If this triangle is in the same component as the sheet
+                const int sheetIdComponent = this->correspondenceGraphDS.find(triangleComponentId);
+
+                if (sheetId == sheetIdComponent)
+                {
+                    this->trianglesPerSheet[sheetId].push_back(triangleId);
+                }
+
+            }
+        }
+    }
+
+
+    //for (const auto &[sheetId, trianglesVector] : this->trianglesPerSheet)
+    //{
+        //printf("We are looking at sheet %d\n", sheetId);
+
+        //for (const int triangleId : trianglesVector)
+        //{
+            //printf("%d, ", triangleId);
+        //}
+        //printf("\n");
+    //}
+    //printf("Number of non-empty fiber graphs %d and number of faces %d\n", nonEmptyFiberGraphs, singularArrangement.arr.number_of_faces());
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &currentHalfEdge)
 {
@@ -256,6 +325,7 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
 
 void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool cachePreimageGraphs)
 {
+    this->preimageGraphPerFace.resize(singularArrangement.arr.number_of_faces());
     this->correspondenceGraph.resize(singularArrangement.arr.number_of_faces());
     //this->preimageGraphs.resize(singularArrangement.arr.number_of_faces());
     this->preimageGraphs.resize(singularArrangement.arr.number_of_halfedges());
@@ -346,7 +416,15 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 }
             }
 
+            // Cache one of the fiber graphs for the face
+            if (currentHalfEdge != initialHalfEdge)
+            {
+                this->preimageGraphPerFace[currentHalfEdge->face()->data()] = this->preimageGraphs[currentHalfEdge->data().id].first;
+            }
+
             // We no longer need the preimage graphs, we can clear them
+            // Save the first one, though, how much extra would that be
+            //if (false == cachePreimageGraphs)
             if (false == cachePreimageGraphs)
             {
                 this->preimageGraphs[currentHalfEdge->data().id].first = PreimageGraph();

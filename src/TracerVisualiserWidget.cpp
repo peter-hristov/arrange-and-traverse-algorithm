@@ -44,8 +44,10 @@ TracerVisualiserWidget::initializeGL()
 {
     glClearColor(0.3, 0.3, 0.3, 0.0);
 
-    //glEnable(GL_LIGHTING);
-    //glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
     // Enable alpha blending
     glEnable(GL_BLEND);
@@ -104,21 +106,50 @@ TracerVisualiserWidget::generateDisplayList()
     glEndList();
 }
 
-void
-TracerVisualiserWidget::drawSolidTriangle(GLfloat vertices[3][3])
+void TracerVisualiserWidget::drawSolidTriangle(GLfloat vertices[3][3])
 {
-    GLfloat a[] = { vertices[1][0] - vertices[0][0], vertices[1][1] - vertices[0][1], vertices[1][2] - vertices[0][2] };
+    // Compute edges
+    GLfloat a[3] = {
+        vertices[1][0] - vertices[0][0],
+        vertices[1][1] - vertices[0][1],
+        vertices[1][2] - vertices[0][2]
+    };
 
-    GLfloat b[] = { vertices[2][0] - vertices[0][0], vertices[2][1] - vertices[0][1], vertices[2][2] - vertices[0][2] };
+    GLfloat b[3] = {
+        vertices[2][0] - vertices[0][0],
+        vertices[2][1] - vertices[0][1],
+        vertices[2][2] - vertices[0][2]
+    };
 
-    // Invert Normal for sub/super level sets
-    GLfloat normal[] = { isovalueMult * (a[2] * b[1] - b[1] * b[2]),
-                         isovalueMult * (a[0] * b[2] - a[2] * b[0]),
-                         isovalueMult * (a[1] * b[0] - a[0] * b[1]) };
+    // Correct cross product for the normal
+    GLfloat normal[3] = {
+        a[1]*b[2] - a[2]*b[1],
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0]
+    };
 
-    GLfloat normalFlipped[] = { -1 * normal[0], -1 * normal[1], -1 * normal[2] };
+    // Optionally scale by isovalueMult
+    //normal[0] *= isovalueMult;
+    //normal[1] *= isovalueMult;
+    //normal[2] *= isovalueMult;
 
+    // Normalize the normal
+    GLfloat len = std::sqrt(normal[0]*normal[0] +
+                            normal[1]*normal[1] +
+                            normal[2]*normal[2]);
+    if (len != 0.0f) {
+        normal[0] /= len;
+        normal[1] /= len;
+        normal[2] /= len;
+    }
+
+    // Flip normal if needed
+    GLfloat normalFlipped[3] = { -normal[0], -normal[1], -normal[2] };
+
+    // Set normal for OpenGL
     glNormal3fv(normalFlipped);
+
+    // Draw the triangle
     glVertex3fv(vertices[0]);
     glVertex3fv(vertices[1]);
     glVertex3fv(vertices[2]);
@@ -442,7 +473,47 @@ TracerVisualiserWidget::drawScene()
     }
     glEnd();
 
+
+
+
+
+    // Draw features
+
+    //glBegin(GL_TRIANGLES);
+
+
+    //for (const int triangleId : this->data.reebSpace2.trianglesPerSheet[4])
+    //{
+        //const std::set<int>& triangle = this->data.tetMesh.triangles[triangleId];
+
+        //// Collect vertices into a GLfloat[3][3] array
+        //GLfloat verts[3][3];
+        //int idx = 0;
+        //for (const int vertexId : triangle)
+        //{
+            //const std::array<GLfloat, 3>& vertexCoordinates = this->data.tetMesh.vertexDomainCoordinates[vertexId];
+
+            //verts[idx][0] = vertexCoordinates[0];
+            //verts[idx][1] = vertexCoordinates[1];
+            //verts[idx][2] = vertexCoordinates[2];
+
+            //idx++;
+            //if (idx >= 3) break; // just in case
+        //}
+
+        //// Draw the triangle with proper normal
+        //drawSolidTriangle(verts);
+    //}
+
+
+    //glEnd();
+
+
     glFlush();
+
+
+
+
 }
 
 void

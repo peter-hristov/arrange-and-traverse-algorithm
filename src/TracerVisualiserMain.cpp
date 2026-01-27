@@ -265,6 +265,7 @@ int main(int argc, char* argv[])
             printf("SAVING SHEETS--------------------");
             //io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtp");
             io::saveSheets2(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename);
+            io::saveSheetsFeatures(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename + ".features.vtp");
         }
         catch (const std::exception &e)
         {

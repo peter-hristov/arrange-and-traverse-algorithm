@@ -17,6 +17,7 @@ class PreimageGraph
     public:
 
         // Which triangles belong to which root
+        // triangleId -> triangleId
         std::unordered_map<int, int> componentRoot;
 
         // For each component save a representatives so that we can do correspondence
