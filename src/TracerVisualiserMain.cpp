@@ -140,6 +140,10 @@ int main(int argc, char* argv[])
     singularArrangement.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
     Timer::stop("Assigning pseudosingular edges         :");
 
+    Timer::start();
+    singularArrangement.computePointLocationDataStructure();
+    Timer::stop("Arrangement search structure           :");
+
 
     //
     // Reeb space computation.
@@ -151,7 +155,7 @@ int main(int argc, char* argv[])
     Timer::stop("Computed red/blud intersetions         :");
 
     Timer::start();
-    reebSpace2.computeEdgeRegionMinusPlusTriangles(tetMesh, singularArrangement);
+    reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
     Timer::stop("Edge regions plus/minus triangles      :");
 
     Timer::start();
@@ -159,11 +163,11 @@ int main(int argc, char* argv[])
     Timer::stop("Computed vertex regions                :");
 
     Timer::start();
-    reebSpace2.computeVertexRegionMinusPlusTriangles(tetMesh, singularArrangement);
+    reebSpace2.determineVertexRegionSegmentsOrientation(tetMesh, singularArrangement);
     Timer::stop("Vertex regions plus/minus triangles    :");
 
     Timer::start();
-    reebSpace2.computeEdgeCrossingMinusPlusTriangles(tetMesh, singularArrangement);
+    reebSpace2.determineEdgeCrossingSegmentsOriantation(tetMesh, singularArrangement);
     Timer::stop("Edge crossing plus/minus triangles     :");
 
     Timer::start();

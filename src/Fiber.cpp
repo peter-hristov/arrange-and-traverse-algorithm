@@ -2,9 +2,218 @@
 
 #include "./Fiber.h"
 #include "./DisjointSet.h"
+#include "src/FiberPoint.h"
+#include "src/PreimageGraph.h"
 
 #include <queue>
+#include <unistd.h>
 
+
+
+std::array<double, 3> computeBarycentricCoordinates(const TetMesh &tetMesh, const int triangleId, const std::array<double, 2> &fiberPoint)
+{
+    return {0.33, 0.33, 0.33};
+
+    // Unpack the actual numerical  coordinates of the vertices of the triangle
+    std::vector<CartesianPoint> triangleVertexCoordinates;
+
+    for (const int &vertexId : tetMesh.triangles[triangleId])
+    {
+
+        triangleVertexCoordinates.push_back(
+                CartesianPoint(
+                    tetMesh.vertexCoordinatesF[vertexId], 
+                    tetMesh.vertexCoordinatesG[vertexId]
+                    ));
+    }
+
+
+    std::array<double, 3> barycentricCoordinates;
+
+    CartesianPoint P(fiberPoint[0], fiberPoint[1]);
+
+    CGAL::Barycentric_coordinates::triangle_coordinates_2(
+            triangleVertexCoordinates[0], 
+            triangleVertexCoordinates[0], 
+            triangleVertexCoordinates[0], 
+            P, barycentricCoordinates.begin());
+
+    return barycentricCoordinates;
+}
+
+
+std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh &tetMesh, std::vector<bool> &visited, const PreimageGraph &pg, const std::array<double, 2> &fiberPoint, const int sheetId)
+{
+    std::vector<FiberPoint> faceFibers;
+
+    // triangleId
+    std::queue<int> bfsQueue;
+
+    bfsQueue.push(seedTriangleId);
+    visited[seedTriangleId] = true;
+
+    //const int sheetColour = sheetId % fiber::fiberColours.size();
+
+    const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+    while (false == bfsQueue.empty())
+    {
+        const int currentTriangleId = bfsQueue.front();
+        bfsQueue.pop();
+
+        const std::set<int> currentTriangleUnpacked = tetMesh.triangles[currentTriangleId];
+        const std::vector<int> currentTriangleIndices = std::vector<int>(currentTriangleUnpacked.begin(), currentTriangleUnpacked.end());
+        const std::array<double, 3> currentTriangleBarycentricCoordinates = computeBarycentricCoordinates(tetMesh, currentTriangleId, fiberPoint);
+
+        for (const int &neighbourTriangleId : tetMesh.tetIncidentTriangles[currentTriangleId])
+        {
+            // If the neighbour HAS been visited or if it's NOT active, move on
+            if (visited[neighbourTriangleId] == true || false == pg.componentRoot.contains(neighbourTriangleId))
+            {
+                continue;
+            }
+
+
+
+            visited[neighbourTriangleId] = true;
+            bfsQueue.push(neighbourTriangleId);
+
+
+            const std::set<int> neighbourTriangleUnpacked = tetMesh.triangles[neighbourTriangleId];
+            const std::vector<int> neighbourTriangleIndices = std::vector<int>(neighbourTriangleUnpacked.begin(), neighbourTriangleUnpacked.end());
+            const std::array<double, 3> neighbourTriangleBarycentricCoordinates = computeBarycentricCoordinates(tetMesh, neighbourTriangleId, fiberPoint);
+
+            FiberPoint fb(
+                    currentTriangleBarycentricCoordinates[0], 
+                    currentTriangleBarycentricCoordinates[1], 
+                    {
+                    tetMesh.vertexDomainCoordinates[currentTriangleIndices[0]],
+                    tetMesh.vertexDomainCoordinates[currentTriangleIndices[1]],
+                    tetMesh.vertexDomainCoordinates[currentTriangleIndices[2]],
+                    },
+                    sheetColour);
+            fb.sheetId = sheetId;
+            fb.triangleId = currentTriangleId;
+
+            FiberPoint fb2(
+                    neighbourTriangleBarycentricCoordinates[0], 
+                    neighbourTriangleBarycentricCoordinates[1], 
+                    {
+                    tetMesh.vertexDomainCoordinates[neighbourTriangleIndices[0]],
+                    tetMesh.vertexDomainCoordinates[neighbourTriangleIndices[1]],
+                    tetMesh.vertexDomainCoordinates[neighbourTriangleIndices[2]],
+                    },
+                    sheetColour);
+            fb2.sheetId = sheetId;
+            fb2.triangleId = neighbourTriangleId;
+
+            faceFibers.push_back(fb);
+            faceFibers.push_back(fb2);
+
+
+
+            //FiberPoint fb2(barycentricCoordinatesNeighbour[0], barycentricCoordinatesNeighbour[1], {
+                    //tetMesh.vertexDomainCoordinates[triangle2Indices[0]],
+                    //tetMesh.vertexDomainCoordinates[triangle2Indices[1]],
+                    //tetMesh.vertexDomainCoordinates[triangle2Indices[2]],
+                    //},
+                    //sheetColour);
+            //fb2.sheetId = currentSheeId;
+            //fb2.triangleId = neighbourTriagleId;
+            //faceFibers.push_back(fb2);
+
+        }
+    }
+
+    return faceFibers;
+}
+
+
+std::vector<FiberPoint> processPreimageGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, PreimageGraph &pg, const std::set<int> activeSheets)
+{
+    // We first need to sort the triangles in the fiber graph
+    std::vector<FiberPoint> faceFibers;
+
+    // The inner set will always have two elements, two triangle IDs, basically a tetrahedron
+    std::vector<bool> visited(tetMesh.triangles.size(), false);
+
+    for (const auto &[triangleId, componentId] : pg.componentRoot)
+    {
+        const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+
+        if (false == activeSheets.contains(sheetId))
+        {
+            continue;
+        }
+
+        std::vector<FiberPoint> newFaceFibers = BFSFiberSearch(triangleId, tetMesh, visited, pg, fiberPoint, sheetId);
+
+        faceFibers.insert(
+                faceFibers.end(),
+                newFaceFibers.begin(),
+                newFaceFibers.end()
+                );
+
+    }
+
+    return faceFibers;
+
+}
+
+std::vector<FiberPoint> fiber::computeFiberFromFiberGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint)
+{
+    // The output of this function
+    std::vector<FiberPoint> faceFibers;
+
+    // Determine which face has been clicked on
+    Face_const_handle activeFace = arrangement.getActiveFace(fiberPoint);
+    const int activeFaceId = arrangement.arrangementFacesIdices[activeFace];
+
+    // Determine which sheets are active (contained the active face)
+    std::set<int> activeSheets;
+    std::cout << "The active faces are : ";
+    for (const int &componentId : reebSpace.correspondenceGraph[activeFaceId])
+    {
+        const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+        std::cout << sheetId << " ";
+
+        activeSheets.insert(sheetId);
+    }
+    std::cout << std::endl;
+
+    // Go through all faces and pull their representative fibers for their sheets
+    for (auto face = arrangement.arr.faces_begin(); face != arrangement.arr.faces_end(); ++face) 
+    {
+        if (face->is_unbounded() || !face->has_outer_ccb())
+        {
+            continue;
+        }
+
+        const int faceId = face->data();
+
+        PreimageGraph &pg = reebSpace.preimageGraphPerFace[faceId];
+
+        for (const int &componentId : reebSpace.correspondenceGraph[faceId])
+        {
+            const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+
+            if (activeSheets.contains(sheetId))
+            {
+                std::vector<FiberPoint> newFaceFibers = processPreimageGraph(tetMesh, arrangement, reebSpace, fiberPoint, pg, activeSheets);
+
+                faceFibers.insert(
+                        faceFibers.end(),
+                        newFaceFibers.begin(),
+                        newFaceFibers.end()
+                        );
+            }
+        }
+
+    }
+
+
+    return faceFibers;
+}
 
 std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<double, 2> &fiberPoint, const int reebSheetIdOnly = -1)
 {
@@ -356,5 +565,3 @@ std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement 
         //}
     //}
 //}
-
-

@@ -55,11 +55,13 @@ class ReebSpace2
 
         std::vector<PreimageGraph> preimageGraphPerFace;
         
+        // This tells you whether two sheets share a boundary (a half-edge or a vertex).
+        // These are the edges of the sheet graph
         std::set<std::set<int>> areSheetsConnected;
 
 
         std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
-        int orderIndex = 0;
+        //int orderIndex = 0;
 
         std::map<int, std::vector<int>> trianglesPerSheet;
         int numberOfSheets;
@@ -68,11 +70,15 @@ class ReebSpace2
         std::map<int, double> sheetAreaProportion;
 
 
+
+
+
+
+
         // <Geometric computation>
         //
         void computeEdgeRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
         void computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
         // When sorting the segments around a vertex, compare two of them
@@ -82,9 +88,11 @@ class ReebSpace2
         Halfedge_const_handle getSegmentRegion(Vertex_const_handle &vertexHandle, const Segment_2 &segment);
 
         // Plus/Minus triangles for each region
-        void computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
-        void computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
-        void computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement);
+        void determineEdgeRegionSegmentsOrientation(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
+        void determineEdgeCrossingSegmentsOriantation(const TetMesh &tetMesh, Arrangement &singularArrangement);
+
+        void determineVertexRegionSegmentsOrientation(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
         //
         // </Geometric computation>
@@ -92,10 +100,27 @@ class ReebSpace2
 
 
 
-        // Compute the actual Reeb space with "singular arrange and traverse"
-        void seedFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge);
-        void loopFace(TetMesh &tetMesh, const Halfedge_const_handle &seedHalfEdge);
-        void traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool);
+
+
+
+        // <Combinatorial computation>
+        //
+
+        // Compute the first fiber graph of a half-edge $e$, assuming the fiber graphs of its twin $e->twin()$ are already computed.
+        void seedFace(TetMesh &, const Halfedge_const_handle &);
+
+        // Compute the fiber graphs of all half-edge of a given face
+        void loopFace(TetMesh &, const Halfedge_const_handle &);
+
+        // Traverse the faces of the singular arrangement to compute the Reeb space
+        void traverse(TetMesh &, Arrangement &, const bool);
+
+        //
+        // </Combinatorial computation>
+
+
+
+
 
         // Unit Tests
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);

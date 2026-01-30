@@ -256,34 +256,34 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     //std::cout << "Seeding face " << currentHalfEdge->twin()->face()->data();
     //printf("\n--------------------------------------------------------------------------------------\n");
 
-    // This one has already been computed
-    PreimageGraph &pg = this->preimageGraphs[currentHalfEdge->data().id].second;
+    // We assume that the fiber graph of the face we have come from has been computed already
+    PreimageGraph &pg = this->preimageGraphs[currentHalfEdge->twin()->data().id].second;
 
 
     //printf("\n-----------------------------------------------------\n");
-    //std::cout << "Half-edge is [" << currentHalfEdge->source()->point() << "] -> [" << currentHalfEdge->target()->point() << "]";
+    //std::cout << "Half-edge is [" << currentHalfEdge->twin()->source()->point() << "] -> [" << currentHalfEdge->twin()->target()->point() << "]";
     //printf("\n-----------------------------------------------------\n");
     //std::cout << "Half-edge second (source) is: \n";
     //pg.printByRoot();
 
-    // This one is empty and we need to compute it
-    PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->twin()->data().id].first;
+    // We wish to compute the first fiber graph for this face
+    PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->data().id].first;
     pg2 = pg;
 
     if (currentHalfEdge->data().isPseudoSingular)
     {
-        pg2.updateComponentsRegular(tetMesh, {this->edgeCrossingSegments[currentHalfEdge->data().id]});
+        pg2.updateComponentsRegular(tetMesh, {this->edgeCrossingSegments[currentHalfEdge->twin()->data().id]});
     }
     else
     {
 
          const int componentsBefore = PreimageGraph::componentCount;
 
-        //std::cout << "Preimage graphs after crossing from " << currentHalfEdge->face()->data() << " to " << currentHalfEdge->twin()->face()->data() << std::endl;
+        //std::cout << "Preimage graphs after crossing from " << currentHalfEdge->twin()->face()->data() << " to " << currentHalfEdge->twin()->face()->data() << std::endl;
         //std::cout << "Before...\n";
         //pg2.printByRoot();
 
-        pg2.updateComponentsSingular(tetMesh, this->edgeCrossingSegments[currentHalfEdge->data().id]);
+        pg2.updateComponentsSingular(tetMesh, this->edgeCrossingSegments[currentHalfEdge->twin()->data().id]);
 
         //std::cout << "After...\n";
         //pg2.printByRoot();
@@ -298,7 +298,6 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
 
     //std::cout << "Half-edge first (seeded) is: \n";
     //pg2.printByRoot();
-
 }
 
 
@@ -352,12 +351,14 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
 
 void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, const bool cachePreimageGraphs)
 {
+    // Set up arrays
+    //
     this->preimageGraphPerFace.resize(singularArrangement.arr.number_of_faces());
     this->correspondenceGraph.resize(singularArrangement.arr.number_of_faces());
-    //this->preimageGraphs.resize(singularArrangement.arr.number_of_faces());
     this->preimageGraphs.resize(singularArrangement.arr.number_of_halfedges());
 
     // Find the outside face
+    //
     Halfedge_const_handle startingHalfedge;
     for (Face_const_iterator fit = singularArrangement.arr.faces_begin(); fit != singularArrangement.arr.faces_end(); ++fit) 
     {
@@ -368,28 +369,20 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
         }
     }
 
+    // Queue for our BFS search over the faces of the arrangement
+    //
     std::queue<Halfedge_const_handle> traversalQueue;
+    traversalQueue.push(startingHalfedge);
+
+    // Track how many faces we have processed so far
+    //
+    int orderIndex = 0;
+
+    // Order in which singular facess are processed
+    // This allows us to establish correspondence between faces in a structured way by tracking the front of the BFS
+    // Also serves as a visited array in the BFS
     std::vector<int> order(singularArrangement.arr.number_of_faces(), -1);
-
-    traversalQueue.push(startingHalfedge->twin());
-    order[startingHalfedge->twin()->face()->data()] = ++(this->orderIndex);
-
-    //printf("The outside face is %d and the inside face is %d\n", startingHalfedge->face()->data(), startingHalfedge->twin()->face()->data());
-
-
-    // Seed the first face and loop it
-    seedFace(tetMesh, startingHalfedge);
-    loopFace(tetMesh, startingHalfedge->twin());
-
-    // Seed the first face
-    //this->preimageGraphs[startingHalfedge->twin()->face()->data()].updateComponentsSingular(tetMesh, this->edgeCrossingSegments[startingHalfedge->data()]);
-    //this->preimageGraphs[startingHalfedge->twin()->data()].first = this->preimageGraphs[startingHalfedge->twin()->face()->data()];
-
-    // Update the correspondence graph with the new component
-    //this->correspondenceGraphDS.addElement(0);
-
-    // Make sure the outer face is visited as well, no need to go back
-    order[startingHalfedge->face()->data()] = ++(this->orderIndex);
+    order[startingHalfedge->face()->data()] = ++(orderIndex);
 
     LoadingBar bar(40, "Computing Reeb space (SAT)...");
     int computedFaces = 1; // outside face has already been processed
@@ -397,43 +390,39 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
     while (false == traversalQueue.empty())
     {
-        Halfedge_const_handle initialHalfEdge = traversalQueue.front();
+        Halfedge_const_handle currentHalfEdge = traversalQueue.front();
         traversalQueue.pop();
 
-        const int faceId = initialHalfEdge->face()->data();
+        const int faceId = currentHalfEdge->face()->data();
 
-        //printf("\n\n\nCurrently at face %d\n", initialHalfEdge->face()->data());
+        correspondenceGraph[currentHalfEdge->face()->data()] = this->preimageGraphs[currentHalfEdge->data().id].first.getUniqueComponents();
 
-        correspondenceGraph[initialHalfEdge->face()->data()] = this->preimageGraphs[initialHalfEdge->data().id].first.getUniqueComponents();
-
-        // Loop around the face
-        Halfedge_const_handle currentHalfEdge = initialHalfEdge;
+        // Iterate over neighbours of this face
+        Halfedge_const_handle iteratorHalfEdge = currentHalfEdge;
         do
         {
-            const int twinFaceId = currentHalfEdge->twin()->face()->data();
+            const int twinFaceId = iteratorHalfEdge->twin()->face()->data();
 
             // If this neighbour has not been visited
             if (-1 == order[twinFaceId])
             {
-                //printf("Computing face %d\n", currentHalfEdge->twin()->face()->data());
+                seedFace(tetMesh, iteratorHalfEdge->twin());
+                loopFace(tetMesh, iteratorHalfEdge->twin());
 
-                seedFace(tetMesh, currentHalfEdge);
-                loopFace(tetMesh, currentHalfEdge->twin());
-
-                traversalQueue.push(currentHalfEdge->twin());
-                order[currentHalfEdge->twin()->face()->data()] = ++(this->orderIndex);
+                traversalQueue.push(iteratorHalfEdge->twin());
+                order[iteratorHalfEdge->twin()->face()->data()] = ++(orderIndex);
             }
 
             // @TODO should be else if, optimise
             // Compute correspondence with the neighbour
             if (order[faceId] < order[twinFaceId])
             {
-                const PreimageGraph &pgFace = this->preimageGraphs[currentHalfEdge->data().id].second;
-                const PreimageGraph &pgTwinFace = this->preimageGraphs[currentHalfEdge->twin()->data().id].first;
+                const PreimageGraph &pgFace = this->preimageGraphs[iteratorHalfEdge->data().id].second;
+                const PreimageGraph &pgTwinFace = this->preimageGraphs[iteratorHalfEdge->twin()->data().id].first;
 
                 const std::vector<std::pair<int, int>> componentPairs = pgFace.establishCorrespondence(
                         tetMesh, 
-                        this->edgeCrossingSegments[currentHalfEdge->data().id],
+                        this->edgeCrossingSegments[iteratorHalfEdge->data().id],
                         pgTwinFace
                         );
 
@@ -443,48 +432,30 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 }
             }
 
-            // Cache one of the fiber graphs for the face
-            if (currentHalfEdge != initialHalfEdge)
+            // Cache one of the fiber graphs for the face to use later
+            if (iteratorHalfEdge == currentHalfEdge)
             {
-                this->preimageGraphPerFace[currentHalfEdge->face()->data()] = this->preimageGraphs[currentHalfEdge->data().id].first;
+                this->preimageGraphPerFace[iteratorHalfEdge->face()->data()] = this->preimageGraphs[iteratorHalfEdge->data().id].first;
             }
 
             // We no longer need the preimage graphs, we can clear them
-            // Save the first one, though, how much extra would that be
-            //if (false == cachePreimageGraphs)
             if (false == cachePreimageGraphs)
             {
-                this->preimageGraphs[currentHalfEdge->data().id].first = PreimageGraph();
-                this->preimageGraphs[currentHalfEdge->data().id].second = PreimageGraph();
-
-                //this->preimageGraphs[currentHalfEdge->data()].first.clear();
-                //this->preimageGraphs[currentHalfEdge->data()].second.clear();
+                this->preimageGraphs[iteratorHalfEdge->data().id].first = PreimageGraph();
+                this->preimageGraphs[iteratorHalfEdge->data().id].second = PreimageGraph();
             }
 
-            currentHalfEdge = currentHalfEdge->next();
+            iteratorHalfEdge = iteratorHalfEdge->next();
 
-        } while (currentHalfEdge != initialHalfEdge);
+        } while (iteratorHalfEdge != currentHalfEdge);
 
 
         computedFaces++;
-        //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
-        //bar.update((100 * computedFaces) / totalFaces);
+        bar.update((100 * computedFaces) / totalFaces);
     }
 
-    //printf("\n\n\n\nPrinting all preimage graphs.\n\n\n\n");
 
-    //for (auto currentHalfEdge = singularArrangement.arr.halfedges_begin(); currentHalfEdge != singularArrangement.arr.halfedges_end(); ++currentHalfEdge)
-    //{
-
-        //printf("\n-----------------------------------------------------\n");
-        //std::cout << "Half-edge is [" << currentHalfEdge->source()->point() << "] -> [" << currentHalfEdge->target()->point() << "]";
-        //printf("\n-----------------------------------------------------\n");
-        //std::cout << "First preimage graph is: \n";
-        //this->preimageGraphs[currentHalfEdge->data()].first.printByRoot();
-        //std::cout << "\nSecond preimage graph is: \n";
-        //this->preimageGraphs[currentHalfEdge->data()].second.printByRoot();
-    //}
-
+    // Postprocessing
     this->correspondenceGraphDS.finalise();
     this->numberOfSheets = this->correspondenceGraphDS.countComponents();
 }
@@ -757,39 +728,44 @@ void ReebSpace2::computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement 
 }
 
 
-void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement)
+void ReebSpace2::determineEdgeRegionSegmentsOrientation(const TetMesh &tetMesh, Arrangement &singularArrangement)
 {
-    //for (auto &[halfEdge, intersectingSegments] : edgeRegionSegments)
+
     for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
-    //for (const auto &[halfEdge, segmentIdsMap] : edgeRegionSegmentsMap)
     {
         auto &intersectingSegments = this->edgeRegionSegments[halfEdge->data().id];
 
-        // Each vertex is guaratneed to be in the singular arrangement
         const Point_2 &a = halfEdge->source()->point();
         const Point_2 &b = halfEdge->target()->point();
-
-        //std::vector<std::vector<int>> minusTrianglesAll;
-        //std::vector<std::vector<int>> plusTrianglesAll;
-
-        // Set up handles so don't have to pay for access
-        //std::vector<std::vector<int>> &edgeRegionMinusTrianglesHandle = edgeRegionMinusTriangles[halfEdge];
-        //std::vector<std::vector<int>> &edgeRegionPlusTrianglesHandle = edgeRegionPlusTriangles[halfEdge];
 
         for (std::pair<int, bool> &intersectingSegment : intersectingSegments)
         {
             const int segmentId = intersectingSegment.first;
             const std::array<int, 2> edge = tetMesh.edges.at(segmentId);
             const int segmentSourceId = edge[0];
+            const int segmentTargetId = edge[1];
             const Point_2 &c = singularArrangement.arrangementPoints[segmentSourceId];
+            const Point_2 &d = singularArrangement.arrangementPoints[segmentTargetId];
 
-            assert(CGAL::orientation(a, b, c) != CGAL::COLLINEAR);
+            // Sanity checks for degenerate cases.
+            //
+            if (
+                    CGAL::orientation(a, b, c) == CGAL::COLLINEAR ||
+                    CGAL::orientation(a, b, d) == CGAL::COLLINEAR
+                    )
+            {
+                throw std::runtime_error("Input is degenerate, three points are collienar.");
+            }
 
-            //std::vector<int> minusTriangles;
-            //std::vector<int> plusTriangles;
+            if (
+                    CGAL::orientation(a, b, c) == CGAL::orientation(a, b, d)
+               )
+            {
+                //throw std::runtime_error("Input is degenerate, segments ab and cd do not intersect.");
+            }
 
             //
-            // If the orientation is the other way around note it
+            // If the orientation this way around, reverse it
             //   (regular segment)
             //          d 
             //           \
@@ -802,11 +778,10 @@ void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arr
             if (CGAL::orientation(a, b, c) == CGAL::RIGHT_TURN)
             {
                 intersectingSegment.second = false;
-                //minusTriangles = tetMesh.upperStarTriangles.at(edge);
-                //plusTriangles = tetMesh.lowerStarTriangles.at(edge);
             }
 
             //
+            // If the orientation this way around, okay, that's what we expect
             //   (regular segment)
             //          c 
             //           \
@@ -816,33 +791,6 @@ void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arr
             //               \
             //                d
             //
-            //else if (CGAL::orientation(a, b, c) == CGAL::LEFT_TURN)
-            //{
-                //minusTriangles = tetMesh.lowerStarTriangles.at(edge);
-                //plusTriangles = tetMesh.upperStarTriangles.at(edge);
-            //}
-
-            //// Non-robust predicate issue
-            //else
-            //{
-                //throw std::runtime_error("Input is degenerate, three points are collienar.");
-            //}
-
-            //printf("Minus Triangles:\n");
-            //for (auto triangleId : minusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            //printf("Plus Triangles:\n");
-            //for (auto triangleId : plusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            
-            //edgeRegionMinusTrianglesHandle.push_back(minusTriangles);
-            //edgeRegionPlusTrianglesHandle.push_back(plusTriangles);
         }
 
         auto &intersectingSegmentsTwin = this->edgeRegionSegments[halfEdge->twin()->data().id];
@@ -859,42 +807,6 @@ void ReebSpace2::computeEdgeRegionMinusPlusTriangles(const TetMesh &tetMesh, Arr
             }
 
         }
-
-
-
-
-
-        //printf("\n\nThe intersecting segments are :\n");
-        //for (const auto &[edgeId, isDirectionLowerToUpper] : edgeRegionSegments[halfEdge])
-        //{
-            //printf("%d %d\n", edgeId, isDirectionLowerToUpper);
-
-
-            //const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
-            //const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
-
-            //printf("Minus Triangles:\n");
-            //for (auto triangleId : minusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            //printf("Plus Triangles:\n");
-            //for (auto triangleId : plusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-        //}
-
-        //printf("The intersecting segments of the twin :\n");
-        //for (std::pair<int, bool> &intersectingSegment : edgeRegionSegments[halfEdge->twin()])
-        //{
-            //printf("%d %d\n", intersectingSegment.first, intersectingSegment.second);
-        //}
-        //printf("\n\n");
-        //printf("------------------------------------------------------------------------------------------------------------");
-        //printf("\n\n");
-
     }
 }
 
@@ -1139,39 +1051,20 @@ void ReebSpace2::computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement
 }
 
 
-void ReebSpace2::computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement)
+void ReebSpace2::determineVertexRegionSegmentsOrientation(const TetMesh &tetMesh, Arrangement &singularArrangement)
 {
-    //for (auto &[halfEdge, intersectingSegments] : vertexRegionSegments)
-    //for (auto &[halfEdge, intersectingSegments] : vertexRegionSegments)
     for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
     {
         auto &intersectingSegments = this->vertexRegionSegments[halfEdge->data().id];
+
         // Each vertex is guaratneed to be in the singular arrangement
         const Point_2 &vertex = halfEdge->target()->point();
         const int vertexMeshId = singularArrangement.arrangementPointIndices[vertex];
 
-        //auto &vertexRegionMinusTrianglesHandle = vertexRegionMinusTriangles[halfEdge];
-        //auto &vertexRegionPlusTrianglesHandle = vertexRegionPlusTriangles[halfEdge];
-
-        //std::set<int> minusTrianglesSet;
-        //std::set<int> plusTrianglesSet;
-
-        //std::vector<std::vector<int>> plusTrianglesAll;
-        //std::vector<std::vector<int>> minusTrianglesAll;
-
-        //for (const auto &[segmentId,  : segmentIds)
         for (std::pair<int, bool> &intersectingSegment : intersectingSegments)
         {
-            //const std::array<int, 2> edge = tetMesh.edges.at(segmentId);
-            //const int segmentSourceId = edge[0];
-            //const Point_2 &c = singularArrangement.arrangementPoints[segmentSourceId];
-
             const int segmentId = intersectingSegment.first;
             const std::array<int, 2> edge = tetMesh.edges[segmentId];
-
-            //std::vector<int> minusTriangles;
-            //std::vector<int> plusTriangles;
-
 
             // Crossing ab in a CW direction goes from the lower to the upper star
             // Remember that we assume that a < b, so if a = v, then b is in the set BiggerThan(a).
@@ -1201,95 +1094,11 @@ void ReebSpace2::computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, A
             //     /|
             //    / | 
             //   a  |
+            //
+            //   This is the default case, so no need to do anything
             //      
-            //else if (edge[1] == vertexMeshId)
-            //{
-                //intersectingSegment.second = true;
-                ////minusTriangles = tetMesh.lowerStarTriangles.at(edge);
-                ////plusTriangles = tetMesh.upperStarTriangles.at(edge);
-            //}
-            //else
-            //{
-                //assert(false);
-            //}
-
-            //printf("Minus Triangles:\n");
-            //for (auto triangleId : minusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            //printf("Plus Triangles:\n");
-            //for (auto triangleId : plusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            //plusTrianglesAll.push_back(plusTriangles);
-            //minusTrianglesAll.push_back(minusTriangles);
-
-            //vertexRegionMinusTrianglesHandle.push_back(minusTriangles);
-            //vertexRegionPlusTrianglesHandle.push_back(plusTriangles);
-
-            //std::map<Halfedge_const_handle, std::vector<int>> vertexRegionMinusTriangles;
-            //std::map<Halfedge_const_handle, std::vector<int>> vertexRegionPlusTriangles;
-
-            //minusTrianglesSet.insert(minusTriangles.begin(), minusTriangles.end());
-            //plusTrianglesSet.insert(plusTriangles.begin(), plusTriangles.end());
         }
 
-        // Cancel out the plus/minus triangles and write to a vector
-        //std::set_difference(
-                //minusTrianglesSet.begin(), minusTrianglesSet.end(),
-                //plusTrianglesSet.begin(), plusTrianglesSet.end(),
-                //std::back_inserter(vertexRegionMinusTriangles[halfEdge]));
-
-        //std::set_difference(
-                //plusTrianglesSet.begin(), plusTrianglesSet.end(),
-                //minusTrianglesSet.begin(), minusTrianglesSet.end(),
-                //std::back_inserter(vertexRegionPlusTriangles[halfEdge]));
-
-
-            
-
-
-        //printf("\n\nThe intersecting segments are :\n");
-        ////for (const auto &[edgeId, isDirectionLowerToUpper] : vertexRegionSegments[halfEdge])
-        //for (int i = 0 ; i < vertexRegionSegments[halfEdge].size() ; i++)
-        //{
-            //const auto [edgeId, isDirectionLowerToUpper] = vertexRegionSegments[halfEdge][i];
-
-            //printf("------------------------------- %d %d\n", edgeId, isDirectionLowerToUpper);
-
-            //const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
-            //const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
-
-
-            //printf("Minus Triangles:\n");
-            //for (auto triangleId : minusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            //printf("Plus Triangles:\n");
-            //for (auto triangleId : plusTriangles)
-            //{
-                //printf("%d\n", triangleId);
-            //}
-
-            //if (minusTriangles != minusTrianglesAll[i])
-            //{
-                //throw std::runtime_error("Minus Triangles differ!");
-            //}
-
-            //if (plusTriangles != plusTrianglesAll[i])
-            //{
-                //throw std::runtime_error("Minus Triangles differ!");
-            //}
-        //}
-        //printf("\n\n");
-        //printf("------------------------------------------------------------------------------------------------------------");
-        //printf("\n\n");
     }
 }
 
@@ -1300,24 +1109,13 @@ void ReebSpace2::computeVertexRegionMinusPlusTriangles(const TetMesh &tetMesh, A
 
 
 
-void ReebSpace2::computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, Arrangement &singularArrangement)
+void ReebSpace2::determineEdgeCrossingSegmentsOriantation(const TetMesh &tetMesh, Arrangement &singularArrangement)
 {
     this->edgeCrossingSegments.resize(singularArrangement.arr.number_of_halfedges());
 
     for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
     {
-        //std::cout << "Edge id is " << he->data() << std::endl;
-        // If we have computed this for the twin, just swap them around
-        //if (edgeCrossingSegments.contains(he->twin()))
-        //{
-        //edgeCrossingSegments[he].first = edgeCrossingSegments[he->twin()].first;
-        //edgeCrossingSegments[he].second = !edgeCrossingSegments[he->twin()].second;
-        //}
-        //else
-        //{
         const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(he);
-        //std::cout << "Half-edge   from: " << he->source()->point() << " to " << he->target()->point() << std::endl;
-        //std::cout << "Source-edge from: " << segment.source() << " to " << segment.target() << std::endl;
 
         const int aIndex = singularArrangement.arrangementPointIndices.at(segment.source());
         const int bIndex = singularArrangement.arrangementPointIndices.at(segment.target());
@@ -1339,16 +1137,11 @@ void ReebSpace2::computeEdgeCrossingMinusPlusTriangles(const TetMesh &tetMesh, A
         if (isSegmentLeftToRight == isCurrentHalfEdgeLeftToRight)
         {
             edgeCrossingSegments[he->data().id].second = false;
-            //edgeCrossingMinusTriangles[he] = tetMesh.upperStarTriangles.at(edge);
-            //edgeCrossingPlusTriangles[he] = tetMesh.lowerStarTriangles.at(edge);
         }
         else
         {
             edgeCrossingSegments[he->data().id].second = true;
-            //edgeCrossingMinusTriangles[he] = tetMesh.lowerStarTriangles.at(edge);
-            //edgeCrossingPlusTriangles[he] = tetMesh.upperStarTriangles.at(edge);
         }
-        //}
     }
 }
 

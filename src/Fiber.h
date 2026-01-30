@@ -6,9 +6,12 @@
 #include "./TetMesh.h"
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
+#include "./ReebSpace2.h"
 
 namespace fiber
 {
+    std::vector<FiberPoint> computeFiberFromFiberGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint);
+
     std::vector<FiberPoint> computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<double, 2> &fiberPoint, const int reebSheetIdOnly);
 
     // Colour map for Reeb space sheets and fibers
