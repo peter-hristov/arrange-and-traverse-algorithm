@@ -7,9 +7,8 @@
 #include "./TetMesh.h"
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
-#include "./PreimageGraph.h"
-
-#include "DisjointSetSimple.h"
+#include "./FiberGraph.h"
+#include "./DisjointSetSimple.h"
 
 class ReebSpace2
 {
@@ -44,16 +43,16 @@ class ReebSpace2
         //    \  .  .     .     .  .  /
         //     \ . .  o1  .  o2  . . /
         //      \.________.________./
-        //       a        .         b 
+        //       a        .        b 
         //                .
         //
         // Indexed by half-edge ID
         // For a half-edge $ab$, where "\, _, /" represent singular segments and ... represent regular ones,
         // The first preimage graph is o1: at the source $a$, after all regular segments
         // The second preimage graph is o2: at the target $b$, before all regular segments
-        std::vector<std::pair<PreimageGraph, PreimageGraph>> preimageGraphs;
+        std::vector<std::pair<FiberGraph, FiberGraph>> fiberGraphs;
 
-        std::vector<PreimageGraph> preimageGraphPerFace;
+        std::vector<FiberGraph> fiberGraphsPerFace;
         
         // This tells you whether two sheets share a boundary (a half-edge or a vertex).
         // These are the edges of the sheet graph
@@ -81,7 +80,7 @@ class ReebSpace2
         void computeVertexRegionSegments(const TetMesh &tetMesh, Arrangement &singularArrangement);
         void computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
-        // When sorting the segments around a vertex, compare two of them
+        // Geometry helper functions
         bool compareRegularSegments(const Halfedge_const_handle &halfEdge, const Point_2& b, const Point_2& c);
         bool doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2);
         bool ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment);
@@ -89,9 +88,7 @@ class ReebSpace2
 
         // Plus/Minus triangles for each region
         void determineEdgeRegionSegmentsOrientation(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
         void determineEdgeCrossingSegmentsOriantation(const TetMesh &tetMesh, Arrangement &singularArrangement);
-
         void determineVertexRegionSegmentsOrientation(const TetMesh &tetMesh, Arrangement &singularArrangement);
 
         //
@@ -115,19 +112,22 @@ class ReebSpace2
         // Traverse the faces of the singular arrangement to compute the Reeb space
         void traverse(TetMesh &, Arrangement &, const bool);
 
+
         //
         // </Combinatorial computation>
 
 
+        // Additional functions
+        //
+        void computeSheets(Arrangement &singularArrangement);
 
 
 
-        // Unit Tests
+        // Unit Tests, mostly depricated
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
-        bool unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
+        bool unitTestCompareFiberGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);
         bool areHalfEdgeRegionMapsEqual(const std::map<Halfedge_const_handle, std::set<int>>& a, const std::map<Halfedge_const_handle, std::set<int>>& b);
 
-        void computeSheets(Arrangement &singularArrangement);
 
 };
 

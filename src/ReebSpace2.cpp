@@ -6,9 +6,7 @@
 #include "./Timer.h"
 #include "./ReebSpace2.h"
 #include "./DisjointSet.h"
-#include "./PreimageGraph.h"
 #include "./LoadingBar.hpp"
-#include "src/CGALTypedefs.h"
 
 void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 {
@@ -187,7 +185,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 
 
     int nonEmptyFiberGraphs = 0;
-    for (const auto &[firstFG, secondFG] : this->preimageGraphs)
+    for (const auto &[firstFG, secondFG] : this->fiberGraphs)
     {
         if (firstFG.componentRoot.size() != 0)
         {
@@ -197,7 +195,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
     }
 
     // For every face face
-    for (int faceId = 0 ; faceId < this->preimageGraphPerFace.size(); faceId++)
+    for (int faceId = 0 ; faceId < this->fiberGraphsPerFace.size(); faceId++)
     {
 
         // For every sheet in the face
@@ -207,7 +205,7 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 
 
             // For every thiangle in the preimage graph
-            for (const auto &[triangleId, triangleComponentId] : preimageGraphPerFace[faceId].componentRoot)
+            for (const auto &[triangleId, triangleComponentId] : this->fiberGraphsPerFace[faceId].componentRoot)
             {
 
                 // If this triangle is in the same component as the sheet
@@ -257,7 +255,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     //printf("\n--------------------------------------------------------------------------------------\n");
 
     // We assume that the fiber graph of the face we have come from has been computed already
-    PreimageGraph &pg = this->preimageGraphs[currentHalfEdge->twin()->data().id].second;
+    FiberGraph &pg = this->fiberGraphs[currentHalfEdge->twin()->data().id].second;
 
 
     //printf("\n-----------------------------------------------------\n");
@@ -267,7 +265,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     //pg.printByRoot();
 
     // We wish to compute the first fiber graph for this face
-    PreimageGraph &pg2 = this->preimageGraphs[currentHalfEdge->data().id].first;
+    FiberGraph &pg2 = this->fiberGraphs[currentHalfEdge->data().id].first;
     pg2 = pg;
 
     if (currentHalfEdge->data().isPseudoSingular)
@@ -277,7 +275,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
     else
     {
 
-         const int componentsBefore = PreimageGraph::componentCount;
+         const int componentsBefore = FiberGraph::componentCount;
 
         //std::cout << "Preimage graphs after crossing from " << currentHalfEdge->twin()->face()->data() << " to " << currentHalfEdge->twin()->face()->data() << std::endl;
         //std::cout << "Before...\n";
@@ -290,8 +288,7 @@ void ReebSpace2::seedFace(TetMesh &tetMesh, const Halfedge_const_handle &current
 
 
         // Add the new components to the correspondence graph
-        const int componentsAfter = PreimageGraph::componentCount;
-
+        const int componentsAfter = FiberGraph::componentCount;
         this->correspondenceGraphDS.add(componentsAfter - componentsBefore);
     }
 
@@ -313,13 +310,13 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
     //std::cout << "Half-edge is [" << initialHalfEdge->source()->point() << "] -> [" << initialHalfEdge->target()->point() << "]";
     //printf("\n-----------------------------------------------------\n");
 
-    PreimageGraph pg = this->preimageGraphs[initialHalfEdge->data().id].first;
+    FiberGraph pg = this->fiberGraphs[initialHalfEdge->data().id].first;
 
     //std::cout << "First preimage graph is: \n";
     //pg.printByRoot();
 
     pg.updateComponentsRegular(tetMesh, this->edgeRegionSegments[initialHalfEdge->data().id]);
-    this->preimageGraphs[initialHalfEdge->data().id].second = pg;
+    this->fiberGraphs[initialHalfEdge->data().id].second = pg;
 
     //std::cout << "\nSecond preimage graph is: \n";
     //pg.printByRoot();
@@ -328,19 +325,19 @@ void ReebSpace2::loopFace(TetMesh &tetMesh, const Halfedge_const_handle &initial
     do
     {
         pg.updateComponentsRegular(tetMesh, this->vertexRegionSegments[currentHalfEdge->prev()->data().id]);
-        this->preimageGraphs[currentHalfEdge->data().id].first = pg;
+        this->fiberGraphs[currentHalfEdge->data().id].first = pg;
 
         pg.updateComponentsRegular(tetMesh, this->edgeRegionSegments[currentHalfEdge->data().id]);
-        this->preimageGraphs[currentHalfEdge->data().id].second = pg;
+        this->fiberGraphs[currentHalfEdge->data().id].second = pg;
 
 
         //printf("\n-----------------------------------------------------\n");
         //std::cout << "Half-edge is [" << currentHalfEdge->source()->point() << "] -> [" << currentHalfEdge->target()->point() << "]";
         //printf("\n-----------------------------------------------------\n");
         //std::cout << "First preimage graph is: \n";
-        //this->preimageGraphs[currentHalfEdge->data()].first.printByRoot();
+        //this->fiberGraphs[currentHalfEdge->data()].first.printByRoot();
         //std::cout << "\nSecond preimage graph is: \n";
-        //this->preimageGraphs[currentHalfEdge->data()].second.printByRoot();
+        //this->fiberGraphs[currentHalfEdge->data()].second.printByRoot();
 
 
         currentHalfEdge = currentHalfEdge->next();
@@ -353,9 +350,9 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 {
     // Set up arrays
     //
-    this->preimageGraphPerFace.resize(singularArrangement.arr.number_of_faces());
+    this->fiberGraphsPerFace.resize(singularArrangement.arr.number_of_faces());
     this->correspondenceGraph.resize(singularArrangement.arr.number_of_faces());
-    this->preimageGraphs.resize(singularArrangement.arr.number_of_halfedges());
+    this->fiberGraphs.resize(singularArrangement.arr.number_of_halfedges());
 
     // Find the outside face
     //
@@ -395,7 +392,7 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 
         const int faceId = currentHalfEdge->face()->data();
 
-        correspondenceGraph[currentHalfEdge->face()->data()] = this->preimageGraphs[currentHalfEdge->data().id].first.getUniqueComponents();
+        correspondenceGraph[currentHalfEdge->face()->data()] = this->fiberGraphs[currentHalfEdge->data().id].first.getUniqueComponents();
 
         // Iterate over neighbours of this face
         Halfedge_const_handle iteratorHalfEdge = currentHalfEdge;
@@ -417,8 +414,8 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
             // Compute correspondence with the neighbour
             if (order[faceId] < order[twinFaceId])
             {
-                const PreimageGraph &pgFace = this->preimageGraphs[iteratorHalfEdge->data().id].second;
-                const PreimageGraph &pgTwinFace = this->preimageGraphs[iteratorHalfEdge->twin()->data().id].first;
+                const FiberGraph &pgFace = this->fiberGraphs[iteratorHalfEdge->data().id].second;
+                const FiberGraph &pgTwinFace = this->fiberGraphs[iteratorHalfEdge->twin()->data().id].first;
 
                 const std::vector<std::pair<int, int>> componentPairs = pgFace.establishCorrespondence(
                         tetMesh, 
@@ -435,14 +432,14 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
             // Cache one of the fiber graphs for the face to use later
             if (iteratorHalfEdge == currentHalfEdge)
             {
-                this->preimageGraphPerFace[iteratorHalfEdge->face()->data()] = this->preimageGraphs[iteratorHalfEdge->data().id].first;
+                this->fiberGraphsPerFace[iteratorHalfEdge->face()->data()] = this->fiberGraphs[iteratorHalfEdge->data().id].first;
             }
 
             // We no longer need the preimage graphs, we can clear them
             if (false == cachePreimageGraphs)
             {
-                this->preimageGraphs[iteratorHalfEdge->data().id].first = PreimageGraph();
-                this->preimageGraphs[iteratorHalfEdge->data().id].second = PreimageGraph();
+                this->fiberGraphs[iteratorHalfEdge->data().id].first = FiberGraph();
+                this->fiberGraphs[iteratorHalfEdge->data().id].second = FiberGraph();
             }
 
             iteratorHalfEdge = iteratorHalfEdge->next();
@@ -1451,7 +1448,7 @@ std::pair<Halfedge_const_handle, Halfedge_const_handle>  findHalfEdges(const Hal
 }
 
 
-bool ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs)
+bool ReebSpace2::unitTestCompareFiberGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs)
 {
     //for (const auto& [halfEdge, preimageGraphs] : this->preimageGraphsCached)
     for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge)
@@ -1461,14 +1458,14 @@ bool ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
         std::pair<Face_const_handle, Face_const_handle> foundFaces =  {foundHalfEdges.first->face(), foundHalfEdges.second->face()};
         std::pair<int, int> foundFaceIds =  {regularArrangement.arrangementFacesIdices.at(foundFaces.first), regularArrangement.arrangementFacesIdices.at(foundFaces.second)};
 
-        std::pair<PreimageGraph, PreimageGraph> &singularPreimageGraphs = this->preimageGraphs[halfEdge->data().id];
-        std::pair<DisjointSet<int>, DisjointSet<int>> regularPreimageGraphs = {rs.preimageGraphs[foundFaceIds.first], rs.preimageGraphs[foundFaceIds.second]};
+        std::pair<FiberGraph, FiberGraph> &singularFiberGraphs = this->fiberGraphs[halfEdge->data().id];
+        std::pair<DisjointSet<int>, DisjointSet<int>> regularFiberGraphs = {rs.preimageGraphs[foundFaceIds.first], rs.preimageGraphs[foundFaceIds.second]};
 
         //assert(singularPreimageGraphs.first == regularPreimageGraphs.first);
         //assert(singularPreimageGraphs.second == regularPreimageGraphs.second);
 
 
-        if (false == singularPreimageGraphs.first.areEqual(regularPreimageGraphs.first) || false == singularPreimageGraphs.second.areEqual(regularPreimageGraphs.second))
+        if (false == singularFiberGraphs.first.areEqual(regularFiberGraphs.first) || false == singularFiberGraphs.second.areEqual(regularFiberGraphs.second))
         {
             printf("\n------------------------------------------------------------------------------------\n");
             std::cout << "SingularHalf-edge is [" << halfEdge->source()->point() << "] -> [" << halfEdge->target()->point() << "]";
@@ -1477,10 +1474,10 @@ bool ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
 
 
             std::cout << "First singular preimage graph is: \n";
-            singularPreimageGraphs.first.printByRoot();
+            singularFiberGraphs.first.printByRoot();
 
             std::cout << "Second singular preimage graph is: \n";
-            singularPreimageGraphs.second.printByRoot();
+            singularFiberGraphs.second.printByRoot();
 
 
             printf("\n------------------------------------------------------------------------------------\n");
@@ -1489,16 +1486,10 @@ bool ReebSpace2::unitTestComparePreimageGraphs(const TetMesh &tetMesh, Arrangeme
             printf("\n------------------------------------------------------------------------------------\n");
 
             std::cout << "First regular preimage graph is: \n";
-            regularPreimageGraphs.first.printByRoot();
-            //regularPreimageGraphs.first.print([&](const int &triangleId) {
-                    //io::printTriangle(tetMesh, triangleId);
-                    //});
+            regularFiberGraphs.first.printByRoot();
 
             std::cout << "Second regular preimage graph is: \n";
-            regularPreimageGraphs.second.printByRoot();
-            //regularPreimageGraphs.second.print([&](const int &triangleId) {
-                    //io::printTriangle(tetMesh, triangleId);
-                    //});
+            regularFiberGraphs.second.printByRoot();
 
             printf("\n\n\n");
 

@@ -2,8 +2,8 @@
 
 #include "./Fiber.h"
 #include "./DisjointSet.h"
-#include "src/FiberPoint.h"
-#include "src/PreimageGraph.h"
+#include "./FiberPoint.h"
+#include "./FiberGraph.h"
 
 #include <queue>
 #include <unistd.h>
@@ -42,7 +42,7 @@ std::array<double, 3> computeBarycentricCoordinates(const TetMesh &tetMesh, cons
 }
 
 
-std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh &tetMesh, std::vector<bool> &visited, const PreimageGraph &pg, const std::array<double, 2> &fiberPoint, const int sheetId)
+std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh &tetMesh, std::vector<bool> &visited, const FiberGraph &pg, const std::array<double, 2> &fiberPoint, const int sheetId)
 {
     std::vector<FiberPoint> faceFibers;
 
@@ -129,7 +129,7 @@ std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh 
 }
 
 
-std::vector<FiberPoint> processPreimageGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, PreimageGraph &pg, const std::set<int> activeSheets)
+std::vector<FiberPoint> processFiberGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets)
 {
     // We first need to sort the triangles in the fiber graph
     std::vector<FiberPoint> faceFibers;
@@ -191,7 +191,7 @@ std::vector<FiberPoint> fiber::computeFiberFromFiberGraph(const TetMesh &tetMesh
 
         const int faceId = face->data();
 
-        PreimageGraph &pg = reebSpace.preimageGraphPerFace[faceId];
+        FiberGraph &pg = reebSpace.fiberGraphsPerFace[faceId];
 
         for (const int &componentId : reebSpace.correspondenceGraph[faceId])
         {
@@ -199,7 +199,7 @@ std::vector<FiberPoint> fiber::computeFiberFromFiberGraph(const TetMesh &tetMesh
 
             if (activeSheets.contains(sheetId))
             {
-                std::vector<FiberPoint> newFaceFibers = processPreimageGraph(tetMesh, arrangement, reebSpace, fiberPoint, pg, activeSheets);
+                std::vector<FiberPoint> newFaceFibers = processFiberGraph(tetMesh, arrangement, reebSpace, fiberPoint, pg, activeSheets);
 
                 faceFibers.insert(
                         faceFibers.end(),

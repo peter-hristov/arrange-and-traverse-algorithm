@@ -29,7 +29,6 @@
 #include "./Fiber.h"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
-#include "src/PreimageGraph.h"
 
 using namespace std;
 

@@ -12,7 +12,7 @@
 #include "./DisjointSet.h"
 
 
-class PreimageGraph
+class FiberGraph
 {
     public:
 
@@ -23,16 +23,16 @@ class PreimageGraph
         // For each component save a representatives so that we can do correspondence
         std::unordered_map<int, int> componentRepresentative;
 
-        // All the unique components in this preimage graphs (effectively the unique values in componentRoot)
+        // All the unique components in this fiber graphs (effectively the unique values in componentRoot)
         //std::unordered_set<int> uniqueComponentIds;
 
         // The number of components found so far
         inline static int componentCount = 0; // declaration inside class
 
-        PreimageGraph() { }
+        FiberGraph() { }
 
         // Initialize vertices (triangles), the edges are implicit
-        PreimageGraph(const std::unordered_map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
+        FiberGraph(const std::unordered_map<int, int> &_componentRoot)  : componentRoot(_componentRoot) { }
 
 
         // Depricated
@@ -44,7 +44,7 @@ class PreimageGraph
             //this->uniqueComponentIds  = std::unordered_set<int>();
         }
 
-        bool areEqual(PreimageGraph &p)
+        bool areEqual(FiberGraph &p)
         {
             // Group elements with the same root
             std::unordered_map<int, std::set<int>> groupedOurs = this->groupComponents();
@@ -53,7 +53,7 @@ class PreimageGraph
             // Make sure there is an equal number of roots
             if (groupedOurs.size() != groupedTheirs.size())
             {
-                std::cerr << "Size of preimage graphs is not equal!.";
+                std::cerr << "Size of fiber graphs is not equal!.";
                 return false;
             }
 
@@ -99,7 +99,7 @@ class PreimageGraph
             // Make sure there is an equal number of roots
             if (groupedOurs.size() != groupedTheirs.size())
             {
-                std::cerr << "Size of preimage graphs is not equal!.";
+                std::cerr << "Size of fiber graphs is not equal!.";
                 return false;
             }
 
@@ -217,7 +217,7 @@ class PreimageGraph
 
             if (neighbours.size() == 0 || neighbours.size() > 2)
             {
-                throw std::runtime_error( "Triangle has " + std::to_string(neighbours.size()) + " neighbours in its preimage graph.");
+                throw std::runtime_error( "Triangle has " + std::to_string(neighbours.size()) + " neighbours in its fiber graph.");
             }
 
             return neighbours;
@@ -232,7 +232,7 @@ class PreimageGraph
             visited.insert(root);
 
             // Obtain the next available componentId
-            const int componentId = PreimageGraph::componentCount++;
+            const int componentId = FiberGraph::componentCount++;
 
             // All new components will have this as their root
             this->componentRoot[root] = componentId;
@@ -292,9 +292,6 @@ class PreimageGraph
 
         void updateComponentsSingular(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment)
         {
-            //this->componentRoot = preimageGraphPrevious.componentRoot;
-            //this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
-
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
 
@@ -305,7 +302,7 @@ class PreimageGraph
 
                 if (it == componentRoot.end())
                 {
-                    throw std::runtime_error("Minus triangle not found in preimage graph for singular.");
+                    throw std::runtime_error("Minus triangle not found in fiber graph for singular.");
                 }
 
                 // This connected component will no longer exist
@@ -321,7 +318,7 @@ class PreimageGraph
             // Add the plus triangles with a sentinel value
             for (auto &triangleId : plusTriangles)
             {
-                assert(false == this->componentRoot.contains(triangleId) && "Plus triangle is already in the preimage graph.");
+                assert(false == this->componentRoot.contains(triangleId) && "Plus triangle is already in the fiber graph.");
                 this->componentRoot[triangleId] = triangleId;
             }
 
@@ -338,9 +335,6 @@ class PreimageGraph
 
         void updateComponentsRegular(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges)
         {
-            //this->componentRoot = preimageGraphPrevious.componentRoot;
-            //this->uniqueComponentIds = preimageGraphPrevious.uniqueComponentIds;
-
             for (const auto &[edgeId, isDirectionLowerToUpper] : intersectingEdges)
             {
                 const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
@@ -418,7 +412,7 @@ class PreimageGraph
             }
         }
 
-        const std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const PreimageGraph &pg2) const
+        const std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const FiberGraph &pg2) const
         {
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingSegment.first, intersectingSegment.second);
