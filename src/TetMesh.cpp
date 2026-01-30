@@ -719,3 +719,18 @@ const std::vector<int>& TetMesh::getPlusTriangles(const int &edgeId, const bool 
         return this->lowerStarTrianglesNew[edgeId];
     }
 }
+
+
+const std::array<std::array<float, 3>, 3> TetMesh::getTriangleVerticesCoordinates(const int &triangleId) const
+{
+    const std::set<int> triangleUnpacked = this->triangles[triangleId];
+    const std::vector<int> triangleIndices = std::vector<int>(triangleUnpacked.begin(), triangleUnpacked.end());
+
+    return 
+    {
+        this->vertexDomainCoordinates[triangleIndices[0]],
+        this->vertexDomainCoordinates[triangleIndices[1]],
+        this->vertexDomainCoordinates[triangleIndices[2]],
+    };
+
+}

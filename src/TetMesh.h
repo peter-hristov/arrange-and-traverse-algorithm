@@ -77,6 +77,7 @@ class TetMesh
     // We assume that aIndex < bIndex for consistent orientation.
     bool isUpperLinkEdgeVertex(int, int, int);
 
+    const std::array<std::array<float, 3>, 3> getTriangleVerticesCoordinates(const int &triangleId) const;
 
 
 

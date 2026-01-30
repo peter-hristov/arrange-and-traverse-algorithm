@@ -11,6 +11,7 @@ class FiberPoint{
 
     // (x, y, z) domain coodrinates
     std::array<float, 3> point;
+
     // RGB colour value
     std::array<float, 3> colour;
 
@@ -18,9 +19,11 @@ class FiberPoint{
     int triangleId;
 
     // The barycentric coordinates as well as the three triangle vertices
-    FiberPoint(const float alpha, const float beta, const std::array<std::array<float, 3>, 3> &triangleVertices, const std::array<float, 3> _colour)
+    FiberPoint(const float alpha, const float beta, const std::array<std::array<float, 3>, 3> &triangleVertices, const std::array<float, 3> _colour, const int _sheetId = -1, const int _triangleId = -1)
     {
         this->colour = _colour;
+        this->sheetId = _sheetId;
+        this->triangleId = _triangleId;
 
         point[0] = 
             alpha * triangleVertices[0][0] +
