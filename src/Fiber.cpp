@@ -41,10 +41,9 @@ std::array<double, 3> computeBarycentricCoordinates(const TetMesh &tetMesh, cons
 }
 
 
-std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh &tetMesh, const FiberGraph &pg, const std::array<double, 2> &fiberPoint, const int sheetId)
+std::set<std::pair<int, int>> BFSFiberSearch(const int &seedTriangleId, const TetMesh &tetMesh, const FiberGraph &pg, const std::array<double, 2> &fiberPoint, const int sheetId)
 {
     std::vector<FiberPoint> faceFibers;
-    const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
     // Set up the BFs
     std::queue<int> bfsQueue;
@@ -83,7 +82,7 @@ std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh 
 
             }
 
-            // If the neighbour has been visited and it's 
+            // If the neighbour has been visited, but it's not our parent, then it completes a cycle
             if (neighbourTriangleId != parent[currentTriangleId])
             {
                 fiberSegments.insert({
@@ -98,39 +97,7 @@ std::vector<FiberPoint> BFSFiberSearch(const int &seedTriangleId, const TetMesh 
     }
 
 
-    // Set up the fiber points for each segment
-    for (const auto &[triangleIdA, triangleIdB] : fiberSegments)
-    {
-        const std::array<double, 3> triangleABarycentricCoordinates = computeBarycentricCoordinates(tetMesh, triangleIdA, fiberPoint);
-        const std::array<double, 3> triangleBBarycentricCoordinates = computeBarycentricCoordinates(tetMesh, triangleIdB, fiberPoint);
-
-        FiberPoint fb(
-                triangleABarycentricCoordinates[0], 
-                triangleABarycentricCoordinates[1], 
-                tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                sheetColour,
-                sheetId,
-                triangleIdA
-                );
-
-        FiberPoint fb2(
-                triangleBBarycentricCoordinates[0], 
-                triangleBBarycentricCoordinates[1], 
-                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                sheetColour,
-                sheetId,
-                triangleIdB
-                );
-
-        faceFibers.push_back(fb);
-        faceFibers.push_back(fb2);
-
-    }
-
-
-
-
-    return faceFibers;
+    return fiberSegments;
 }
 
 
@@ -142,19 +109,43 @@ std::vector<FiberPoint> processFiberGraph(const TetMesh &tetMesh, Arrangement &a
     for (const auto &[triangleId, componentId] : pg.componentRoot)
     {
         const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
         if (false == activeSheets.contains(sheetId))
         {
             continue;
         }
 
-        std::vector<FiberPoint> newFaceFibers = BFSFiberSearch(triangleId, tetMesh, pg, fiberPoint, sheetId);
+        std::set<std::pair<int, int>> fiberSegments = BFSFiberSearch(triangleId, tetMesh, pg, fiberPoint, sheetId);
 
-        faceFibers.insert(
-                faceFibers.end(),
-                newFaceFibers.begin(),
-                newFaceFibers.end()
-                );
+        // Set up the fiber points for each segment
+        for (const auto &[triangleIdA, triangleIdB] : fiberSegments)
+        {
+            const std::array<double, 3> triangleABarycentricCoordinates = computeBarycentricCoordinates(tetMesh, triangleIdA, fiberPoint);
+            const std::array<double, 3> triangleBBarycentricCoordinates = computeBarycentricCoordinates(tetMesh, triangleIdB, fiberPoint);
+
+            FiberPoint fb(
+                    triangleABarycentricCoordinates[0], 
+                    triangleABarycentricCoordinates[1], 
+                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                    sheetColour,
+                    sheetId,
+                    triangleIdA
+                    );
+
+            FiberPoint fb2(
+                    triangleBBarycentricCoordinates[0], 
+                    triangleBBarycentricCoordinates[1], 
+                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                    sheetColour,
+                    sheetId,
+                    triangleIdB
+                    );
+
+            faceFibers.push_back(fb);
+            faceFibers.push_back(fb2);
+
+        }
 
     }
 
