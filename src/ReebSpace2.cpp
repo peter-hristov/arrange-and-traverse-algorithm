@@ -729,10 +729,8 @@ void ReebSpace2::computeEdgeRegionSegments2(const TetMesh &tetMesh, Arrangement 
 void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement &singularArrangement)
 {
     std::vector<std::vector<int>> regularEdgeIntersections(tetMesh.edgeSingularTypes.size());
-    //std::vector<std::vector<std::pair<K::FT, int>>> intersections_on_blue(singularArrangement.arr.number_of_halfedges());
 
     // For each regular edge
-    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     #pragma omp parallel for schedule(dynamic)
     for (const auto &edge : tetMesh.edges) 
     {
@@ -740,70 +738,24 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
         {
             const int edgeId = tetMesh.edgeIndices.at(edge);
 
-            Arrangement_2::X_monotone_curve_2 segmentMonotoneCurve(singularArrangement.arrangementPoints[edge[0]],
+            Arrangement_2::X_monotone_curve_2 segmentMonotoneCurve(
+                    singularArrangement.arrangementPoints[edge[0]],
                     singularArrangement.arrangementPoints[edge[1]]);
-
 
             std::vector<Arrangement_2::Vertex_handle> vrts;
             std::vector<Arrangement_2::Halfedge_handle> hedges;
 
-
-
             CGAL::zone(singularArrangement.arr, segmentMonotoneCurve, CGAL::dispatch_or_drop_output<Arrangement_2::Vertex_handle, Arrangement_2::Halfedge_handle>(std::back_inserter(vrts), std::back_inserter(hedges)));
 
-            //std::cout << "Regular edge with ID " << edgeId << " is intersecting " << hedges.size() << " halfEdge \n";
 
             for (auto h : hedges)
             {
-
-                //std::cout << "\n\nAt halfEdge with ID : " << h->data().id << " from : " << h->source()->point() << " to : " << h->target()->point() << std::endl;
-
                 if (&(*h) > &(*h->twin()))
                 {
                     h=h->twin();
-
                 }
 
                 regularEdgeIntersections[edgeId].push_back(h->data().id);
-
-                //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(h->source()->point().x(), h->source()->point().y(),
-                //h->target()->point().x(), h->target()->point().y(),
-                //segmentMonotoneCurve.source().x(), segmentMonotoneCurve.source().y(),
-                //segmentMonotoneCurve.target().x(), segmentMonotoneCurve.target().y());
-
-
-                //intersections_on_blue[h->data().id].push_back(std::make_pair(alpha, edgeId));
-
-
-
-                //Arrangement_2::X_monotone_curve_2 segmentMonotoneCurveSingularHe(h->source()->point(), h->target()->point());
-
-                //Segment_2 s1(h->source()->point(), h->target()->point());
-                //Segment_2 s2(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]);
-
-
-                //std::optional<std::variant<Point_2, Segment_2>> result = CGAL::intersection(s1, s2);
-
-                //if (!result)
-                //{
-                    //continue;
-                //}
-
-                //const K::Vector_2 v = s1.target() - s1.source();
-
-                //if (std::holds_alternative<Point_2>(*result))
-                //{
-                    //const Point_2 &p = std::get<Point_2>(*result);
-                    //const K::Vector_2 wA = p - s1.source();
-                    //const K::FT tA = (wA * v) / v.squared_length();
-
-                    //// Make sure the regular intersections are well ordered
-                    //assert(false == segmentRegionsOrdered.contains(tA));
-
-                    ////segmentRegionsOrdered[tA] = regularSegmentsIds[j];
-
-                    //intersections_on_blue[h->data().id].push_back(std::make_pair(tA, edgeId));
-                //}
             }
         }
     }
@@ -869,32 +821,6 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
         }
 
     }
-
-
-
-
-    // Sort the segments per edge based on the barycentric coordinate
-    //for (auto& vec : intersections_on_blue)
-    //{
-        //std::sort(vec.begin(), vec.end(),
-                //[](const std::pair<K::FT, int>& a,
-                    //const std::pair<K::FT, int>& b)
-                //{
-                //return a.first < b.first;
-                //});
-    //}
-
-
-    //this->edgeRegionSegments3.resize(singularArrangement.arr.number_of_halfedges());
-
-    //for (int halfEdgeId = 0 ; halfEdgeId < intersections_on_blue.size() ; halfEdgeId++)
-    //{
-        //for (const auto &[alpha, edgeId] : intersections_on_blue[halfEdgeId])
-        //{
-            //this->edgeRegionSegments3[halfEdgeId].push_back({edgeId, true});
-        //}
-    //}
-
 }
 
 
