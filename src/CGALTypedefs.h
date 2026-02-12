@@ -23,6 +23,7 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 #include <CGAL/Arr_extended_dcel.h>
 #include <CGAL/Arrangement_with_history_2.h>
 #include <CGAL/Arr_segment_traits_2.h>
+#include <CGAL/Surface_sweep_2_algorithms.h>
 
 #include <CGAL/Segment_2.h>
 #include <CGAL/Line_2.h>

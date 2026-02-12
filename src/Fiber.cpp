@@ -82,7 +82,7 @@ std::set<std::pair<int, int>> BFSFiberSearch(const int &seedTriangleId, const Te
 
             }
 
-            // If the neighbour has been visited, but it's not our parent, then it completes a cycle
+            // If the neighbour has been visited, but it's not our parent, then it completes a cycle, add it
             if (neighbourTriangleId != parent[currentTriangleId])
             {
                 fiberSegments.insert({
@@ -207,6 +207,21 @@ std::vector<FiberPoint> fiber::computeFiberFromFiberGraph(const TetMesh &tetMesh
 
     return faceFibers;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<double, 2> &fiberPoint, const int reebSheetIdOnly = -1)
 {
