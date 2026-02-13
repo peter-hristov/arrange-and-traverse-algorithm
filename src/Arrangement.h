@@ -60,4 +60,8 @@ class Arrangement
 
     void assignIndices();
 
+    Interval_skip_listId isl;
+    void buildIntervalTree(const TetMesh &tetMesh);
+
+
 };

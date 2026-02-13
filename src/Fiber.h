@@ -14,6 +14,10 @@ namespace fiber
 
     std::vector<FiberPoint> computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<double, 2> &fiberPoint, const int reebSheetIdOnly);
 
+
+    std::vector<FiberPoint> computeFiberSAT(const TetMesh &, Arrangement &, ReebSpace2 &, const std::array<double, 2> &);
+
+
     // Colour map for Reeb space sheets and fibers
     const std::vector<std::array<float, 3>> fiberColours = {
         {1.0f, 0.0f, 0.0f},    // Vivid Red

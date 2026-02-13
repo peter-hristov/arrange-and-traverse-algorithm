@@ -1,6 +1,30 @@
 #include "./Timer.h"
 #include "./Arrangement.h"
 
+void Arrangement::buildIntervalTree(const TetMesh &tetMesh)
+{
+
+
+    int indexCounter = 0;
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    {
+        K::FT xmin = std::min(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[1]].x());
+        K::FT xmax = std::max(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[1]].x());
+        isl.insert(IntervalWithID(xmin, xmax, static_cast<int>(indexCounter++)));
+    }
+
+    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    //{
+        //Point_3 a(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[0]].y(), 0.0);
+        //Point_3 b(this->arrangementPoints[edge[1]].x(), this->arrangementPoints[edge[1]].y(), 0.0);
+
+        //this->allSegments.push_back(Segment_3(a, b));
+    //}
+
+    //this->tree = TreeAABB(this->allSegments.begin(), this->allSegments.end());
+    //this->tree.build();
+}
+
 Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPoint)
 {
     // The query point (u, v)

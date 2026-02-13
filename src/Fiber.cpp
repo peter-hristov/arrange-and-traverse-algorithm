@@ -4,9 +4,124 @@
 #include "./DisjointSet.h"
 #include "./FiberPoint.h"
 #include "./FiberGraph.h"
+#include "./Timer.h"
 
 #include <queue>
 #include <unistd.h>
+
+
+
+std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint)
+{
+    //Timer::start();
+    //Point_3 p(controlPoint[0], controlPoint[1], 0.0);
+    //K::Ray_3 ray(p, K::Direction_3(0, -1, 0)); // vertical upward
+
+    //std::vector<TreeAABB::Intersection_and_primitive_id<K::Ray_3>::Type> intersections;
+    //singularArrangement.tree.all_intersections(ray, std::back_inserter(intersections));
+    //Timer::stop("Ray intersections                      :");
+
+    //std::set<int> intersectedEdges;
+
+    //for (auto &hit : intersections)
+    //{
+        //const auto &seg_it = std::get<1>(hit); // iterator to the segment
+        //const Segment_3 &seg = *seg_it;
+
+        //auto sourceX = seg.source().x();
+        //auto sourceY = seg.source().y();
+
+        //auto targetX = seg.target().x();
+        //auto targetY = seg.target().y();
+
+        //auto vertexAid = singularArrangement.arrangementPointIndices.at({sourceX, sourceY});
+        //auto vertexBid = singularArrangement.arrangementPointIndices.at({targetX, targetY});
+
+        //if (vertexAid > vertexBid)
+        //{
+            //std::swap(vertexAid, vertexBid);
+        //}
+
+        ////const vertexBid
+
+        //std::cout << "Segment with ID " << tetMesh.edgeIndices.at({vertexAid, vertexBid}) << std::endl;
+
+        //intersectedEdges.insert(tetMesh.edgeIndices.at({vertexAid, vertexBid}));
+
+        //std::cout << "Intersected segment: ("
+            //<< seg.source() << ") -> ("
+            //<< seg.target() << ")\n";
+    //}
+
+    // Query: horizontal ray at y = 3
+    //
+    K::FT x0 = controlPoint[0];
+
+    std::set<int> intersectedEdges;
+    
+    std::set<int> intersectedEdges2;
+
+
+    Timer::start();
+    int indexCounter = 0;
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    {
+        K::FT xmin = std::min(singularArrangement.arrangementPoints[edge[0]].x(), singularArrangement.arrangementPoints[edge[1]].x());
+        K::FT xmax = std::max(singularArrangement.arrangementPoints[edge[0]].x(), singularArrangement.arrangementPoints[edge[1]].x());
+
+        if (xmin < x0 && x0 < xmax)
+        {
+            intersectedEdges.insert(indexCounter);
+        }
+
+        indexCounter++;
+    }
+    Timer::stop("Brute Force search                     :");
+
+    Timer::start();
+    std::list<IntervalWithID> intersected;
+    singularArrangement.isl.find_intervals(x0, std::back_inserter(intersected));
+    Timer::stop("Interval tree search                   :");
+
+    std::cout << "Segments intersected by horizontal line y = " << x0 << ":\n";
+    for(const auto& interval : intersected)
+    {
+        intersectedEdges2.insert(interval.id);
+        std::cout << "Segment ID: " << interval.id << "\n";
+    }
+
+
+    if (intersectedEdges == intersectedEdges2)
+    {
+        std::cout << "Corect computation!\n";
+    }
+    else
+    {
+        std::cout << "Something is wrong!\n";
+
+    }
+
+
+
+    return {};
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -435,7 +435,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         qDebug() << "Computing fiber (" << u << ", " << v << ")";
 
         //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
-        const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+        //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+        const std::vector<FiberPoint> fiber = fiber::computeFiberSAT(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
 
         sibling->updateFiber(fiber);
     }

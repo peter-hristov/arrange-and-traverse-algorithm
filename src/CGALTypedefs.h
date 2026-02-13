@@ -110,3 +110,25 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 
 
 #include <CGAL/Union_find.h>
+
+
+
+
+
+
+#include <CGAL/Interval_skip_list.h>
+#include <CGAL/Interval_skip_list_interval.h>
+#include <CGAL/algorithm.h>
+
+// Custom interval that stores an ID
+struct IntervalWithID : public CGAL::Interval_skip_list_interval<K::FT>
+{
+    int id; // your segment index
+
+    IntervalWithID() : CGAL::Interval_skip_list_interval<K::FT>(), id(-1) {}
+
+    IntervalWithID(const K::FT& low, const K::FT& high, int id_)
+        : CGAL::Interval_skip_list_interval<K::FT>(low, high), id(id_) {}
+};
+
+typedef CGAL::Interval_skip_list<IntervalWithID> Interval_skip_listId;
