@@ -764,7 +764,7 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
 
     // Invert regularEdgeIntersections and save all regular segment intersections per half-edge in \bar{A}
     //
-    this->edgeRegionSegments3.resize(singularArrangement.arr.number_of_halfedges());
+    this->edgeRegionSegments.resize(singularArrangement.arr.number_of_halfedges());
 
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
@@ -774,7 +774,7 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
 
             for (const auto &singularHalfEdgeId : regularEdgeIntersections[regularEdgeId])
             {
-                this->edgeRegionSegments3[singularHalfEdgeId].push_back({regularEdgeId, true});
+                this->edgeRegionSegments[singularHalfEdgeId].push_back({regularEdgeId, true});
             }
         }
     }
@@ -789,19 +789,17 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
         halfEdgeVector.emplace_back(halfEdge);
     }
 
-    // Timings on this : 2.1, 
-
     // Sort the regular segment intersection points per half-edge
     //
     #pragma omp parallel for schedule(dynamic)
     for (const auto &halfEdge : halfEdgeVector) 
     {
         std::vector<std::pair<K::FT, int>> segmentRegionsOrdered;
-        segmentRegionsOrdered.reserve(this->edgeRegionSegments3[halfEdge->data().id].size());
+        segmentRegionsOrdered.reserve(this->edgeRegionSegments[halfEdge->data().id].size());
 
         const Segment_2 singularSegment(halfEdge->source()->point(), halfEdge->target()->point());
 
-        for (const auto &[regularEdgeId, boolDirection] : this->edgeRegionSegments3[halfEdge->data().id])
+        for (const auto &[regularEdgeId, boolDirection] : this->edgeRegionSegments[halfEdge->data().id])
         {
                 const Segment_2 regularSegment(
                         singularArrangement.arrangementPoints[tetMesh.edges[regularEdgeId][0]],
@@ -821,7 +819,7 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
 
         for (int i = 0 ; i < segmentRegionsOrdered.size() ; i++)
         {
-            edgeRegionSegments3[halfEdge->data().id][i].first = segmentRegionsOrdered[i].second;
+            edgeRegionSegments[halfEdge->data().id][i].first = segmentRegionsOrdered[i].second;
         }
 
     }
@@ -864,11 +862,6 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
         //}
 
     //}
-
-
-
-
-
 }
 
 

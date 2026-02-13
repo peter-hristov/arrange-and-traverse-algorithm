@@ -152,57 +152,14 @@ int main(int argc, char* argv[])
 
     Timer::start();
     reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
-    Timer::stop("Computed red/blud intersetions 1 bf    :");
+    Timer::stop("Computed red/blud intersetions         :");
 
-    //reebSpace2.edgeRegionSegments.clear();
-    //reebSpace2.edgeRegionSegments.shrink_to_fit();
-
-    //Timer::start();
-    //reebSpace2.computeEdgeRegionSegments2(tetMesh, singularArrangement);
-    //Timer::stop("Computed red/blud intersetions 2       :");
+    reebSpace2.edgeRegionSegments.clear();
+    reebSpace2.edgeRegionSegments.shrink_to_fit();
 
     Timer::start();
     reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
-    Timer::stop("Computed red/blud intersetions 3       :");
-
-
-    //for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
-    //{
-        //const int &halfEdgeId = halfEdge->data().id;
-        //const auto &edgeRegion = reebSpace2.edgeRegionSegments[halfEdgeId];
-
-        //std::cout << "\n\nAt halfEdge with ID : " << halfEdgeId << " from : " << halfEdge->source()->point() << " to : " << halfEdge->target()->point() << std::endl;
-
-        //std::cout << "Edge region 1 : " << std::endl;
-        //for (const auto &[edgeId, isDirection] : edgeRegion)
-        //{
-            //std::cout << edgeId << std::endl;
-
-        //}
-
-        //std::cout << "Edge region 3 : " << std::endl;
-
-        //const auto &edgeRegion3 = reebSpace2.edgeRegionSegments3[halfEdgeId];
-
-        //for (const auto &[edgeId, isDirection] : edgeRegion3)
-        //{
-            //std::cout << edgeId << std::endl;
-
-        //}
-
-    //}
-
-    if (reebSpace2.edgeRegionSegments == reebSpace2.edgeRegionSegments3)
-    {
-        std::cout << "EXACTLY THE SAME";
-    }
-    else
-    {
-        std::cerr << "WRONG COMPUTATION";
-    }
-
-
-    return 0;
+    Timer::stop("Computed red/blud intersetions         :");
 
     Timer::start();
     reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);

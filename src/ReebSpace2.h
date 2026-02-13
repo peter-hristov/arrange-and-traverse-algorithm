@@ -23,8 +23,6 @@ class ReebSpace2
         // The "edge region" is defined as the interior of the half-edge and the order is linear along the half-edge
         std::vector<std::vector<std::pair<int, bool>>> edgeRegionSegments;
 
-        std::vector<std::vector<std::pair<int, bool>>> edgeRegionSegments3;
-
         // Indexed by half-edge ID
         // For each helf-edge $e$, get the ordered list of regular segment IDs that intersect the vertex region (have the same source as $e$) and whether they are left-to-right (direction of travel)
         // The vertex region is defined as the area between $e$ and $e->next$ around $e->source$, the order is CCW  as per CGAL convention
