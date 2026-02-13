@@ -116,19 +116,14 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 
 
 
-#include <CGAL/Interval_skip_list.h>
-#include <CGAL/Interval_skip_list_interval.h>
-#include <CGAL/algorithm.h>
 
-// Custom interval that stores an ID
-struct IntervalWithID : public CGAL::Interval_skip_list_interval<K::FT>
-{
-    int id; // your segment index
+// For the AABB Tree
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_segment_primitive.h>
+typedef K::Segment_3 Segment_3;
+typedef K::Point_3 Point_3;
 
-    IntervalWithID() : CGAL::Interval_skip_list_interval<K::FT>(), id(-1) {}
-
-    IntervalWithID(const K::FT& low, const K::FT& high, int id_)
-        : CGAL::Interval_skip_list_interval<K::FT>(low, high), id(id_) {}
-};
-
-typedef CGAL::Interval_skip_list<IntervalWithID> Interval_skip_listId;
+using PrimitiveAABB = CGAL::AABB_segment_primitive<K, std::vector<Segment_3>::iterator>;
+using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
+using TreeAABB = CGAL::AABB_tree<TraitsAABB>;

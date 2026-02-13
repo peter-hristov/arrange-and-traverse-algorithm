@@ -144,9 +144,8 @@ int main(int argc, char* argv[])
     singularArrangement.computePointLocationDataStructure();
     Timer::stop("Arrangement search structure           :");
 
-    Timer::start();
-    singularArrangement.buildIntervalTree(tetMesh);
-    Timer::stop("Arrangement Interval Tree              :");
+
+
 
 
     //
@@ -189,6 +188,9 @@ int main(int argc, char* argv[])
     reebSpace2.computeSheets(singularArrangement);
     Timer::stop("Postprocessing                         :");
 
+    Timer::start();
+    singularArrangement.buildAABBtree(tetMesh);
+    Timer::stop("Arrangement AABB Tree                  :");
 
 
     std::cout << "\nThe Reeb space has this many sheets " << reebSpace2.correspondenceGraphDS.countComponents() << std::endl;

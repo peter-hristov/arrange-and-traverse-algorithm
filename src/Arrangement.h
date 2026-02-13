@@ -42,6 +42,8 @@ class Arrangement
     // Which faces are adjacent to a singular edge
     std::set<Arrangement_2::Face_const_handle> singularFaces;
 
+    std::vector<Segment_3> allSegments;
+    TreeAABB tree;
 
     std::unique_ptr<Point_location> pl;  // nullptr by default
 
@@ -60,9 +62,8 @@ class Arrangement
 
     void assignIndices();
 
-    Interval_skip_listId isl;
-    std::vector<IntervalWithID> intervalStorage;
-    void buildIntervalTree(const TetMesh &tetMesh);
+
+    void buildAABBtree(const TetMesh &tetMesh);
 
 
 };
