@@ -730,7 +730,8 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
 {
     std::vector<std::vector<int>> regularEdgeIntersections(tetMesh.edgeSingularTypes.size());
 
-    // For each regular edge
+    // For each regular segment, compute its intersections with all singular segment
+    //
     #pragma omp parallel for schedule(dynamic)
     for (const auto &edge : tetMesh.edges) 
     {
@@ -761,9 +762,10 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
     }
 
 
+    // Invert regularEdgeIntersections and save all regular segment intersections per half-edge in \bar{A}
+    //
     this->edgeRegionSegments3.resize(singularArrangement.arr.number_of_halfedges());
 
-    // Serial
     for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
     {
         if (type == 1)
@@ -778,6 +780,8 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
     }
 
 
+    // Temporary make a vector of half-edges so that we can use OpenMP next
+    //
     std::vector<Halfedge_const_handle> halfEdgeVector;
     halfEdgeVector.reserve(singularArrangement.arr.number_of_halfedges());
     for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
@@ -785,13 +789,15 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
         halfEdgeVector.emplace_back(halfEdge);
     }
 
-    // Sort the regular segments per halfEdge
-    //for (auto halfEdge = singularArrangement.arr.halfedges_begin(); halfEdge != singularArrangement.arr.halfedges_end(); ++halfEdge) 
+    // Timings on this : 2.1, 
 
+    // Sort the regular segment intersection points per half-edge
+    //
     #pragma omp parallel for schedule(dynamic)
     for (const auto &halfEdge : halfEdgeVector) 
     {
-        std::map<K::FT, int> segmentRegionsOrdered;
+        std::vector<std::pair<K::FT, int>> segmentRegionsOrdered;
+        segmentRegionsOrdered.reserve(this->edgeRegionSegments3[halfEdge->data().id].size());
 
         const Segment_2 singularSegment(halfEdge->source()->point(), halfEdge->target()->point());
 
@@ -808,19 +814,61 @@ void ReebSpace2::computeEdgeRegionSegments3(const TetMesh &tetMesh, Arrangement 
                         regularSegment.source().x(), regularSegment.source().y(),
                         regularSegment.target().x(), regularSegment.target().y());
 
-
-                segmentRegionsOrdered[alpha] = regularEdgeId;
+                segmentRegionsOrdered.emplace_back(alpha, regularEdgeId);
         }
 
+        std::sort(segmentRegionsOrdered.begin(), segmentRegionsOrdered.end());
 
-        edgeRegionSegments3[halfEdge->data().id].clear();
-
-        for (const auto& [alpha, regularEdgeId] : segmentRegionsOrdered)
+        for (int i = 0 ; i < segmentRegionsOrdered.size() ; i++)
         {
-            edgeRegionSegments3[halfEdge->data().id].push_back({regularEdgeId, true});
+            edgeRegionSegments3[halfEdge->data().id][i].first = segmentRegionsOrdered[i].second;
         }
 
     }
+
+
+    // Timings on this : 2.5, 2.3 
+
+    // Sort the regular segment intersection points per half-edge
+    //
+    //#pragma omp parallel for schedule(dynamic)
+    //for (const auto &halfEdge : halfEdgeVector) 
+    //{
+        //std::map<K::FT, int> segmentRegionsOrdered;
+
+        //const Segment_2 singularSegment(halfEdge->source()->point(), halfEdge->target()->point());
+
+        //for (const auto &[regularEdgeId, boolDirection] : this->edgeRegionSegments3[halfEdge->data().id])
+        //{
+                //const Segment_2 regularSegment(
+                        //singularArrangement.arrangementPoints[tetMesh.edges[regularEdgeId][0]],
+                        //singularArrangement.arrangementPoints[tetMesh.edges[regularEdgeId][1]]
+                        //);
+
+                //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                        //halfEdge->target()->point().x(), halfEdge->target()->point().y(),
+                        //halfEdge->source()->point().x(), halfEdge->source()->point().y(),
+                        //regularSegment.source().x(), regularSegment.source().y(),
+                        //regularSegment.target().x(), regularSegment.target().y());
+
+
+                //segmentRegionsOrdered[alpha] = regularEdgeId;
+        //}
+
+
+        //edgeRegionSegments3[halfEdge->data().id].clear();
+
+        //for (const auto& [alpha, regularEdgeId] : segmentRegionsOrdered)
+        //{
+            //edgeRegionSegments3[halfEdge->data().id].push_back({regularEdgeId, true});
+        //}
+
+    //}
+
+
+
+
+
 }
 
 

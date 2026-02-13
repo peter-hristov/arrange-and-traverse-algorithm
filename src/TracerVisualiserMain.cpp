@@ -151,8 +151,15 @@ int main(int argc, char* argv[])
     ReebSpace2 reebSpace2;
 
     Timer::start();
-    reebSpace2.computeEdgeRegionSegments2(tetMesh, singularArrangement);
-    Timer::stop("Computed red/blud intersetions         :");
+    reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
+    Timer::stop("Computed red/blud intersetions 1 bf    :");
+
+    //reebSpace2.edgeRegionSegments.clear();
+    //reebSpace2.edgeRegionSegments.shrink_to_fit();
+
+    //Timer::start();
+    //reebSpace2.computeEdgeRegionSegments2(tetMesh, singularArrangement);
+    //Timer::stop("Computed red/blud intersetions 2       :");
 
     Timer::start();
     reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
