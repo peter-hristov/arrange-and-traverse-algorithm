@@ -61,6 +61,7 @@ class Arrangement
     void assignIndices();
 
     Interval_skip_listId isl;
+    std::vector<IntervalWithID> intervalStorage;
     void buildIntervalTree(const TetMesh &tetMesh);
 
 

@@ -3,26 +3,32 @@
 
 void Arrangement::buildIntervalTree(const TetMesh &tetMesh)
 {
-
+    this->isl.clear();
+    this->intervalStorage.clear();
+    this->intervalStorage.reserve(tetMesh.edgeSingularTypes.size());
 
     int indexCounter = 0;
-    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    std::set<std::pair<K::FT, K::FT>> intervals;
+
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes)
     {
-        K::FT xmin = std::min(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[1]].x());
-        K::FT xmax = std::max(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[1]].x());
-        isl.insert(IntervalWithID(xmin, xmax, static_cast<int>(indexCounter++)));
+        K::FT xmin = std::min(arrangementPoints[edge[0]].x(),
+                              arrangementPoints[edge[1]].x());
+
+        K::FT xmax = std::max(arrangementPoints[edge[0]].x(),
+                              arrangementPoints[edge[1]].x());
+
+        //if (xmin == xmax)
+            //throw std::runtime_error("Empty interval.");
+
+        //if (!intervals.insert({xmin, xmax}).second)
+            //throw std::runtime_error("Duplicate interval.");
+
+        intervalStorage.emplace_back(xmin, xmax, indexCounter++);
     }
 
-    //for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
-    //{
-        //Point_3 a(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[0]].y(), 0.0);
-        //Point_3 b(this->arrangementPoints[edge[1]].x(), this->arrangementPoints[edge[1]].y(), 0.0);
-
-        //this->allSegments.push_back(Segment_3(a, b));
-    //}
-
-    //this->tree = TreeAABB(this->allSegments.begin(), this->allSegments.end());
-    //this->tree.build();
+    for (auto& interval : intervalStorage)
+        isl.insert(interval);
 }
 
 Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPoint)

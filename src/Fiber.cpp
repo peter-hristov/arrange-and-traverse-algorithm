@@ -56,6 +56,10 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
     // Query: horizontal ray at y = 3
     //
     K::FT x0 = controlPoint[0];
+    K::FT y0 = controlPoint[1];
+
+    K::FT x1 = controlPoint[0];
+    K::FT y1 = tetMesh.minY - 1.0;
 
     std::set<int> intersectedEdges;
     
@@ -78,17 +82,55 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
     }
     Timer::stop("Brute Force search                     :");
 
+
+
+
+
+
+
+
+
+
+
     Timer::start();
     std::list<IntervalWithID> intersected;
     singularArrangement.isl.find_intervals(x0, std::back_inserter(intersected));
     Timer::stop("Interval tree search                   :");
 
     std::cout << "Segments intersected by horizontal line y = " << x0 << ":\n";
+
+    std::vector<std::pair<K::FT, int>> sortedIntersections;
+    sortedIntersections.reserve(intersected.size());
+
+
+
+
+
+    Timer::start();
     for(const auto& interval : intersected)
     {
         intersectedEdges2.insert(interval.id);
-        std::cout << "Segment ID: " << interval.id << "\n";
+
+        // Get the edge
+        const std::array<int, 2> &edge = tetMesh.edges[interval.id];
+
+        // Get the segment
+        const Segment_2 intersectedSegment(singularArrangement.arrangementPoints[edge[0]], singularArrangement.arrangementPoints[edge[1]]);
+
+        K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                x0, y0, x1, y1,
+                intersectedSegment.source().x(), intersectedSegment.source().y(),
+                intersectedSegment.target().x(), intersectedSegment.target().y());
+
+        sortedIntersections.emplace_back(alpha, interval.id);
+
+        //std::cout << "Segment ID: " << interval.id << "\n";
     }
+
+
+    std::sort(sortedIntersections.begin(), sortedIntersections.end());
+
+    Timer::stop("Computed alpha                         :");
 
 
     if (intersectedEdges == intersectedEdges2)
