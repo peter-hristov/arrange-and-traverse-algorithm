@@ -269,7 +269,7 @@ TracerVisualiserWidget::drawScene()
     // Don't remember why I need this
     glRotatef(-90., 1., 0., 0.);
 
-    this->drawAxis(1000., 1.0 * (this->data.tetMesh.maxX - this->data.tetMesh.minX) / 1800.0);
+    //this->drawAxis(1000., 1.0 * (this->data.tetMesh.maxX - this->data.tetMesh.minX) / 1800.0);
 
 
     //

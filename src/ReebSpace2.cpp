@@ -195,30 +195,30 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
     }
 
     // For every face face
-    for (int faceId = 0 ; faceId < this->fiberGraphsPerFace.size(); faceId++)
-    {
+    //for (int faceId = 0 ; faceId < this->fiberGraphsPerFace.size(); faceId++)
+    //{
 
-        // For every sheet in the face
-        for (const int &componentId : this->correspondenceGraph[faceId])
-        {
-            const int sheetId = this->correspondenceGraphDS.find(componentId);
+        //// For every sheet in the face
+        //for (const int &componentId : this->correspondenceGraph[faceId])
+        //{
+            //const int sheetId = this->correspondenceGraphDS.find(componentId);
 
 
-            // For every thiangle in the preimage graph
-            for (const auto &[triangleId, triangleComponentId] : this->fiberGraphsPerFace[faceId].componentRoot)
-            {
+            //// For every thiangle in the preimage graph
+            //for (const auto &[triangleId, triangleComponentId] : this->fiberGraphsPerFace[faceId].componentRoot)
+            //{
 
-                // If this triangle is in the same component as the sheet
-                const int sheetIdComponent = this->correspondenceGraphDS.find(triangleComponentId);
+                //// If this triangle is in the same component as the sheet
+                //const int sheetIdComponent = this->correspondenceGraphDS.find(triangleComponentId);
 
-                if (sheetId == sheetIdComponent)
-                {
-                    this->trianglesPerSheet[sheetId].push_back(triangleId);
-                }
+                //if (sheetId == sheetIdComponent)
+                //{
+                    //this->trianglesPerSheet[sheetId].push_back(triangleId);
+                //}
 
-            }
-        }
-    }
+            //}
+        //}
+    //}
 
 
     //for (const auto &[sheetId, trianglesVector] : this->trianglesPerSheet)
@@ -350,9 +350,9 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
 {
     // Set up arrays
     //
-    this->fiberGraphsPerFace.resize(singularArrangement.arr.number_of_faces());
     this->correspondenceGraph.resize(singularArrangement.arr.number_of_faces());
     this->fiberGraphs.resize(singularArrangement.arr.number_of_halfedges());
+    this->representativeFiberGraphs.resize(singularArrangement.arr.number_of_faces());
 
     // Find the outside face
     //
@@ -429,10 +429,10 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 }
             }
 
-            // Cache one of the fiber graphs for the face to use later
-            if (iteratorHalfEdge == currentHalfEdge)
+            // Cache the first fiber graph for the first halfEdge of the current face
+            if (false == currentHalfEdge->face()->is_unbounded() && iteratorHalfEdge->data().id == currentHalfEdge->face()->outer_ccb()->data().id)
             {
-                this->fiberGraphsPerFace[iteratorHalfEdge->face()->data()] = this->fiberGraphs[iteratorHalfEdge->data().id].first;
+                this->representativeFiberGraphs[iteratorHalfEdge->face()->data()] = this->fiberGraphs[iteratorHalfEdge->data().id].first;
             }
 
             // We no longer need the preimage graphs, we can clear them

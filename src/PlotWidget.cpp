@@ -306,6 +306,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
 
     // Draw all edges
+    //
     //for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
     //{
         //const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
@@ -320,7 +321,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         //}
         //else if (type == 1)
         //{
-            //continue;
+            ////continue;
             ////p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
             //p.setPen(QPen(Qt::black, 5.0, Qt::SolidLine));
         //}

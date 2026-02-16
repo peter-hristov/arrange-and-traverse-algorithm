@@ -52,7 +52,8 @@ class ReebSpace2
         // The second preimage graph is o2: at the target $b$, before all regular segments
         std::vector<std::pair<FiberGraph, FiberGraph>> fiberGraphs;
 
-        std::vector<FiberGraph> fiberGraphsPerFace;
+        // Save on fiber graph per face, for visualisation after
+        std::vector<FiberGraph> representativeFiberGraphs;
         
         // This tells you whether two sheets share a boundary (a half-edge or a vertex).
         // These are the edges of the sheet graph
