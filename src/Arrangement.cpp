@@ -3,16 +3,32 @@
 
 void Arrangement::buildAABBtree(const TetMesh &tetMesh)
 {
-    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
-    {
-        Point_3 a(this->arrangementPoints[edge[0]].x(), this->arrangementPoints[edge[0]].y(), 0.0);
-        Point_3 b(this->arrangementPoints[edge[1]].x(), this->arrangementPoints[edge[1]].y(), 0.0);
 
-        this->allSegments.push_back(Segment_3(a, b));
+    for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
+    {
+        const std::array<int, 2> &edge = tetMesh.edges[edgeId];
+        const int &edgeType = tetMesh.edgeSingularTypes.at(edge);
+
+        this->allSegments.push_back(Segment_2(this->arrangementPoints[edge[0]], this->arrangementPoints[edge[1]]));
+
     }
 
     this->tree = TreeAABB(this->allSegments.begin(), this->allSegments.end());
     this->tree.build();
+
+
+
+    for (const auto &[edge, type] : tetMesh.edgeSingularTypes) 
+    {
+        if (type != 1)
+        {
+            this->singularSegments.push_back(Segment_2(this->arrangementPoints[edge[0]], this->arrangementPoints[edge[1]]));
+        }
+    }
+
+    this->treeSingular = TreeAABB(this->singularSegments.begin(), this->singularSegments.end());
+    this->treeSingular.build();
+
 }
 
 Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPoint)

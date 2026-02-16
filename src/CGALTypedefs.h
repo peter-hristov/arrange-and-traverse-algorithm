@@ -118,12 +118,26 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 
 
 // For the AABB Tree
-#include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_traits.h>
-#include <CGAL/AABB_segment_primitive.h>
-typedef K::Segment_3 Segment_3;
-typedef K::Point_3 Point_3;
+//#include <CGAL/AABB_tree.h>
+//#include <CGAL/AABB_traits.h>
+//#include <CGAL/AABB_segment_primitive.h>
 
-using PrimitiveAABB = CGAL::AABB_segment_primitive<K, std::vector<Segment_3>::iterator>;
-using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
-using TreeAABB = CGAL::AABB_tree<TraitsAABB>;
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits_2.h>
+#include <CGAL/AABB_segment_primitive_2.h>
+
+
+
+typedef std::vector<Segment_2>::const_iterator Iterator;
+typedef CGAL::AABB_segment_primitive_2<K, Iterator> Primitive;
+typedef CGAL::AABB_traits_2<K, Primitive> Traits;
+typedef CGAL::AABB_tree<Traits> TreeAABB;
+
+
+
+//typedef K::Segment_3 Segment_3;
+//typedef K::Point_3 Point_3;
+
+//using PrimitiveAABB = CGAL::AABB_segment_primitive<K, std::vector<Segment_2>::iterator>;
+//using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
+//using TreeAABB = CGAL::AABB_tree<TraitsAABB>;

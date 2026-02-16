@@ -42,8 +42,11 @@ class Arrangement
     // Which faces are adjacent to a singular edge
     std::set<Arrangement_2::Face_const_handle> singularFaces;
 
-    std::vector<Segment_3> allSegments;
+    std::vector<Segment_2> allSegments;
     TreeAABB tree;
+
+    std::vector<Segment_2> singularSegments;
+    TreeAABB treeSingular;
 
     std::unique_ptr<Point_location> pl;  // nullptr by default
 

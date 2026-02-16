@@ -11,77 +11,196 @@
 
 
 
-#include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_traits.h>
-#include <CGAL/AABB_segment_primitive.h>
-typedef K::Segment_3 Segment_3;
-typedef K::Point_3 Point_3;
-
-using PrimitiveAABB = CGAL::AABB_segment_primitive<K, std::vector<Segment_3>::iterator>;
-using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
-using TreeAABB = CGAL::AABB_tree<TraitsAABB>;
-
-
-
-#include <CGAL/Segment_tree_d.h>
-#include <CGAL/Range_segment_tree_traits.h>
-
 
 
 
 
 std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint)
 {
-    Timer::start();
-    Point_3 p(controlPoint[0], controlPoint[1], 0.0);
-    K::Ray_3 ray(p, K::Direction_3(0, -1, 0)); // vertical upward
+    std::cout << std::endl;
 
-    std::vector<TreeAABB::Intersection_and_primitive_id<K::Ray_3>::Type> intersections;
-    singularArrangement.tree.all_intersections(ray, std::back_inserter(intersections));
-    Timer::stop("Ray intersections                      :");
+    const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
 
-    for (auto &hit : intersections)
+    //Timer::start();
+
+    auto result = singularArrangement.treeSingular.closest_point_and_primitive(controlPointEPEC);
+    Point_2 closestPoint = result.first;
+    Segment_2 closestSegment = *result.second;
+    Timer::stop("Computed closest point in              :");
+
+    const int vertexSourceId = singularArrangement.arrangementPointIndices.at(closestSegment.source());
+    const int vertexTargetId = singularArrangement.arrangementPointIndices.at(closestSegment.target());
+    const int closestSegmentId = tetMesh.edgeIndices.at({vertexSourceId, vertexTargetId});
+
+    std::cout << "The closest point is " << closestPoint << std::endl;
+    std::cout << "The closest segment is " << tetMesh.edgeIndices.at({vertexSourceId, vertexTargetId}) << std::endl;
+
+
+
+    // If we happen to be connected to an endpiont of a segment
+    if (closestPoint == closestSegment.source() || closestPoint == closestSegment.target())
     {
-        const auto &seg_it = std::get<1>(hit); // iterator to the segment
-        const Segment_3 &seg = *seg_it;
+        closestPoint = CGAL::midpoint(closestSegment.source(), closestSegment.target());
+    }
 
-        auto sourceX = seg.source().x();
-        auto sourceY = seg.source().y();
 
-        auto targetX = seg.target().x();
-        auto targetY = seg.target().y();
 
-        auto vertexAid = singularArrangement.arrangementPointIndices.at({sourceX, sourceY});
-        auto vertexBid = singularArrangement.arrangementPointIndices.at({targetX, targetY});
+    // Get the active face
+    //
+    Timer::start();
+    Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
 
-        if (vertexAid > vertexBid)
+    if (activeFace->is_unbounded())
+    {
+        return {};
+    }
+
+    const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];
+    Timer::stop("Computed active face in                :");
+
+
+
+
+    bool foundVertex = false;
+
+    auto circ = activeFace->outer_ccb();
+    auto start = circ;
+    do
+    {
+        //const Point_2& p = circ->target()->point();
+        //std::cout << "  Vertex: (" << p << ")" << std::endl;
+
+        const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(circ);
+
+        const int aIndex = singularArrangement.arrangementPointIndices.at(segment.source());
+        const int bIndex = singularArrangement.arrangementPointIndices.at(segment.target());
+
+        // Sanity check
+        assert(aIndex < bIndex);
+
+        const std::array<int, 2> edge = {aIndex, bIndex};
+
+        const int segmentId = tetMesh.edgeIndices.at({aIndex, bIndex});
+
+        if (segmentId == closestSegmentId)
         {
-            std::swap(vertexAid, vertexBid);
+            foundVertex = true;
+            closestPoint = circ->source()->point();
         }
 
-        //const vertexBid
 
-        //std::cout << "Segment with ID " << tetMesh.edgeIndices.at({vertexAid, vertexBid}) << std::endl;
+        ++circ;
+    } while (circ != start);
 
-        //std::cout << "Intersected segment: ("
-            //<< seg.source() << ") -> ("
-            //<< seg.target() << ")\n";
+    if (foundVertex == false)
+    {
+        throw std::runtime_error("Half-edge vertex not found.");
     }
+
+
+
+
+
+
+    // Construct search segment
+    //
+    //auto vertex = activeFace->outer_ccb()->source()->point();
+    //const Segment_2 searchSegment(controlPointEPEC, vertex);
+
+    const Segment_2 searchSegment(controlPointEPEC, closestPoint);
+
+    // Compute intersectinos with the AABB tree
+    //
+    Timer::start();
+    std::vector<TreeAABB::Primitive_id> ids;
+    singularArrangement.tree.all_intersected_primitives(searchSegment, std::back_inserter(ids));
+    Timer::stop("Computed AABB intersections in         :");
+
+    //std::cout << "We found " << ids.size() << " intersected segments!\n";
+
+
+
+    Timer::start();
+
+    std::vector<std::pair<K::FT, int>> intersectedSegments;
+    intersectedSegments.reserve(ids.size());
+
+    for (auto id : ids)
+    {
+        const Segment_2& s = *id;   // dereference iterator to get the original segment
+
+        // Get the ID of the original segment.
+        const int segmentIndex = id - singularArrangement.allSegments.begin();
+
+        // Double check we get the same segment back.
+        Point_2 a = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][0]];
+        Point_2 b = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][1]];
+
+        const bool match =
+            (s.source() == a && s.target() == b) ||
+            (s.source() == b && s.target() == a);
+
+        if (match == false)
+        {
+            throw std::runtime_error("Issue in AABB tree segments interation.");
+        }
+
+        //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                //s.target().x(), s.target().y(),
+                //s.source().x(), s.source().y(),
+                //searchSegment.target().x(), searchSegment.target().y(),
+
+        //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                //s.source().x(), s.source().y(),
+                //s.target().x(), s.target().y(),
+                //searchSegment.source().x(), searchSegment.source().y(),
+                //searchSegment.target().x(), searchSegment.target().y());               //searchSegment.source().x(), searchSegment.source().y());
+
+
+        //
+        //
+        //
+        //                          s.source()
+        //                              |
+        //                              |
+        //                              |
+        // searchSegment.source() ------x---------- searchSegment.target()
+        //                              |
+        //                              |
+        //                              |
+        //                              |
+        //                          s.target()
+        //
+        K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                searchSegment.target().x(), searchSegment.target().y(),
+                searchSegment.source().x(), searchSegment.source().y(),
+                s.source().x(), s.source().y(),
+                s.target().x(), s.target().y());
+
+        intersectedSegments.emplace_back(alpha, segmentIndex);
+
+
+    }
+
+    Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed AABB intersections in         :");
+
+
+    Timer::start();
+    std::sort(intersectedSegments.begin(), intersectedSegments.end());
+    Timer::stop("Sorting alpha intersections            :");
+
+
+    for (const auto &[alpha, edgeId] : intersectedSegments)
+    {
+        std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
+    }
+
 
 
 
     return {};
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
