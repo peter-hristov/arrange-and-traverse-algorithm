@@ -11,8 +11,43 @@
 
 
 
+// Given a point p within a face F, find a vertex v in the polygon such that the segment pv is entirely within F
+// This relies on that fact given a point in a simple, non-intersecting polygon there at least one visible vertex from p.
+//
+// In practise we use the number of intersected halfEdge, which sould be zero, and only one vertex should be intersected.
+//
+Point_2 findVisibleVertex(const Face_const_handle activeFace, const Point_2 p, Arrangement &singularArrangement)
+{
+    auto circ = activeFace->outer_ccb();
+    auto start = circ;
+    do
+    {
+        Arrangement_2::X_monotone_curve_2 segmentMonotoneCurve(
+                p,
+                circ->source()->point());
+
+            std::vector<Arrangement_2::Vertex_handle> vertices;
+            std::vector<Arrangement_2::Halfedge_handle> halfEdges;
+
+            CGAL::zone(
+                    singularArrangement.arr, 
+                    segmentMonotoneCurve, 
+                    CGAL::dispatch_or_drop_output<Arrangement_2::Vertex_handle, Arrangement_2::Halfedge_handle>(
+                        std::back_inserter(vertices), 
+                        std::back_inserter(halfEdges))
+                    );
+
+            if (halfEdges.size() == 0 && vertices.size() == 1)
+            {
+                return circ->source()->point();
+            }
 
 
+        ++circ;
+    } while (circ != start);
+
+    throw std::runtime_error("No arrangement vertices are visible from the control point.");
+}
 
 
 std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint)
@@ -21,28 +56,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
 
     const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
 
-    //Timer::start();
-
-    auto result = singularArrangement.treeSingular.closest_point_and_primitive(controlPointEPEC);
-    Point_2 closestPoint = result.first;
-    Segment_2 closestSegment = *result.second;
-    Timer::stop("Computed closest point in              :");
-
-    const int vertexSourceId = singularArrangement.arrangementPointIndices.at(closestSegment.source());
-    const int vertexTargetId = singularArrangement.arrangementPointIndices.at(closestSegment.target());
-    const int closestSegmentId = tetMesh.edgeIndices.at({vertexSourceId, vertexTargetId});
-
-    std::cout << "The closest point is " << closestPoint << std::endl;
-    std::cout << "The closest segment is " << tetMesh.edgeIndices.at({vertexSourceId, vertexTargetId}) << std::endl;
-
-
-
-    // If we happen to be connected to an endpiont of a segment
-    if (closestPoint == closestSegment.source() || closestPoint == closestSegment.target())
-    {
-        closestPoint = CGAL::midpoint(closestSegment.source(), closestSegment.target());
-    }
-
+    Timer::start();
 
 
     // Get the active face
@@ -59,73 +73,32 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
     Timer::stop("Computed active face in                :");
 
 
-
-
-    bool foundVertex = false;
-
-    auto circ = activeFace->outer_ccb();
-    auto start = circ;
-    do
-    {
-        //const Point_2& p = circ->target()->point();
-        //std::cout << "  Vertex: (" << p << ")" << std::endl;
-
-        const Segment_2 &segment = *singularArrangement.arr.originating_curves_begin(circ);
-
-        const int aIndex = singularArrangement.arrangementPointIndices.at(segment.source());
-        const int bIndex = singularArrangement.arrangementPointIndices.at(segment.target());
-
-        // Sanity check
-        assert(aIndex < bIndex);
-
-        const std::array<int, 2> edge = {aIndex, bIndex};
-
-        const int segmentId = tetMesh.edgeIndices.at({aIndex, bIndex});
-
-        if (segmentId == closestSegmentId)
-        {
-            foundVertex = true;
-            closestPoint = circ->source()->point();
-        }
-
-
-        ++circ;
-    } while (circ != start);
-
-    if (foundVertex == false)
-    {
-        throw std::runtime_error("Half-edge vertex not found.");
-    }
-
-
-
-
-
-
-    // Construct search segment
+    // Get a visible point from within the face
     //
-    //auto vertex = activeFace->outer_ccb()->source()->point();
-    //const Segment_2 searchSegment(controlPointEPEC, vertex);
+    Timer::start();
+    Point_2 closestHalfEdgeVertexPoint = findVisibleVertex(activeFace, controlPointEPEC, singularArrangement);
+    Timer::stop("Found visible point  in                :");
 
-    const Segment_2 searchSegment(controlPointEPEC, closestPoint);
+    // Set up the control Segment
+    //
+    const Segment_2 controlSegment(controlPointEPEC, closestHalfEdgeVertexPoint);
 
     // Compute intersectinos with the AABB tree
     //
     Timer::start();
-    std::vector<TreeAABB::Primitive_id> ids;
-    singularArrangement.tree.all_intersected_primitives(searchSegment, std::back_inserter(ids));
+    std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
+    singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
     Timer::stop("Computed AABB intersections in         :");
 
-    //std::cout << "We found " << ids.size() << " intersected segments!\n";
 
-
-
+    // Compute the alpha for the intersected segments
+    // 
     Timer::start();
 
     std::vector<std::pair<K::FT, int>> intersectedSegments;
-    intersectedSegments.reserve(ids.size());
+    intersectedSegments.reserve(intersectedSegmentsAABB.size());
 
-    for (auto id : ids)
+    for (auto id : intersectedSegmentsAABB)
     {
         const Segment_2& s = *id;   // dereference iterator to get the original segment
 
@@ -145,17 +118,6 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
             throw std::runtime_error("Issue in AABB tree segments interation.");
         }
 
-        //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
-                //s.target().x(), s.target().y(),
-                //s.source().x(), s.source().y(),
-                //searchSegment.target().x(), searchSegment.target().y(),
-
-        //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
-                //s.source().x(), s.source().y(),
-                //s.target().x(), s.target().y(),
-                //searchSegment.source().x(), searchSegment.source().y(),
-                //searchSegment.target().x(), searchSegment.target().y());               //searchSegment.source().x(), searchSegment.source().y());
-
 
         //
         //
@@ -172,8 +134,8 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
         //                          s.target()
         //
         K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
-                searchSegment.target().x(), searchSegment.target().y(),
-                searchSegment.source().x(), searchSegment.source().y(),
+                controlSegment.target().x(), controlSegment.target().y(),
+                controlSegment.source().x(), controlSegment.source().y(),
                 s.source().x(), s.source().y(),
                 s.target().x(), s.target().y());
 
@@ -193,6 +155,14 @@ std::vector<FiberPoint> fiber::computeFiberSAT(const TetMesh &tetMesh, Arrangeme
 
     for (const auto &[alpha, edgeId] : intersectedSegments)
     {
+        const int singularType = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId));
+
+
+        if (alpha < 1 && singularType != 1)
+        {
+            throw std::runtime_error("Control point segment intersects other singular segments.");
+        }
+
         std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
     }
 
