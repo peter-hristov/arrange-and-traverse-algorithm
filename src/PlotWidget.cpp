@@ -47,12 +47,14 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
     paddedMinG = data.tetMesh.minG - paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
     paddedMaxG = data.tetMesh.maxG + paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
 
+ 
 
-    paddedMinF = -0.006111;
-    paddedMaxF = 0.047295;
+ 
+    paddedMinF = -0.0161366;
+    paddedMaxF = 0.0477647;
 
-    paddedMinG = 0.09477;
-    paddedMaxG = 0.135989;
+    paddedMinG = 0.103332;
+    paddedMaxG = 0.132822;
 }
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
