@@ -46,6 +46,12 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
     paddedMaxF = data.tetMesh.maxF + paddingScalingFactor * (data.tetMesh.maxF - data.tetMesh.minF);
     paddedMinG = data.tetMesh.minG - paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
     paddedMaxG = data.tetMesh.maxG + paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
+
+    //paddedMinF = -0.000111;
+    //paddedMaxF = 0.057295;
+
+    //paddedMinG = 0.08477;
+    //paddedMaxG = 0.185989;
 }
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
@@ -246,15 +252,15 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
         if (type == 0)
         {
-            p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
+            p.setPen(QPen(Qt::black, 5.2, Qt::DashLine));
         }
         else if (type == 1)
         {
-            p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
+            p.setPen(QPen(Qt::black, 1.2, Qt::SolidLine));
         }
         else
         {
-            p.setPen(QPen(Qt::black, 10.2, Qt::SolidLine));
+            p.setPen(QPen(Qt::black, 5.2, Qt::SolidLine));
         }
 
         p.setRenderHint(QPainter::Antialiasing, true);
@@ -262,20 +268,20 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
     }
 
     // Draw all the vertex coordinates
-    for(size_t i = 0 ; i <  this->data.tetMesh.vertexCoordinatesF.size() ; i++)
-    {
-        float u = this->data.tetMesh.vertexCoordinatesF[i];
-        float v = this->data.tetMesh.vertexCoordinatesG[i];
+    //for(size_t i = 0 ; i <  this->data.tetMesh.vertexCoordinatesF.size() ; i++)
+    //{
+        //float u = this->data.tetMesh.vertexCoordinatesF[i];
+        //float v = this->data.tetMesh.vertexCoordinatesG[i];
 
-        p.setPen(QPen(Qt::black, 6, Qt::SolidLine));
-        p.setBrush(Qt::white);           // Fill color
-        p.drawEllipse(rescalePoint(u, v), 20, 20);
+        //p.setPen(QPen(Qt::black, 6, Qt::SolidLine));
+        //p.setBrush(Qt::white);           // Fill color
+        //p.drawEllipse(rescalePoint(u, v), 20, 20);
 
-        QFont font = p.font();
-        font.setPointSize(70);
-        p.setFont(font);
-        p.drawText(rescalePoint(u, v), QString::number(i));
-    }
+        //QFont font = p.font();
+        //font.setPointSize(70);
+        //p.setFont(font);
+        //p.drawText(rescalePoint(u, v), QString::number(i));
+    //}
 }
 
 void PlotWidget::generateStaticReebSpaceCache()
