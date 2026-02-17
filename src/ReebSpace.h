@@ -39,7 +39,7 @@ class ReebSpace
         void determineCorrespondence(const TetMesh &tetMesh, const Arrangement &arrangement, const Arrangement_2::Halfedge_const_handle &);
 
         // Compute the preimage graphs Gi for each cell in the arrangement and their correspondence
-        void computeTraversal(const TetMesh &tetMesh, const Arrangement &arrangement, const bool);
+        void computeTraversal(const TetMesh &tetMesh, const Arrangement &arrangement, const bool, const bool);
 
         // Compute the geometry of the sheets of the Reeb space
         void computeReebSpacePostprocess(const TetMesh &tetMesh, const Arrangement &arrangement);

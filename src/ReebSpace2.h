@@ -85,7 +85,7 @@ class ReebSpace2
         // Geometry helper functions
         bool compareRegularSegments(const Halfedge_const_handle &halfEdge, const Point_2& b, const Point_2& c);
         bool doSegmentEndpointsOverlap(const Segment_2 &s1, const Segment_2 &s2);
-        bool ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment);
+        bool ifSegmentInHalfEdgeRegion(const Halfedge_const_handle &halfEdge, const Segment_2 &segment);
         Halfedge_const_handle getSegmentRegion(Vertex_const_handle &vertexHandle, const Segment_2 &segment);
 
         // Plus/Minus triangles for each region

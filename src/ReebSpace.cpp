@@ -237,7 +237,7 @@ void ReebSpace::determineCorrespondence(const TetMesh &tetMesh, const Arrangemen
     }
 }
 
-void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arrangement, const bool discardFiberSeedsSets)
+void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arrangement, const bool discardFiberSeedsSets, const bool unitTestFiberGraphs)
 {
     Face_const_handle outerFace;
     for (Face_const_iterator fit = arrangement.arr.faces_begin(); fit != arrangement.arr.faces_end(); ++fit) 
@@ -337,8 +337,11 @@ void ReebSpace::computeTraversal(const TetMesh &tetMesh, const Arrangement &arra
         bar.update((100 * computedFaces) / totalFaces);
         //printf("Computed faces %d / %d\n", computedFaces, totalFaces);
 
-        // Dispose of the preimage graph we will no longer need it
-        this->preimageGraphs[currentFaceID].clear();
+        // Dispose of the preimage graph we will no longer need it (unless we want to do unit tests against SAT)
+        if (false == unitTestFiberGraphs)
+        {
+            this->preimageGraphs[currentFaceID].clear();
+        }
         graphsInMemory--;
     }
 

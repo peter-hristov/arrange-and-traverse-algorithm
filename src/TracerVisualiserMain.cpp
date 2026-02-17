@@ -31,8 +31,11 @@ int main(int argc, char* argv[])
     bool performanceRun = false;
     cliApp.add_flag("--performanceRun, -p", performanceRun, "Only compute the Reeb space, no graphics..");
 
-    bool unitTestPreimageGraphs = false;
-    cliApp.add_flag("--unitTestPreimageGraphs, -u", unitTestPreimageGraphs, "Compute the preimage graphs with arrange and traverse and check if they are the same as with singular arrange and traverse.");
+    bool unitTestSheets = false;
+    cliApp.add_flag("--unitTestSheets, -u", unitTestSheets, "Compute the fiber graphs with arrange and traverse and check if they are the same as with singular arrange and traverse.");
+
+    bool unitTestFiberGraphs = false;
+    cliApp.add_flag("--unitTestFiberGraphs, -U", unitTestFiberGraphs, "Compute the sheets with arrange and traverse and check if they are the same as with singular arrange and traverse.");
 
     bool discardFiberSeeds = false;
     cliApp.add_flag("--discardPreimageGraphs, -d", discardFiberSeeds, "Discard the seeds for generating fibers based on sheets, discard to save a bit of memory (not too much).");
@@ -153,16 +156,16 @@ int main(int argc, char* argv[])
     //
     ReebSpace2 reebSpace2;
 
-    Timer::start();
-    reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
-    Timer::stop("Computed red/blud intersetions         :");
+    //Timer::start();
+    //reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
+    //Timer::stop("Computed red/blud intersetions         :");
 
     //reebSpace2.edgeRegionSegments.clear();
     //reebSpace2.edgeRegionSegments.shrink_to_fit();
 
-    //Timer::start();
-    //reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
-    //Timer::stop("Computed red/blud intersetions         :");
+    Timer::start();
+    reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
+    Timer::stop("Computed red/blud intersetions         :");
 
     Timer::start();
     reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
@@ -181,7 +184,7 @@ int main(int argc, char* argv[])
     Timer::stop("Edge crossing plus/minus triangles     :");
 
     Timer::start();
-    reebSpace2.traverse(tetMesh, singularArrangement, false);
+    reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
     Timer::stop("Computed singular traversal            :");
 
     Timer::start();
@@ -207,7 +210,7 @@ int main(int argc, char* argv[])
     ReebSpace reebSpace;
     Arrangement arrangement;
 
-    if (unitTestPreimageGraphs)
+    if (unitTestSheets || unitTestFiberGraphs)
     {
         Timer::start();
         arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
@@ -219,7 +222,7 @@ int main(int argc, char* argv[])
 
 
         Timer::start();
-        reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds);
+        reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds, unitTestFiberGraphs);
         Timer::stop("Computed {G_F} and H                   :");
 
         if (reebSpace2.numberOfSheets != reebSpace.correspondenceGraph.getComponentRepresentatives().size())
@@ -231,6 +234,8 @@ int main(int argc, char* argv[])
             std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
             return 1;
         }
+
+
 
         Timer::start();
         bool areSheetsEqual = unitTests::testAreSheetsIdentical(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
@@ -245,17 +250,20 @@ int main(int argc, char* argv[])
         }
 
 
-        //Timer::start();
-        //bool arePreimageGraphsEqual = reebSpace2.unitTestComparePreimageGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-        //Timer::stop("Comparing preimage graphs              :");
+        if (true == unitTestFiberGraphs)
+        {
+            Timer::start();
+            bool arePreimageGraphsEqual = reebSpace2.unitTestCompareFiberGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+            Timer::stop("Comparing preimage graphs              :");
 
-        //if (false == arePreimageGraphsEqual)
-        //{
-            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            //std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
-            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            //return 1;
-        //}
+            if (false == arePreimageGraphsEqual)
+            {
+                std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+                std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
+                std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+                return 1;
+            }
+        }
 
 
         //std::cout << "Postprocessing..." << std::endl;

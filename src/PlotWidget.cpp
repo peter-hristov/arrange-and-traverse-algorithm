@@ -46,15 +46,6 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
     paddedMaxF = data.tetMesh.maxF + paddingScalingFactor * (data.tetMesh.maxF - data.tetMesh.minF);
     paddedMinG = data.tetMesh.minG - paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
     paddedMaxG = data.tetMesh.maxG + paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
-
- 
-
- 
-    paddedMinF = -0.0161366;
-    paddedMaxF = 0.0477647;
-
-    paddedMinG = 0.103332;
-    paddedMaxG = 0.132822;
 }
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
@@ -316,32 +307,32 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
     // Draw all edges
     //
-    for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
-    {
-        const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
-        const float v1 = this->data.tetMesh.vertexCoordinatesG[edge[0]];
+    //for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
+    //{
+        //const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
+        //const float v1 = this->data.tetMesh.vertexCoordinatesG[edge[0]];
 
-        const float u2 = this->data.tetMesh.vertexCoordinatesF[edge[1]];
-        const float v2 = this->data.tetMesh.vertexCoordinatesG[edge[1]];
+        //const float u2 = this->data.tetMesh.vertexCoordinatesF[edge[1]];
+        //const float v2 = this->data.tetMesh.vertexCoordinatesG[edge[1]];
 
-        if (type == 0)
-        {
-            p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
-        }
-        else if (type == 1)
-        {
-            //continue;
-            //p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
-            p.setPen(QPen(Qt::black, 3.0, Qt::SolidLine));
-        }
-        else
-        {
-            p.setPen(QPen(Qt::black, 10.2, Qt::SolidLine));
-        }
+        //if (type == 0)
+        //{
+            //p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
+        //}
+        //else if (type == 1)
+        //{
+            ////continue;
+            ////p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
+            //p.setPen(QPen(Qt::black, 3.0, Qt::SolidLine));
+        //}
+        //else
+        //{
+            //p.setPen(QPen(Qt::black, 10.2, Qt::SolidLine));
+        //}
 
-        p.setRenderHint(QPainter::Antialiasing, true);
-        p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
-    }
+        //p.setRenderHint(QPainter::Antialiasing, true);
+        //p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
+    //}
 
     //// Draw all the vertex coordinates
     //for(size_t i = 0 ; i <  this->data.tetMesh.vertexCoordinatesF.size() ; i++)
@@ -442,7 +433,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
 
-        qDebug() << "Computing fiber (" << u << ", " << v << ")";
+        //qDebug() << "Computing fiber (" << u << ", " << v << ")";
 
         //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
         //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});

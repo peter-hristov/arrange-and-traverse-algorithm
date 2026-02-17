@@ -7,6 +7,7 @@
 #include "./ReebSpace2.h"
 #include "./DisjointSet.h"
 #include "./LoadingBar.hpp"
+#include "src/CGALTypedefs.h"
 
 void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 {
@@ -980,14 +981,18 @@ void ReebSpace2::determineEdgeRegionSegmentsOrientation(const TetMesh &tetMesh, 
 
 
 
-bool ReebSpace2::ifSegmentInHalfEdgeRegion(Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator, const Segment_2 &segment)
+bool ReebSpace2::ifSegmentInHalfEdgeRegion(const Halfedge_const_handle &halfEdge, const Segment_2 &segment)
 {
-    assert(halfEdgeCirculator != nullptr); 
+    // Previous version
+    //
+    //Arrangement_2::Halfedge_around_vertex_const_circulator &halfEdgeCirculator
+    //const auto halfEdge = halfEdgeCirculator;
+    //auto halfEdgeCirculatorPrevious = halfEdgeCirculator;
+    //const auto halfEdgeNext = ++halfEdgeCirculatorPrevious;
+    //assert(halfEdgeCirculator != nullptr); 
 
-    const auto halfEdge = halfEdgeCirculator;
+    const auto halfEdgeNext = halfEdge->next()->twin();
 
-    auto halfEdgeCirculatorPrevious = halfEdgeCirculator;
-    const auto halfEdgeNext = ++halfEdgeCirculatorPrevious;
 
     // The image of the vertex is o, the endpoints of the half-edges are a and b and the other endpoints of the segment is b
     // See bellow for pictures
@@ -1640,6 +1645,35 @@ bool ReebSpace2::unitTestCompareFiberGraphs(const TetMesh &tetMesh, Arrangement 
 
             return false;
             //throw std::runtime_error("Preimage graphs do not match!");
+        }
+        else
+        {
+            //printf("\n------------------------------------------------------------------------------------\n");
+            //std::cout << "SingularHalf-edge is [" << halfEdge->source()->point() << "] -> [" << halfEdge->target()->point() << "]";
+            //printf("The IDs are %d -> %d\n", singularArrangement.arrangementPointIndices[halfEdge->source()->point()], singularArrangement.arrangementPointIndices[halfEdge->target()->point()]);
+            //printf("\n------------------------------------------------------------------------------------\n");
+
+
+            //std::cout << "First singular preimage graph is: \n";
+            //singularFiberGraphs.first.printByRoot();
+
+            //std::cout << "Second singular preimage graph is: \n";
+            //singularFiberGraphs.second.printByRoot();
+
+
+            //printf("\n------------------------------------------------------------------------------------\n");
+            //std::cout << "Regular-edge 1 is [" << foundHalfEdges.first->source()->point() << "] -> [" << foundHalfEdges.first->target()->point() << "]\n";
+            //std::cout << "Regular-edge 2 is [" << foundHalfEdges.second->source()->point() << "] -> [" << foundHalfEdges.second->target()->point() << "]";
+            //printf("\n------------------------------------------------------------------------------------\n");
+
+            //std::cout << "First regular preimage graph is: \n";
+            //regularFiberGraphs.first.printByRoot();
+
+            //std::cout << "Second regular preimage graph is: \n";
+            //regularFiberGraphs.second.printByRoot();
+
+            //printf("\n\n\n");
+            //std::cout << "Fiber graphs are equal!\n" << std::endl;
         }
     }
     return true;

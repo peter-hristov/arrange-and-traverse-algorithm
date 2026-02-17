@@ -204,8 +204,13 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
             throw std::runtime_error("Control point segment intersects other singular segments.");
         }
 
-        std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
+        //std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
     }
+
+
+
+
+
 
     Timer::start();
 
@@ -218,21 +223,31 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
     //std::cout << "Starting half-edge is " << currentHalfEdge->source()->point() << " -> " << currentHalfEdge->target()->point() << std::endl;
 
     FiberGraph pg = reebSpace.representativeFiberGraphs[activeFace->data()];
-    pg.printByRoot();
+    //pg.printByRoot();
     pg.updateComponentsRegular(tetMesh, reebSpace.edgeRegionSegments[currentHalfEdge->data().id]);
-    pg.printByRoot();
+    //pg.printByRoot();
 
     ++currentHalfEdge;
     do
     {
         //std::cout << "Next half-edge is " << currentHalfEdge->source()->point() << " -> " << currentHalfEdge->target()->point() << std::endl;
         pg.updateComponentsRegular(tetMesh, reebSpace.vertexRegionSegments[currentHalfEdge->prev()->data().id]);
-        pg.printByRoot();
+        //pg.printByRoot();
         pg.updateComponentsRegular(tetMesh, reebSpace.edgeRegionSegments[currentHalfEdge->data().id]);
-        pg.printByRoot();
+        //pg.printByRoot();
 
-        ++currentHalfEdge;
-    } while (currentHalfEdge->source()->point() != closestHalfEdgeVertexPoint);
+        // If we have reached the visible vertex AND the control segment is in its region (not always the case with poinch points)
+        if (currentHalfEdge->target()->point() == closestHalfEdgeVertexPoint && reebSpace.ifSegmentInHalfEdgeRegion(currentHalfEdge, controlSegment))
+        {
+            break;
+        }
+        else
+        {
+            ++currentHalfEdge;
+        }
+
+
+    } while (true);
 
 
     //std::cout << "Final half-edge is " << currentHalfEdge->source()->point() << " -> " << currentHalfEdge->target()->point() << std::endl;
@@ -240,7 +255,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
     // Go to contorlSegment in the region of the vertex
     //
-    const auto &vertexRegion = reebSpace.vertexRegionSegments[currentHalfEdge->prev()->data().id];
+    const auto &vertexRegion = reebSpace.vertexRegionSegments[currentHalfEdge->data().id];
 
     const int vertexMeshId = singularArrangement.arrangementPointIndices[closestHalfEdgeVertexPoint];
 
@@ -262,10 +277,10 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
             b = singularArrangement.arrangementPoints[edge[0]];
         }
 
-        if (reebSpace.compareRegularSegments(currentHalfEdge->prev(), b, controlPointEPEC))
+        if (reebSpace.compareRegularSegments(currentHalfEdge, b, controlPointEPEC))
         {
             pg.updateComponentsRegular(tetMesh, {intersectingSegment});
-            std::cout << "It's happening!" << std::endl;
+            //std::cout << "It's happening!" << std::endl;
         }
         else
         {
@@ -278,8 +293,8 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
     // Got along the control segment 
 
 
-    std::cout << std::endl;
-    std::cout << std::endl;
+    //std::cout << std::endl;
+    //std::cout << std::endl;
 
     for (int i = intersectedSegments.size() - 1 ; i >= 0 ; i--)
     {
@@ -292,7 +307,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
         const int segmentId = intersectedSegments[i].second;
         bool typicalOrientation = true;
 
-        std::cout << "Intersected segment with ID " << segmentId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentId)) << " and alpha " << intersectedSegments[i].first << std::endl;
+        //std::cout << "Intersected segment with ID " << segmentId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentId)) << " and alpha " << intersectedSegments[i].first << std::endl;
 
         // Change orientation in case we need to
         const std::array<int, 2> edge = tetMesh.edges.at(segmentId);
@@ -322,25 +337,25 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
         }
 
 
-        pg.printByRoot();
+        //pg.printByRoot();
 
 
-        const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(segmentId, typicalOrientation);
-        const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(segmentId, typicalOrientation);
+        //const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(segmentId, typicalOrientation);
+        //const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(segmentId, typicalOrientation);
 
-        std::cout << "\n\n\n\nMinus triangles: " << std::endl;
+        //std::cout << "\n\n\n\nMinus triangles: " << std::endl;
 
-        for (const int &triangleId : minusTriangles)
-        {
-            std::cout << triangleId << std::endl;
-        }
+        //for (const int &triangleId : minusTriangles)
+        //{
+            //std::cout << triangleId << std::endl;
+        //}
 
-        std::cout << "\nPlus triangles: " << std::endl;
+        //std::cout << "\nPlus triangles: " << std::endl;
 
-        for (const int &triangleId : plusTriangles)
-        {
-            std::cout << triangleId << std::endl;
-        }
+        //for (const int &triangleId : plusTriangles)
+        //{
+            //std::cout << triangleId << std::endl;
+        //}
 
 
         pg.updateComponentsRegular(tetMesh, {{segmentId, typicalOrientation}});
