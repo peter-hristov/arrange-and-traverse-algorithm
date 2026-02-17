@@ -50,4 +50,14 @@ bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/i
 
 
 
+Center
+0.0138284 0.116638
 
+Bottom Left
+-0.007111 0.10477
+
+Top Right
+0.037295 0.125989
+
+x \in [-0.007111, 0.037295]
+y \in [0.10477, 0.125989]
