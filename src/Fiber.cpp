@@ -23,7 +23,7 @@ std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement 
 
     if (reebSheetIdOnly == -1)
     {
-        std::cout << "There are " << reebSpace.fiberSeeds[activeFaceId].size() << " fiber components with (sheet IDs, sorted IDs): ";
+        std::cout << "There are " << reebSpace.fiberSeeds[activeFaceId].size() << " fiber components with (sheet IDs, sorted IDs): \n";
     }
 
     //vector<int> sheetIds;
@@ -187,7 +187,7 @@ std::vector<FiberPoint> fiber::computeFiber(const TetMesh &tetMesh, Arrangement 
                 fb2.triangleId = neighbourTriagleId;
                 faceFibers.push_back(fb2);
 
-                //printf("Adding fiber between %d -> %d\n", currentTriangleId, neighbourTriagleId);
+                printf("Adding fiber between %d -> %d\n", currentTriangleId, neighbourTriagleId);
             }
         }
     }

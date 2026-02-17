@@ -52,6 +52,12 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
 
     //paddedMinG = 0.08477;
     //paddedMaxG = 0.185989;
+
+    paddedMinF = -0.0161366;
+    paddedMaxF = 0.0477647;
+
+    paddedMinG = 0.103332;
+    paddedMaxG = 0.132822;
 }
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
