@@ -170,11 +170,11 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
             return a.second > b.second; // ascending by area
             });
 
-    for (int i = 0 ; i < sortedSheets.size() ; i++)
-    {
-        const auto &[sheetId, area] = sortedSheets[i];
-        std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
-    }
+    //for (int i = 0 ; i < sortedSheets.size() ; i++)
+    //{
+        //const auto &[sheetId, area] = sortedSheets[i];
+        //std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
+    //}
 
 
 
@@ -426,6 +426,11 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 for (const auto &[componentIdA, componentIdB] : componentPairs)
                 {
                     this->correspondenceGraphDS.unify(componentIdA, componentIdB);
+                    if (faceId == 3072 || twinFaceId == 3072)
+                    {
+                        std::cout << "Unify " << componentIdA << " " << componentIdB << std::endl;
+
+                    }
                 }
             }
 

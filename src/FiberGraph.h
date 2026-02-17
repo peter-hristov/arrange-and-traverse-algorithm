@@ -343,6 +343,24 @@ class FiberGraph
                 assert(minusTriangles.size() > 0 && "Minus triangles of a regular edge are empty.");
                 assert(plusTriangles.size() > 0 && "Plus triangles of a regular edge are empty.");
 
+                //if (intersectingEdges.size() == 1)
+                //{
+                    //std::cout << "Minus triangles: " << std::endl;
+
+                    //for (const int &triangleId : minusTriangles)
+                    //{
+                        //std::cout << triangleId << std::endl;
+                    //}
+
+                    //std::cout << "\n\nPlus triangles: " << std::endl;
+
+                    //for (const int &triangleId : plusTriangles)
+                    //{
+                        //std::cout << triangleId << std::endl;
+                    //}
+
+                //}
+
                 //if (this->componentRoot.contains(minusTriangles[0]) == false)
                 //{
                     //this->printByRoot();
@@ -419,21 +437,21 @@ class FiberGraph
 
             std::unordered_set<int> affectedComponents;
 
-            //printf("Affected roots...");
-            // These are all affected components, all other have a 1-1 correspondence
-            for (const int &triangle : minusTriangles)
-            {
-                affectedComponents.insert(this->componentRoot.at(triangle));
+            //printf("\n\nAffected roots...");
+             ////These are all affected components, all other have a 1-1 correspondence
+            //for (const int &triangle : minusTriangles)
+            //{
+                //affectedComponents.insert(this->componentRoot.at(triangle));
                 //printf("%d ", this->componentRoot.at(triangle));
-            }
+            //}
 
             //printf("Affected roots twin...");
-            std::unordered_set<int> twinAffectedComponents;
-            for (const int &triangle : plusTriangles)
-            {
-                twinAffectedComponents.insert(pg2.componentRoot.at(triangle));
+            //std::unordered_set<int> twinAffectedComponents;
+            //for (const int &triangle : plusTriangles)
+            //{
+                //twinAffectedComponents.insert(pg2.componentRoot.at(triangle));
                 //printf("%d ", pg2.componentRoot.at(triangle));
-            }
+            //}
 
 
             //printf("\n\nOur preimage graph...\n");
