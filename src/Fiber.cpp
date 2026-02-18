@@ -78,7 +78,7 @@ std::vector<int> extractCycle(const int &start, const std::unordered_map<int, st
 }
 
 
-std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buildFiberGraphPathsAndCycles(const TetMesh &tetMesh, ReebSpace2 &reebSpace, FiberGraph fg)
+std::pair<std::map<int, std::vector<std::vector<int>>>, std::map<int, std::vector<std::vector<int>>>> buildFiberGraphPathsAndCycles(const TetMesh &tetMesh, ReebSpace2 &reebSpace, FiberGraph fg)
 {
     // Build the adjacency list
     //
@@ -106,7 +106,7 @@ std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buil
 
     // Search from the endpoints of paths
     //
-    std::map<int, std::vector<int>> paths;   
+    std::map<int, std::vector<std::vector<int>>> paths;   
 
     //std::cout << "Extracting paths ...\n";
     for (const auto &[triangleId, neighbours] : fgAdj)
@@ -121,7 +121,7 @@ std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buil
                 throw std::runtime_error("The path for this sheet has already been constructed.");
             }
 
-            paths[sheetId] = extractPath(triangleId, fgAdj, visited);
+            paths[sheetId].push_back(extractPath(triangleId, fgAdj, visited));
 
             //std::cout << "Found path: \n";
 
@@ -136,7 +136,8 @@ std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buil
 
     // Search from cycles
     //
-    std::map<int, std::vector<int>> cycles;   
+    //std::map<int, std::vector<int>> cycles;   
+    std::map<int, std::vector<std::vector<int>>> cycles;   
 
     //std::cout << "Extracting cycles ...\n";
     for (const auto &[triangleId, neighbours] : fgAdj)
@@ -146,12 +147,12 @@ std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buil
             const int componentId = fg.componentRoot.at(triangleId);
             const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
 
-            if (cycles.contains(sheetId))
-            {
-                throw std::runtime_error("The cycle for this sheet has already been constructed.");
-            }
+            //if (cycles.contains(sheetId))
+            //{
+                //throw std::runtime_error("The cycle for this sheet has already been constructed.");
+            //}
 
-            cycles[sheetId] = extractCycle(triangleId, fgAdj, visited);
+            cycles[sheetId].push_back(extractCycle(triangleId, fgAdj, visited));
 
             //std::cout << "\n\nFound cycle: \n";
 
@@ -888,73 +889,81 @@ std::vector<FiberPoint> fiber::processFiberGraph2(const TetMesh &tetMesh, Arrang
 
     const auto [paths, cycles] = buildFiberGraphPathsAndCycles(tetMesh, reebSpace, pg);
 
-    for (const auto &[sheetId, path] : paths)
+    for (const auto &[sheetId, pathsInner] : paths)
     {
         const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
-        for (int i = 0 ; i < path.size() - 1 ; i++)
+        for (const auto path : pathsInner)
         {
-            const int triangleIdA = path[i];
-            const int triangleIdB = path[i+1];
+            for (int i = 0 ; i < path.size() - 1 ; i++)
+            {
+                const int triangleIdA = path[i];
+                const int triangleIdB = path[i+1];
 
-            const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
-            const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
+                const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
+                const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
 
-            FiberPoint fb(
-                    triangleABarycentricCoordinates[0], 
-                    triangleABarycentricCoordinates[1], 
-                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                    sheetColour,
-                    sheetId,
-                    triangleIdA
-                    );
+                FiberPoint fb(
+                        triangleABarycentricCoordinates[0], 
+                        triangleABarycentricCoordinates[1], 
+                        tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                        sheetColour,
+                        sheetId,
+                        triangleIdA
+                        );
 
-            FiberPoint fb2(
-                    triangleBBarycentricCoordinates[0], 
-                    triangleBBarycentricCoordinates[1], 
-                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                    sheetColour,
-                    sheetId,
-                    triangleIdB
-                    );
+                FiberPoint fb2(
+                        triangleBBarycentricCoordinates[0], 
+                        triangleBBarycentricCoordinates[1], 
+                        tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                        sheetColour,
+                        sheetId,
+                        triangleIdB
+                        );
 
-            faceFibers.push_back(fb);
-            faceFibers.push_back(fb2);
+                faceFibers.push_back(fb);
+                faceFibers.push_back(fb2);
+            }
+
         }
     }
 
-    for (const auto &[sheetId, cycle] : cycles)
+    for (const auto &[sheetId, cyclesInner] : cycles)
     {
         const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
-        for (int i = 0 ; i < cycle.size() ; i++)
+        for (const auto &cycle : cyclesInner)
         {
-            const int triangleIdA = cycle[i];
-            const int triangleIdB = cycle[(i + 1) % (cycle.size())];
+            for (int i = 0 ; i < cycle.size() ; i++)
+            {
+                const int triangleIdA = cycle[i];
+                const int triangleIdB = cycle[(i + 1) % (cycle.size())];
 
-            const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
-            const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
+                const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
+                const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
 
-            FiberPoint fb(
-                    triangleABarycentricCoordinates[0], 
-                    triangleABarycentricCoordinates[1], 
-                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                    sheetColour,
-                    sheetId,
-                    triangleIdA
-                    );
+                FiberPoint fb(
+                        triangleABarycentricCoordinates[0], 
+                        triangleABarycentricCoordinates[1], 
+                        tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                        sheetColour,
+                        sheetId,
+                        triangleIdA
+                        );
 
-            FiberPoint fb2(
-                    triangleBBarycentricCoordinates[0], 
-                    triangleBBarycentricCoordinates[1], 
-                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                    sheetColour,
-                    sheetId,
-                    triangleIdB
-                    );
+                FiberPoint fb2(
+                        triangleBBarycentricCoordinates[0], 
+                        triangleBBarycentricCoordinates[1], 
+                        tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                        sheetColour,
+                        sheetId,
+                        triangleIdB
+                        );
 
-            faceFibers.push_back(fb);
-            faceFibers.push_back(fb2);
+                faceFibers.push_back(fb);
+                faceFibers.push_back(fb2);
+            }
+
         }
     }
 
