@@ -12,6 +12,321 @@
 #include <unordered_map>
 
 
+std::vector<int> extractPath(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited)
+{
+    std::vector<int> path;
+
+    path.push_back(start);
+    visited[start] = true;
+
+    int current = start;
+
+    do
+    {
+        for (const int &neighbour : fgAdj.at(current))
+        {
+            if (false == visited[neighbour])
+            {
+                path.push_back(neighbour);
+                visited[neighbour] = true;
+                current = neighbour;
+            }
+        }
+
+
+    } while (fgAdj.at(current).size() == 2);
+
+
+    return path;
+}
+
+
+
+std::vector<int> extractCycle(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited)
+{
+    std::vector<int> cycle;
+
+    cycle.push_back(start);
+    visited[start] = true;
+
+    int current = start;
+
+    do
+    {
+        for (const int &neighbour : fgAdj.at(current))
+        {
+            if (false == visited[neighbour])
+            {
+                cycle.push_back(neighbour);
+                visited[neighbour] = true;
+                current = neighbour;
+                break;
+            }
+
+            // Finish the loop when we find the cycle end
+            if (neighbour == start && cycle.size() > 2)
+            {
+                current = neighbour;
+            }
+        }
+
+
+    } while (current != start);
+
+
+    return cycle;
+}
+
+
+std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buildFiberGraphPathsAndCycles(const TetMesh &tetMesh, ReebSpace2 &reebSpace, FiberGraph fg)
+{
+    // Build the adjacency list
+    //
+    std::unordered_map<int, std::vector<int>> fgAdj;
+
+    //std::cout << "Building the adjacency list ...\n";
+
+
+    //std::cout << "The fiber graphs is : \n";
+    //fg.printByRoot();
+
+
+    for (const auto &[triangleId, componentId] : fg.componentRoot)
+    {
+        for (const int &neighbourTriangleId : tetMesh.tetIncidentTriangles[triangleId])
+        {
+            if (true == fg.componentRoot.contains(neighbourTriangleId))
+            {
+                fgAdj[triangleId].push_back(neighbourTriangleId);
+            }
+        }
+    }
+
+    std::vector<bool> visited(tetMesh.triangles.size(), false);
+
+    // Search from the endpoints of paths
+    //
+    std::map<int, std::vector<int>> paths;   
+
+    //std::cout << "Extracting paths ...\n";
+    for (const auto &[triangleId, neighbours] : fgAdj)
+    {
+        if (neighbours.size() == 1 && visited[triangleId] == false)
+        {
+            const int componentId = fg.componentRoot.at(triangleId);
+            const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+
+            if (paths.contains(sheetId))
+            {
+                throw std::runtime_error("The path for this sheet has already been constructed.");
+            }
+
+            paths[sheetId] = extractPath(triangleId, fgAdj, visited);
+
+            //std::cout << "Found path: \n";
+
+            //for (const int &triangleId : path)
+            //{
+                //std::cout << triangleId << " ";
+            //}
+        }
+    }
+
+
+
+    // Search from cycles
+    //
+    std::map<int, std::vector<int>> cycles;   
+
+    //std::cout << "Extracting cycles ...\n";
+    for (const auto &[triangleId, neighbours] : fgAdj)
+    {
+        if (visited[triangleId] == false)
+        {
+            const int componentId = fg.componentRoot.at(triangleId);
+            const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+
+            if (cycles.contains(sheetId))
+            {
+                throw std::runtime_error("The cycle for this sheet has already been constructed.");
+            }
+
+            cycles[sheetId] = extractCycle(triangleId, fgAdj, visited);
+
+            //std::cout << "\n\nFound cycle: \n";
+
+            //for (const int &triangleId : cycle)
+            //{
+                //std::cout << triangleId << " ";
+            //}
+        }
+    }
+
+    //printf("\n\n");
+
+    return {paths, cycles};
+}
+
+
+
+std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints)
+{
+    Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
+    Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
+    Segment_2 controlSegment(startPoint, endPoint);
+
+    //Arrangement_2::X_monotone_curve_2 segmentMonotoneCurve(startPoint, endPoint);
+
+    //std::vector<Arrangement_2::Vertex_handle> vertices;
+    //std::vector<Arrangement_2::Halfedge_handle> halfEdges;
+
+    //CGAL::zone(
+            //singularArrangement.arr, 
+            //segmentMonotoneCurve, 
+            //CGAL::dispatch_or_drop_output<Arrangement_2::Vertex_handle, Arrangement_2::Halfedge_handle>(
+                //std::back_inserter(vertices), 
+                //std::back_inserter(halfEdges))
+            //);
+
+    Timer::start();
+
+
+    // Compute intersectinos with the AABB tree
+    //
+    Timer::start();
+    std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
+    singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
+    Timer::stop("Computed AABB intersections in         :");
+
+
+
+    Timer::start();
+
+
+    std::vector<std::pair<K::FT, int>> intersectedSegments;
+    intersectedSegments.reserve(intersectedSegmentsAABB.size());
+
+    for (auto id : intersectedSegmentsAABB)
+    {
+        const Segment_2& s = *id;   // dereference iterator to get the original segment
+
+        // Get the ID of the original segment.
+        const int segmentIndex = id - singularArrangement.allSegments.begin();
+
+
+        const int indexSource = singularArrangement.arrangementPointIndices[s.source()];
+        const int indexTarget = singularArrangement.arrangementPointIndices[s.target()];
+
+        const int edgeId = tetMesh.edgeIndices.at({indexSource, indexTarget});
+
+        if (segmentIndex != edgeId)
+        {
+            throw std::runtime_error("Issue in AABB tree segments indices.");
+        }
+
+        // Double check we get the same segment back.
+        Point_2 a = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][0]];
+        Point_2 b = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][1]];
+
+        const bool match =
+            (s.source() == a && s.target() == b) ||
+            (s.source() == b && s.target() == a);
+
+        if (match == false)
+        {
+            throw std::runtime_error("Issue in AABB tree segments interation.");
+        }
+
+        // ---- Collinear check with your controlSegment ----
+        if (CGAL::collinear(controlSegment.source(), controlSegment.target(), s.source()) &&
+                CGAL::collinear(controlSegment.source(), controlSegment.target(), s.target()))
+        {
+            // The intersection segment is collinear with the control segment
+            std::cerr << "------------------------------------------ Collinear overlap detected for segment " << segmentIndex << std::endl;
+            continue;
+        }
+
+
+        //
+        //
+        //
+        //                          s.source()
+        //                              |
+        //                              |
+        //                              |
+        // searchSegment.source() ------x---------- searchSegment.target()
+        //                              |
+        //                              |
+        //                              |
+        //                              |
+        //                          s.target()
+        //
+        K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                controlSegment.target().x(), controlSegment.target().y(),
+                controlSegment.source().x(), controlSegment.source().y(),
+                s.source().x(), s.source().y(),
+                s.target().x(), s.target().y());
+
+        intersectedSegments.emplace_back(alpha, segmentIndex);
+    }
+
+    Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed AABB intersections in         :");
+
+
+    Timer::start();
+    std::sort(intersectedSegments.begin(), intersectedSegments.end());
+    Timer::stop("Sorting alpha intersections            :");
+
+
+    Timer::start();
+    std::vector<Point_2> fiberPoints;
+    fiberPoints.reserve(intersectedSegments.size() - 1);
+    for (int i = 1 ; i <  intersectedSegments.size() ; i++)
+    {
+        const auto &[alpha1, edgeId1] = intersectedSegments[i-1];
+        const auto &[alpha2, edgeId2] = intersectedSegments[i];
+
+        K::FT fiberPointAlpha = (alpha1 + alpha2) / 2.0;
+
+        Point_2 fiberPoint = startPoint + fiberPointAlpha * (endPoint - startPoint);
+
+        fiberPoints.emplace_back(fiberPoint);
+    }
+    Timer::stop("Finding the midpoint alphas            :");
+
+
+    std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
+
+    std::cout << "Computing " << fiberPoints.size() << " fibers...\n";
+
+    #pragma omp parallel for schedule(dynamic)
+    for (int i = 0 ; i < fiberPoints.size() ; i++)
+    {
+        const Point_2 &fiberPoint = fiberPoints[i];
+
+        allFiberPoints[i] =
+            fiber::computeFiberSAT(
+                    tetMesh,
+                    singularArrangement,
+                    reebSpace,
+                    { CGAL::to_double(fiberPoint.x()),
+                    CGAL::to_double(fiberPoint.y()) }
+                    );
+
+
+    }
+    Timer::stop("Computing fibers                       :");
+
+    std::vector<FiberPoint> result;
+
+    for (const auto& fiberPointsVector : allFiberPoints)
+    {
+        result.insert(result.end(), fiberPointsVector.begin(), fiberPointsVector.end());
+    }
+
+    return result;
+}
 
 // Given a point p within a face F, find a vertex v in the polygon such that the segment pv is entirely within F
 // This relies on that fact given a point in a simple, non-intersecting polygon there at least one visible vertex from p.
@@ -51,14 +366,8 @@ Point_2 findVisibleVertex(const Face_const_handle activeFace, const Point_2 p, A
     throw std::runtime_error("No arrangement vertices are visible from the control point.");
 }
 
-
-std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint)
+FiberGraph fiber::computeFiberGraph(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint)
 {
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-
     // Segfautl for ~/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_4.vtu
     //controlPoint = {-0.0566964, 0.107433};
 
@@ -66,12 +375,12 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
     const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
 
-    Timer::start();
+    //Timer::start();
 
 
     // Get the active face
     //
-    Timer::start();
+    //Timer::start();
     Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
 
     if (activeFace->is_unbounded())
@@ -79,21 +388,21 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
         return {};
     }
 
-    printf("---------------------------------------------------------------------------\n");
-    std::cout << "The active face ID is " << activeFace->data() << std::endl;
+    //printf("---------------------------------------------------------------------------\n");
+    //std::cout << "The active face ID is " << activeFace->data() << std::endl;
 
     const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];
-    Timer::stop("Computed active face in                :");
+    //Timer::stop("Computed active face in                :");
 
 
     // Get a visible point from within the face
     //
-    Timer::start();
+    //Timer::start();
     Point_2 closestHalfEdgeVertexPoint = findVisibleVertex(activeFace, controlPointEPEC, singularArrangement);
-    Timer::stop("Found visible point  in                :");
+    //Timer::stop("Found visible point  in                :");
 
-    std::cout << "The fiber   point is " << controlPointEPEC << std::endl;
-    std::cout << "The visible point is " << closestHalfEdgeVertexPoint << std::endl;
+    //std::cout << "The fiber   point is " << controlPointEPEC << std::endl;
+    //std::cout << "The visible point is " << closestHalfEdgeVertexPoint << std::endl;
 
     // Set up the control Segment
     //
@@ -108,15 +417,15 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
     // Compute intersectinos with the AABB tree
     //
-    Timer::start();
+    //Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
     singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
-    Timer::stop("Computed AABB intersections in         :");
+    //Timer::stop("Computed AABB intersections in         :");
 
 
     // Compute the alpha for the intersected segments
     // 
-    Timer::start();
+    //Timer::start();
 
     std::vector<std::pair<K::FT, int>> intersectedSegments;
     intersectedSegments.reserve(intersectedSegmentsAABB.size());
@@ -186,13 +495,13 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
         intersectedSegments.emplace_back(alpha, segmentIndex);
     }
 
-    Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed Alpha intersections           :");
     //Timer::stop("Computed AABB intersections in         :");
 
 
-    Timer::start();
+    //Timer::start();
     std::sort(intersectedSegments.begin(), intersectedSegments.end());
-    Timer::stop("Sorting alpha intersections            :");
+    //Timer::stop("Sorting alpha intersections            :");
 
 
     for (const auto &[alpha, edgeId] : intersectedSegments)
@@ -213,7 +522,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
 
 
-    Timer::start();
+    //Timer::start();
 
     // Compute the fiber graph
     //
@@ -348,14 +657,14 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
         //for (const int &triangleId : minusTriangles)
         //{
-            //std::cout << triangleId << std::endl;
+        //std::cout << triangleId << std::endl;
         //}
 
         //std::cout << "\nPlus triangles: " << std::endl;
 
         //for (const int &triangleId : plusTriangles)
         //{
-            //std::cout << triangleId << std::endl;
+        //std::cout << triangleId << std::endl;
         //}
 
 
@@ -363,11 +672,24 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
     }
 
-    Timer::stop("Computing fiber graph                  :");
+    return pg;
+}
 
-    std::vector<FiberPoint> fiber = fiber::processFiberGraph(tetMesh, singularArrangement, reebSpace, controlPoint, pg, {});
+std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint)
+{
+    //Timer::start();
+    FiberGraph fg = fiber::computeFiberGraph(tetMesh, singularArrangement, reebSpace, controlPoint);
+    //Timer::stop("Computing fiber graph                  :");
 
-    return fiber;
+    //Timer::start();
+    //const std::vector<FiberPoint> fiber = fiber::processFiberGraph(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
+    //Timer::stop("Computing fiber                        :");
+
+    //Timer::start();
+    const std::vector<FiberPoint> fiber2 = fiber::processFiberGraph2(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
+    //Timer::stop("Computing fiber graph paths cyc        :");
+
+    return fiber2;
 }
 
 
@@ -474,20 +796,20 @@ std::vector<FiberPoint> fiber::processFiberGraph(const TetMesh &tetMesh, Arrange
 
     std::unordered_map<int, std::array<double, 3>> barycentricCoordinatesPerTriangle;
 
-    std::cout << std::endl;
-    std::cout << std::endl;
+    //std::cout << std::endl;
+    //std::cout << std::endl;
 
-    std::cout << "The fiber has " << pg.componentRoot.size() << std::endl;
+    //std::cout << "The fiber has " << pg.componentRoot.size() << std::endl;
 
-    Timer::start();
+    //Timer::start();
     for (const auto &[triangleId, componentId] : pg.componentRoot)
     {
         barycentricCoordinatesPerTriangle[triangleId] = computeBarycentricCoordinates(tetMesh, triangleId, fiberPoint);
     }
-    Timer::stop("Computing barycentric coordinates      :");
+    //Timer::stop("Computing barycentric coordinates      :");
 
 
-    Timer::start();
+    //Timer::start();
 
     std::vector<int> parent(tetMesh.triangles.size(), -1);
     for (const auto &[triangleId, componentId] : pg.componentRoot)
@@ -500,7 +822,7 @@ std::vector<FiberPoint> fiber::processFiberGraph(const TetMesh &tetMesh, Arrange
         const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
         const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
-        std::cout << "Sheet Id is : " << sheetId << std::endl;
+        //std::cout << "Sheet Id is : " << sheetId << std::endl;
 
         const std::vector<std::pair<int, int>> fiberSegments = BFSFiberSearch(triangleId, tetMesh, pg, fiberPoint, sheetId, parent);
         //const std::set<std::pair<int, int>> fiberSegments = {};
@@ -535,9 +857,159 @@ std::vector<FiberPoint> fiber::processFiberGraph(const TetMesh &tetMesh, Arrange
         }
 
     }
-    Timer::stop("Computing fiber connectivity           :");
+    //Timer::stop("Computing fiber connectivity           :");
 
-    std::cout << "There are this many face fibers " << faceFibers.size() << std::endl;
+    //std::cout << "There are this many face fibers " << faceFibers.size() << std::endl;
+
+    return faceFibers;
+
+}
+
+
+std::vector<FiberPoint> fiber::processFiberGraph2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets)
+{
+    // We first need to sort the triangles in the fiber graph
+    std::vector<FiberPoint> faceFibers;
+
+
+    std::unordered_map<int, std::array<double, 3>> barycentricCoordinatesPerTriangle;
+
+    //std::cout << std::endl;
+    //std::cout << std::endl;
+
+    //std::cout << "The fiber has " << pg.componentRoot.size() << std::endl;
+
+    //Timer::start();
+    for (const auto &[triangleId, componentId] : pg.componentRoot)
+    {
+        barycentricCoordinatesPerTriangle[triangleId] = computeBarycentricCoordinates(tetMesh, triangleId, fiberPoint);
+    }
+    //Timer::stop("Computing barycentric coordinates      :");
+
+    const auto [paths, cycles] = buildFiberGraphPathsAndCycles(tetMesh, reebSpace, pg);
+
+    for (const auto &[sheetId, path] : paths)
+    {
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+        for (int i = 0 ; i < path.size() - 1 ; i++)
+        {
+            const int triangleIdA = path[i];
+            const int triangleIdB = path[i+1];
+
+            const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
+            const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
+
+            FiberPoint fb(
+                    triangleABarycentricCoordinates[0], 
+                    triangleABarycentricCoordinates[1], 
+                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                    sheetColour,
+                    sheetId,
+                    triangleIdA
+                    );
+
+            FiberPoint fb2(
+                    triangleBBarycentricCoordinates[0], 
+                    triangleBBarycentricCoordinates[1], 
+                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                    sheetColour,
+                    sheetId,
+                    triangleIdB
+                    );
+
+            faceFibers.push_back(fb);
+            faceFibers.push_back(fb2);
+        }
+    }
+
+    for (const auto &[sheetId, cycle] : cycles)
+    {
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+        for (int i = 0 ; i < cycle.size() ; i++)
+        {
+            const int triangleIdA = cycle[i];
+            const int triangleIdB = cycle[(i + 1) % (cycle.size())];
+
+            const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
+            const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
+
+            FiberPoint fb(
+                    triangleABarycentricCoordinates[0], 
+                    triangleABarycentricCoordinates[1], 
+                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                    sheetColour,
+                    sheetId,
+                    triangleIdA
+                    );
+
+            FiberPoint fb2(
+                    triangleBBarycentricCoordinates[0], 
+                    triangleBBarycentricCoordinates[1], 
+                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                    sheetColour,
+                    sheetId,
+                    triangleIdB
+                    );
+
+            faceFibers.push_back(fb);
+            faceFibers.push_back(fb2);
+        }
+    }
+
+
+    //Timer::start();
+
+    //std::vector<int> parent(tetMesh.triangles.size(), -1);
+    //for (const auto &[triangleId, componentId] : pg.componentRoot)
+    //{
+        //if (parent[triangleId] != -1)
+        //{
+            //continue;
+        //}
+
+        //const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+        //const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+        ////std::cout << "Sheet Id is : " << sheetId << std::endl;
+
+        //const std::vector<std::pair<int, int>> fiberSegments = BFSFiberSearch(triangleId, tetMesh, pg, fiberPoint, sheetId, parent);
+        ////const std::set<std::pair<int, int>> fiberSegments = {};
+
+        //// Set up the fiber points for each segment
+        //for (const auto &[triangleIdA, triangleIdB] : fiberSegments)
+        //{
+            //const std::array<double, 3> &triangleABarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdA);
+            //const std::array<double, 3> &triangleBBarycentricCoordinates = barycentricCoordinatesPerTriangle.at(triangleIdB);
+
+            //FiberPoint fb(
+                    //triangleABarycentricCoordinates[0], 
+                    //triangleABarycentricCoordinates[1], 
+                    //tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                    //sheetColour,
+                    //sheetId,
+                    //triangleIdA
+                    //);
+
+            //FiberPoint fb2(
+                    //triangleBBarycentricCoordinates[0], 
+                    //triangleBBarycentricCoordinates[1], 
+                    //tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                    //sheetColour,
+                    //sheetId,
+                    //triangleIdB
+                    //);
+
+            //faceFibers.push_back(fb);
+            //faceFibers.push_back(fb2);
+
+        //}
+
+    //}
+    //Timer::stop("Computing fiber connectivity           :");
+
+    //std::cout << "There are this many face fibers " << faceFibers.size() << std::endl;
 
     return faceFibers;
 

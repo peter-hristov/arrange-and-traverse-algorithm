@@ -15,6 +15,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <qpoint.h>
 #include <qvector.h>
 #include <utility>
 #include <cmath>
@@ -66,6 +67,8 @@ class PlotWidget : public QWidget
         // Position of where we click and drag on the widget
         QPointF mousePoint;
 
+        std::vector<QPointF> controlPoints;
+
         // Whether the mouse is being dragged over the widget
         bool dragging = false;
 
@@ -73,6 +76,7 @@ class PlotWidget : public QWidget
 
         // This is the radius of the sphere around the fiber point
         const float sphereRadius = this->resolution / 100.0;
+        const float controlPointRadious = this->resolution / 200.0;
 
     protected:
         void mouseMoveEvent(QMouseEvent* event);

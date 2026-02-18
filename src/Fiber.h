@@ -17,7 +17,18 @@ namespace fiber
 
     std::vector<FiberPoint> computeFiberSAT(TetMesh &, Arrangement &, ReebSpace2 &, std::array<double, 2> );
 
+    FiberGraph computeFiberGraph(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint);
+
     std::vector<FiberPoint> processFiberGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets);
+
+    std::vector<FiberPoint> processFiberGraph2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets);
+
+    std::vector<FiberPoint> computeFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & );
+
+
+
+    // Helper functions
+
 
 
     // Colour map for Reeb space sheets and fibers

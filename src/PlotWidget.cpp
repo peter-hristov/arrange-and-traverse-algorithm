@@ -57,6 +57,18 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         dragging = false;
         recomputeFiber = true;
         update();
+
+        this->controlPoints.push_back(mousePoint);
+    }
+
+    if (event->button() == Qt::RightButton) 
+    {
+        if (this->controlPoints.size() > 0)
+        {
+            this->controlPoints.pop_back();
+            update();
+        }
+
     }
 }
 
@@ -418,7 +430,23 @@ void PlotWidget::paintEvent(QPaintEvent*)
     auto penGrey = QPen(QColor(0, 0, 0, 250));
     penGrey.setWidthF(8.0);
     p.setPen(penGrey);
-    p.drawEllipse(QPointF(fiberPoint.x(), fiberPoint.y()), sphereRadius, sphereRadius);
+    p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
+
+
+    // Draw the control points and control polygon
+    QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
+
+    for (int i = 0 ; i < this->controlPoints.size() ; i++)
+    {
+        const QPointF &controlPoint = this->controlPoints[i];
+        const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
+        controlPointsTransformed[i] = controlPointTransformed;
+
+        p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
+    }
+
+    p.drawPolygon(QPolygonF(controlPointsTransformed));
+
 
     // Crosshair around fiber point
     penGrey.setWidthF(1.0);
@@ -441,6 +469,36 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         sibling->updateFiber(fiber);
     }
+    
+
+
+    if (this->recomputeFiber == true && controlPointsTransformed.size() == 2)
+    {
+        this->recomputeFiber = false;
+
+
+        std::vector<std::array<double, 2>> controlPointsInternal;
+        controlPointsInternal.reserve(controlPointsTransformed.size());
+
+        for (const QPointF &controlPoint : controlPointsTransformed)
+        {
+            const double u = this->paddedMinF + (controlPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
+            const double v = this->paddedMinG + (controlPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+
+            controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
+        }
+
+        const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, controlPointsInternal);
+
+
+        //qDebug() << "Computing fiber (" << u << ", " << v << ")";
+
+        //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
+        //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+
+        sibling->updateFiber(fibers);
+    }
+
 
     p.restore();
     drawAxisLabels(p);
