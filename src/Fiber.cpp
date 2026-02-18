@@ -79,6 +79,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
         return {};
     }
 
+    printf("---------------------------------------------------------------------------\n");
     std::cout << "The active face ID is " << activeFace->data() << std::endl;
 
     const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];

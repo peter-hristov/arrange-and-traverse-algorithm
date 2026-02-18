@@ -427,11 +427,6 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
                 for (const auto &[componentIdA, componentIdB] : componentPairs)
                 {
                     this->correspondenceGraphDS.unify(componentIdA, componentIdB);
-                    if (faceId == 3072 || twinFaceId == 3072)
-                    {
-                        std::cout << "Unify " << componentIdA << " " << componentIdB << std::endl;
-
-                    }
                 }
             }
 
