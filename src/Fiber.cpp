@@ -389,8 +389,10 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                         // Make sure these triangle are not active in the trasition
                         //
                         if (
-                                false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
-                                false == fiberGraphs[i].componentRoot.contains(triangleIdB)
+                                true == minusTrianglesSet.contains(triangleIdA) ||
+                                true == minusTrianglesSet.contains(triangleIdB)
+                                //false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
+                                //false == fiberGraphs[i].componentRoot.contains(triangleIdB)
                            )
                         {
                             continue;
@@ -532,10 +534,10 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                         const int triangleIdB = cycle[(j + 1) % (cycle.size())];
 
                         if (
-                                //false == minusTrianglesSet.contains(triangleIdA) ||
-                                //false == minusTrianglesSet.contains(triangleIdB)
-                                false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
-                                false == fiberGraphs[i].componentRoot.contains(triangleIdB)
+                                true == minusTrianglesSet.contains(triangleIdA) ||
+                                true == minusTrianglesSet.contains(triangleIdB)
+                                //false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
+                                //false == fiberGraphs[i].componentRoot.contains(triangleIdB)
                            )
                         {
                             continue;
