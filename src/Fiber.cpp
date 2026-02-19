@@ -278,6 +278,9 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
 
+            const std::unordered_set<int> minusTrianglesSet(minusTriangles.begin(), minusTriangles.end());
+            const std::unordered_set<int> plusPlusSet(plusTriangles.begin(), plusTriangles.end());
+
             std::unordered_set<int> affectedComponentsA;
 
             for (const int &triangle : minusTriangles)
@@ -342,17 +345,22 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             //}
 
 
+            // Take 
+            //
+            const std::vector<std::pair<int, int>> correspondence = fiberGraphs[i-1].establishCorrespondence(tetMesh, {intersectedSegments[i].second, typicalOrientation[i] }, fiberGraphs[i]);
 
             // For every UNAFFECTED component
-            //
-            for (const auto &[componentA, representativeTriangleId] : fiberGraphs[i-1].componentRepresentative)
-            {
-                if (affectedComponentsA.contains(componentA))
-                {
-                    continue;
-                }
+            //for (const auto &[componentA, representativeTriangleId] : fiberGraphs[i-1].componentRepresentative)
 
-                const int componentB = fiberGraphs[i].componentRoot.at(representativeTriangleId);
+            // For every corresponding component
+            for (const auto &[componentA, componentB] : correspondence)
+            {
+                //if (affectedComponentsA.contains(componentA))
+                //{
+                    //continue;
+                //}
+
+                //const int componentB = fiberGraphs[i].componentRoot.at(representativeTriangleId);
                 //std::cout << "Component " << componentA << " corresponds to component " << componentB << std::endl;
 
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
@@ -376,6 +384,17 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
                         const int triangleIdA = path[j];
                         const int triangleIdB = path[j+1];
+
+
+                        // Make sure these triangle are not active in the trasition
+                        //
+                        if (
+                                false == minusTrianglesSet.contains(triangleIdA) ||
+                                false == minusTrianglesSet.contains(triangleIdB)
+                           )
+                        {
+                            continue;
+                        }
 
                         const int triangleIdC = path[j];
                         const int triangleIdD = path[j+1];
@@ -498,7 +517,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
                 }
                 // If it's a cycle
-                else if (cyclesA.contains(componentA) && cyclesB.contains(componentB))
+                else if (cyclesA.contains(componentA))
                 {
                     std::vector<int> cycle = cyclesA.at(componentA);
 
@@ -511,6 +530,14 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
                         const int triangleIdA = cycle[j];
                         const int triangleIdB = cycle[(j + 1) % (cycle.size())];
+
+                        if (
+                                false == minusTrianglesSet.contains(triangleIdA) ||
+                                false == minusTrianglesSet.contains(triangleIdB)
+                           )
+                        {
+                            continue;
+                        }
 
                         const int triangleIdC = cycle[j];
                         const int triangleIdD = cycle[(j + 1) % (cycle.size())];
