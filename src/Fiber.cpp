@@ -279,7 +279,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
 
             const std::unordered_set<int> minusTrianglesSet(minusTriangles.begin(), minusTriangles.end());
-            const std::unordered_set<int> plusPlusSet(plusTriangles.begin(), plusTriangles.end());
+            const std::unordered_set<int> plusTrianglesSet(plusTriangles.begin(), plusTriangles.end());
 
             std::unordered_set<int> affectedComponentsA;
 
@@ -389,8 +389,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                         // Make sure these triangle are not active in the trasition
                         //
                         if (
-                                false == minusTrianglesSet.contains(triangleIdA) ||
-                                false == minusTrianglesSet.contains(triangleIdB)
+                                false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
+                                false == fiberGraphs[i].componentRoot.contains(triangleIdB)
                            )
                         {
                             continue;
@@ -532,8 +532,10 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                         const int triangleIdB = cycle[(j + 1) % (cycle.size())];
 
                         if (
-                                false == minusTrianglesSet.contains(triangleIdA) ||
-                                false == minusTrianglesSet.contains(triangleIdB)
+                                //false == minusTrianglesSet.contains(triangleIdA) ||
+                                //false == minusTrianglesSet.contains(triangleIdB)
+                                false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
+                                false == fiberGraphs[i].componentRoot.contains(triangleIdB)
                            )
                         {
                             continue;
