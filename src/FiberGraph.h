@@ -425,6 +425,7 @@ class FiberGraph
             {
                 affectedComponents.insert(this->componentRoot.at(triangle));
                 //printf("%d ", this->componentRoot.at(triangle));
+                //printf("%d ", triangle);
             }
 
             //printf("Affected roots twin...");
@@ -433,6 +434,7 @@ class FiberGraph
             {
                 twinAffectedComponents.insert(pg2.componentRoot.at(triangle));
                 //printf("%d ", pg2.componentRoot.at(triangle));
+                //printf("%d ", triangle);
             }
 
 

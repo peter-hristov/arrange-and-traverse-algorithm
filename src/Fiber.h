@@ -27,6 +27,12 @@ namespace fiber
 
 
 
+    std::vector<int> extractPath(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited);
+    std::vector<int> extractCycle(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited);
+    std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buildFiberGraphPathsAndCycles(const TetMesh &tetMesh, ReebSpace2 &reebSpace, FiberGraph fg);
+
+
+
     // Helper functions
 
 

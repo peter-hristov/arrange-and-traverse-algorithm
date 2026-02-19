@@ -77,7 +77,18 @@ TracerVisualiserWidget::generateDisplayList()
     //setMaterial(1, 0, 0, 1.0, 0.0);
 
     // Draw Fiber
-    glBegin(GL_LINES);
+    //glBegin(GL_LINES);
+    //{
+        //for(const auto &faceFiber : this->faceFibers)
+        //{
+            //glColor3fv(faceFiber.colour.data());
+            //glVertex3fv(faceFiber.point.data());
+        //}
+    //}
+    //glEnd();
+
+
+    glBegin(GL_TRIANGLES);
     {
         for(const auto &faceFiber : this->faceFibers)
         {
@@ -86,6 +97,10 @@ TracerVisualiserWidget::generateDisplayList()
         }
     }
     glEnd();
+
+
+
+
 
     // Draw fiber endpoints (in every tet)
     //for(const auto &faceFiber : this->data.faceFibers)
