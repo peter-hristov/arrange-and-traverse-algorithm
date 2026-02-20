@@ -34,7 +34,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     bool drawFaces = 0;
     bool drawVertices = 0;
 
-    bool enableLighting = false;
+    bool enableLighting = true;
 
     // Depricated
     bool showUIsosurface = false;
@@ -103,6 +103,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     // Render Triangles
     void drawSolidTriangle(GLfloat vertices[3][3]);
+    std::array<GLfloat, 3> computeTriangleNormal(const GLfloat* v0, const GLfloat* v1, const GLfloat* v2);
 
     // Render Various Functions
     void cube();

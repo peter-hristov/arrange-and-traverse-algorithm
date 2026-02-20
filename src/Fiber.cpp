@@ -346,6 +346,9 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
 
 
+
+
+
     // Set up the orientations
     //
 
@@ -421,6 +424,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
 
 
+    // Fet up the fiber points in between the intersecting segments
+    //
     Timer::start();
     std::vector<Point_2> fiberPoints;
     fiberPoints.reserve(intersectedSegments.size() - 1);
@@ -438,678 +443,225 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     Timer::stop("Finding the midpoint alphas            :");
 
 
-    std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
 
     std::vector<FiberGraph> fiberGraphs(fiberPoints.size());
     std::vector<std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>>> pathsAndCycles(fiberPoints.size());
-
-
     std::vector<std::unordered_map<int, std::array<double, 3>>> barycentricCoordinatesPerTriangle(fiberPoints.size());
 
 
-    std::cout << "Computing " << fiberPoints.size() << " fibers...\n";
+    Timer::start();
 
-    //#pragma omp parallel for schedule(dynamic)
+    // Do the heavy lifting
+    //
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0 ; i < fiberPoints.size() ; i++)
     {
-
         // Set up the fiber points
-        //
         const Point_2 &fiberPoint = fiberPoints[i];
         const std::array<double, 2> fiberPointDouble = { CGAL::to_double(fiberPoint.x()), CGAL::to_double(fiberPoint.y()) };
 
-
-        // Set up the edge point
-        const int edgeId = intersectedSegments[i].second;
-        const auto [vertexIdA, vertexIdB] = tetMesh.edges.at(edgeId); 
-
-        const std::array<float, 3> vertexCoordinatesA = tetMesh.vertexDomainCoordinates[vertexIdA]; 
-        const std::array<float, 3> vertexCoordinatesB = tetMesh.vertexDomainCoordinates[vertexIdB]; 
-
-        const float alpha = intersectedSegmentsAlphas[i];
-        //const float alpha = 1.0 - intersectedSegmentsAlphas[i];
-
-        std::cerr << alpha << std::endl;
-
-        const std::array<float, 3> edgePointDomain =
-        {
-            (1.0 - alpha) * (float)vertexCoordinatesA[0] + alpha * (float)vertexCoordinatesB[0],
-            (1.0 - alpha) * (float)vertexCoordinatesA[1] + alpha * (float)vertexCoordinatesB[1],
-            (1.0 - alpha) * (float)vertexCoordinatesA[2] + alpha * (float)vertexCoordinatesB[2],
-        };
-
-
-
-
-
         // Compute the fiber graph and its paths and cycles
-        //
         fiberGraphs[i] = fiber::computeFiberGraph(tetMesh, singularArrangement, reebSpace, fiberPointDouble);
         pathsAndCycles[i] = fiber::buildFiberGraphPathsAndCycles(tetMesh, reebSpace, fiberGraphs[i]);
 
 
         // Compute barycentric coodrinates of all triangles in the current fiber graph
-        //
         for (const auto &[triangleId, componentId] : fiberGraphs[i].componentRoot)
         {
             barycentricCoordinatesPerTriangle[i][triangleId] = computeBarycentricCoordinates(tetMesh, triangleId, fiberPointDouble);
-            //std::cout << barycentricCoordinatesPerTriangle[i][triangleId][0] << " " << barycentricCoordinatesPerTriangle[i][triangleId][1] << std::endl;
         }
+    }
+
+    Timer::stop("Computed fiber graphs and coords       :");
+
+
+
+
+
+
+
+
+
+
+    // Compute all the triangles
+    //
+
+    Timer::start();
+
+    std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
+    std::cout << "Computing " << fiberPoints.size() << " fibers...\n";
+
+    for (int i = 1 ; i < fiberPoints.size() ; i++)
+    {
+        // Set up the fiber point
+        //
+        const Point_2 &fiberPoint = fiberPoints[i];
+        const std::array<double, 2> fiberPointDouble = {CGAL::to_double(fiberPoint.x()), CGAL::to_double(fiberPoint.y())};
+
+        // Set up the edge point
+        //
+        const int edgeId = intersectedSegments[i].second;
+        const auto [vertexIdA, vertexIdB] = tetMesh.edges.at(edgeId); 
+        const std::array<float, 3> vertexCoordinatesA = tetMesh.vertexDomainCoordinates[vertexIdA]; 
+        const std::array<float, 3> vertexCoordinatesB = tetMesh.vertexDomainCoordinates[vertexIdB]; 
+        const float alpha = intersectedSegmentsAlphas[i];
+        const std::array<float, 3> edgePointDomain =
+        {
+            (1.0f - alpha) * vertexCoordinatesA[0] + alpha * vertexCoordinatesB[0],
+            (1.0f - alpha) * vertexCoordinatesA[1] + alpha * vertexCoordinatesB[1],
+            (1.0f - alpha) * vertexCoordinatesA[2] + alpha * vertexCoordinatesB[2],
+        };
+
+
+        // Extract the paths and cycles of both fibers
+        // 
+        const auto pathsA = pathsAndCycles[i-1].first;
+        const auto cyclesA = pathsAndCycles[i-1].second;
+
+
+        const auto pathsB = pathsAndCycles[i].first;
+        const auto cyclesB = pathsAndCycles[i].second;
 
 
         //allFiberPoints[i] =
-            //fiber::computeFiberSAT(
-                    //tetMesh,
-                    //singularArrangement,
-                    //reebSpace,
-                    //fiberPointDouble
-                    //);
+        //fiber::computeFiberSAT(
+        //tetMesh,
+        //singularArrangement,
+        //reebSpace,
+        //fiberPointDouble
+        //);
 
-        // Find the affected components
+        // Compute correspondence related stuff
         //
-        if (i > 0)
+        const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
+        const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
+
+        const std::unordered_set<int> minusTrianglesSet(minusTriangles.begin(), minusTriangles.end());
+        const std::unordered_set<int> plusTrianglesSet(plusTriangles.begin(), plusTriangles.end());
+
+        std::unordered_set<int> affectedComponentsA;
+
+        for (const int &triangle : minusTriangles)
         {
-            const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
-            const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectedSegments[i].second, typicalOrientation[i]);
+            affectedComponentsA.insert(fiberGraphs[i-1].componentRoot.at(triangle));
+        }
 
-            const std::unordered_set<int> minusTrianglesSet(minusTriangles.begin(), minusTriangles.end());
-            const std::unordered_set<int> plusTrianglesSet(plusTriangles.begin(), plusTriangles.end());
+        // Take 
+        //
+        const std::vector<std::pair<int, int>> correspondence = fiberGraphs[i-1].establishCorrespondence(tetMesh, {intersectedSegments[i].second, typicalOrientation[i] }, fiberGraphs[i]);
 
-            std::unordered_set<int> affectedComponentsA;
 
-            for (const int &triangle : minusTriangles)
+
+
+        //printf("\n\n--------------------------------------------------------------------------------------\n");
+
+
+
+        //for (const auto &[componentId, path] : pathsA)
+        //{
+        //std::cout << "\n\nHere's the path fiber from correspondence A with component id " << componentId << "\n";
+        //for (const int &triangleId : path)
+        //{
+        //std::cout << triangleId << " ";
+        //}
+        //}
+
+        //for (const auto &[componentId, cycle] : cyclesA)
+        //{
+        //std::cout << "\n\nHere's the cycle fiber from correspondence A with component id " << componentId << "\n";
+        //for (const int &triangleId : cycle)
+        //{
+        //std::cout << triangleId << " ";
+        //}
+
+        //}
+
+        //for (const auto &[componentId, path] : pathsB)
+        //{
+        //std::cout << "\n\nHere's the path fiber from correspondence B with component id " << componentId << "\n";
+        //for (const int &triangleId : path)
+        //{
+        //std::cout << triangleId << " ";
+        //}
+        //std::cout << std::endl;
+        //}
+
+        //for (const auto &[componentId, cycle] : cyclesB)
+        //{
+        //std::cout << "\n\nHere's the cycle fiber from correspondence B with component id " << componentId << "\n";
+        //for (const int &triangleId : cycle)
+        //{
+        //std::cout << triangleId << " ";
+        //}
+        //std::cout << std::endl;
+
+        //}
+
+
+
+        // For interpolate the non-affected triangles between corresponding components
+        //
+        for (const auto &[componentA, componentB] : correspondence)
+        {
+            const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
+            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+
+            // If it's a path
+            if (pathsA.contains(componentA))
             {
-                affectedComponentsA.insert(fiberGraphs[i-1].componentRoot.at(triangle));
-            }
+                std::vector<int> path = pathsA.at(componentA);
 
 
 
-            const auto pathsA = pathsAndCycles[i-1].first;
-            const auto cyclesA = pathsAndCycles[i-1].second;
-
-
-            const auto pathsB = pathsAndCycles[i].first;
-            const auto cyclesB = pathsAndCycles[i].second;
-
-
-            //printf("\n\n--------------------------------------------------------------------------------------\n");
-
-
-
-            //for (const auto &[componentId, path] : pathsA)
-            //{
-                //std::cout << "\n\nHere's the path fiber from correspondence A with component id " << componentId << "\n";
-                //for (const int &triangleId : path)
-                //{
-                    //std::cout << triangleId << " ";
-                //}
-            //}
-
-            //for (const auto &[componentId, cycle] : cyclesA)
-            //{
-                //std::cout << "\n\nHere's the cycle fiber from correspondence A with component id " << componentId << "\n";
-                //for (const int &triangleId : cycle)
-                //{
-                    //std::cout << triangleId << " ";
-                //}
-
-            //}
-
-
-
-            //for (const auto &[componentId, path] : pathsB)
-            //{
-                //std::cout << "\n\nHere's the path fiber from correspondence B with component id " << componentId << "\n";
-                //for (const int &triangleId : path)
-                //{
-                    //std::cout << triangleId << " ";
-                //}
-                //std::cout << std::endl;
-            //}
-
-            //for (const auto &[componentId, cycle] : cyclesB)
-            //{
-                //std::cout << "\n\nHere's the cycle fiber from correspondence B with component id " << componentId << "\n";
-                //for (const int &triangleId : cycle)
-                //{
-                    //std::cout << triangleId << " ";
-                //}
-                //std::cout << std::endl;
-
-            //}
-
-
-            // Take 
-            //
-            const std::vector<std::pair<int, int>> correspondence = fiberGraphs[i-1].establishCorrespondence(tetMesh, {intersectedSegments[i].second, typicalOrientation[i] }, fiberGraphs[i]);
-
-            // For every UNAFFECTED component
-            //for (const auto &[componentA, representativeTriangleId] : fiberGraphs[i-1].componentRepresentative)
-
-            // For every corresponding component
-            for (const auto &[componentA, componentB] : correspondence)
-            {
-                //if (affectedComponentsA.contains(componentA))
-                //{
-                    //continue;
-                //}
-
-                //const int componentB = fiberGraphs[i].componentRoot.at(representativeTriangleId);
-                //std::cout << "Component " << componentA << " corresponds to component " << componentB << std::endl;
-
-                const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
-                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
-
-                //std::vector<int> componentListA = pathsA.contains(componentA) ? pathsA.at(componentA) : cyclesA.at(componentA);
-
-
-                // If it's a path
-                if (pathsA.contains(componentA))
+                for (int j = 0 ; j + 1 < path.size() ; j++)
                 {
-                    std::vector<int> path = pathsA.at(componentA);
+
+                    //std::cout << "Adding some triangles\n";
 
 
+                    const int triangleIdA = path[j];
+                    const int triangleIdB = path[j+1];
 
-                    for (int j = 0 ; j + 1 < path.size() ; j++)
+
+                    // Make sure these triangle are not active in the trasition
+                    //
+                    if (
+                            true == minusTrianglesSet.contains(triangleIdA) ||
+                            true == minusTrianglesSet.contains(triangleIdB)
+                            //false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
+                            //false == fiberGraphs[i].componentRoot.contains(triangleIdB)
+                       )
                     {
-
-                        //std::cout << "Adding some triangles\n";
-
-
-                        const int triangleIdA = path[j];
-                        const int triangleIdB = path[j+1];
-
-
-                        // Make sure these triangle are not active in the trasition
-                        //
-                        if (
-                                true == minusTrianglesSet.contains(triangleIdA) ||
-                                true == minusTrianglesSet.contains(triangleIdB)
-                                //false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
-                                //false == fiberGraphs[i].componentRoot.contains(triangleIdB)
-                           )
-                        {
-                            continue;
-                        }
-
-                        const int triangleIdC = path[j];
-                        const int triangleIdD = path[j+1];
-
-                        const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
-                        const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i-1].at(triangleIdB);
-
-                        const std::array<double, 3> &c = barycentricCoordinatesPerTriangle[i].at(triangleIdC);
-                        const std::array<double, 3> &d = barycentricCoordinatesPerTriangle[i].at(triangleIdD);
-
-                        std::vector<FiberPoint> componentFiberPoints;
-
-                        //
-                        //
-                        //      a------c
-                        //      |     /|
-                        //      |    / |
-                        //      |   /  |
-                        //      |  /   |
-                        //      | /    |
-                        //      |/     |
-                        //      b------d
-                        //      
-                        //
-
-
-                        // Triangle abd
-                        componentFiberPoints.push_back(FiberPoint(
-                                a[0], 
-                                a[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                                sheetColour,
-                                sheetId,
-                                triangleIdA
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                b[0], 
-                                b[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                                sheetColour,
-                                sheetId,
-                                triangleIdB
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                c[0], 
-                                c[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdC),
-                                sheetColour,
-                                sheetId,
-                                triangleIdC
-                                ));
-
-                        // Triangle dbc
-                        componentFiberPoints.push_back(FiberPoint(
-                                d[0], 
-                                d[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdD),
-                                sheetColour,
-                                sheetId,
-                                triangleIdD
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                b[0], 
-                                b[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                                sheetColour,
-                                sheetId,
-                                triangleIdB
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                c[0], 
-                                c[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdC),
-                                sheetColour,
-                                sheetId,
-                                triangleIdC
-                                ));
-
-
-                        allFiberPoints[i].push_back(componentFiberPoints[0]);
-                        allFiberPoints[i].push_back(componentFiberPoints[1]);
-                        allFiberPoints[i].push_back(componentFiberPoints[2]);
-                        allFiberPoints[i].push_back(componentFiberPoints[3]);
-                        allFiberPoints[i].push_back(componentFiberPoints[4]);
-                        allFiberPoints[i].push_back(componentFiberPoints[5]);
-
-                        //faceFibers.push_back(fb);
-                        //faceFibers.push_back(fb2);
+                        continue;
                     }
 
-
-
-
-
-                    //if (pathsA.at(componentA) != pathsB.at(componentB))
-                    //{
-                        //printf("\n\n--------------------------------------------------------------------------------------\n");
-
-                        //std::cout << "\nHere's the path fiber from correspondence A\n";
-                        //for (const int &triangleId : pathsA.at(componentA))
-                        //{
-                            //std::cout << triangleId << " ";
-                        //}
-
-                        //std::cout << "\n\nHere's the path fiber from correspondence B\n";
-                        //for (const int &triangleId : pathsB.at(componentB))
-                        //{
-                            //std::cout << triangleId << " ";
-                        //}
-                        //std::cout << std::endl;
-
-                        //return {};
-
-                        //throw std::runtime_error("Corresponding paths are not equal.");
-                    //}
-
-                }
-                // If it's a cycle
-                else if (cyclesA.contains(componentA))
-                {
-                    std::vector<int> cycle = cyclesA.at(componentA);
-
-
-                    for (int j = 0 ; j  < cycle.size() ; j++)
-                    {
-
-                        //std::cout << "Adding some triangles\n";
-
-
-                        const int triangleIdA = cycle[j];
-                        const int triangleIdB = cycle[(j + 1) % (cycle.size())];
-
-                        if (
-                                true == minusTrianglesSet.contains(triangleIdA) ||
-                                true == minusTrianglesSet.contains(triangleIdB)
-                                //false == fiberGraphs[i].componentRoot.contains(triangleIdA) ||
-                                //false == fiberGraphs[i].componentRoot.contains(triangleIdB)
-                           )
-                        {
-                            continue;
-                        }
-
-                        const int triangleIdC = cycle[j];
-                        const int triangleIdD = cycle[(j + 1) % (cycle.size())];
-
-                        const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
-                        const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i-1].at(triangleIdB);
-
-                        const std::array<double, 3> &c = barycentricCoordinatesPerTriangle[i].at(triangleIdC);
-                        const std::array<double, 3> &d = barycentricCoordinatesPerTriangle[i].at(triangleIdD);
-
-                        std::vector<FiberPoint> componentFiberPoints;
-
-                        //
-                        //
-                        //      a------c
-                        //      |     /|
-                        //      |    / |
-                        //      |   /  |
-                        //      |  /   |
-                        //      | /    |
-                        //      |/     |
-                        //      b------d
-                        //      
-                        //
-
-
-                        // Triangle abd
-                        componentFiberPoints.push_back(FiberPoint(
-                                a[0], 
-                                a[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                                sheetColour,
-                                sheetId,
-                                triangleIdA
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                b[0], 
-                                b[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                                sheetColour,
-                                sheetId,
-                                triangleIdB
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                c[0], 
-                                c[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdC),
-                                sheetColour,
-                                sheetId,
-                                triangleIdC
-                                ));
-
-                        // Triangle dbc
-                        componentFiberPoints.push_back(FiberPoint(
-                                d[0], 
-                                d[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdD),
-                                sheetColour,
-                                sheetId,
-                                triangleIdD
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                b[0], 
-                                b[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                                sheetColour,
-                                sheetId,
-                                triangleIdB
-                                ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                c[0], 
-                                c[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdC),
-                                sheetColour,
-                                sheetId,
-                                triangleIdC
-                                ));
-
-
-                        allFiberPoints[i].push_back(componentFiberPoints[0]);
-                        allFiberPoints[i].push_back(componentFiberPoints[1]);
-                        allFiberPoints[i].push_back(componentFiberPoints[2]);
-                        allFiberPoints[i].push_back(componentFiberPoints[3]);
-                        allFiberPoints[i].push_back(componentFiberPoints[4]);
-                        allFiberPoints[i].push_back(componentFiberPoints[5]);
-
-                        //faceFibers.push_back(fb);
-                        //faceFibers.push_back(fb2);
-                    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    //if (cyclesA.at(componentA) != cyclesB.at(componentB))
-                    //{
-
-                        //printf("\n\n--------------------------------------------------------------------------------------\n");
-
-                        //std::cout << "\nHere's the cycle fiber from correspondence A\n";
-                        //for (const int &triangleId : cyclesA.at(componentA))
-                        //{
-                            //std::cout << triangleId << " ";
-                        //}
-
-                        //std::cout << "\n\nHere's the cycle fiber from correspondence B..\n";
-                        //for (const int &triangleId : cyclesB.at(componentB))
-                        //{
-                            //std::cout << triangleId << " ";
-                        //}
-                        //std::cout << std::endl;
-
-                        //std::cout << "Bye bye";
-                        //std::cout << std::endl;
-                        ////return {};
-                        ////throw std::runtime_error("Corresponding cycles are not equal.");
-                    //}
-                }
-                else
-                {
-                    throw std::runtime_error("Neither a path nor a cycle.");
-                }
-            }
-
-
-            const int intersectedSegmentType = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(intersectedSegments[i].second));
-
-            // If we are intersecting a regular segment
-            //
-            if (intersectedSegmentType == 1 || intersectedSegmentType == -1)
-            {
-                std::cerr << "Regular segment " << std::endl;
-
-                // Find the componentIds
-                const int componentA = fiberGraphs[i-1].componentRoot.at(minusTriangles[0]);
-                const int componentB = fiberGraphs[i].componentRoot.at(plusTriangles[0]);
-
-
-                const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
-                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
-
-
-
-                // If it's a path
-                if (pathsA.contains(componentA))
-                {
-                    std::cerr << "It's a path " << std::endl;
-                }
-
-                // If it's a cycle
-                else if (cyclesA.contains(componentA))
-                {
-                    const auto cycleA = cyclesA.at(componentA);
-                    const auto cycleB = cyclesB.at(componentB);
-
-                    const auto &[cycleActiveTrianglesA, cycleActiveTrianglesB] = getActiveTrianglesInCycle(
-                            cycleA, 
-                            cycleB,
-                            minusTrianglesSet, 
-                            plusTrianglesSet
-                            );
-
-                    //
-                    //
-                    //      a
-                    //      |\
-                    //      | \
-                    //      |  \
-                    //      b---o
-                    //      |  /
-                    //      | /
-                    //      |/
-                    //      c
-                    //      
-                    //
-
-
-                    for (int k = 0 ; k < cycleActiveTrianglesA.size() - 1 ; k++)
-                    {
-                        std::cerr << "Adding a triangle\n";
-
-                        std::vector<FiberPoint> componentFiberPoints;
-
-                        const int triangleIdA = cycleA[cycleActiveTrianglesA[k]];
-                        const int triangleIdB = cycleA[cycleActiveTrianglesA[k + 1]];
-
-                        const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
-                        const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i-1].at(triangleIdB);
-
-
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                    a[0], 
-                                    a[1], 
-                                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                                    sheetColour,
-                                    sheetId,
-                                    triangleIdA
-                                    ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                    b[0], 
-                                    b[1], 
-                                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                                    sheetColour,
-                                    sheetId,
-                                    triangleIdB
-                                    ));
-
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                    edgePointDomain,
-                                    sheetColour,
-                                    sheetId,
-                                    -1
-                                    ));
-
-
-                        allFiberPoints[i].push_back(componentFiberPoints[0]);
-                        allFiberPoints[i].push_back(componentFiberPoints[1]);
-                        allFiberPoints[i].push_back(componentFiberPoints[2]);
-
-                    }
-
-                    //
-                    //
-                    //      a
-                    //     /|
-                    //    / | 
-                    //   /  |  
-                    //  o---b
-                    //   \  |
-                    //    \ |
-                    //     \|
-                    //      c
-                    //      
-                    //
-                    for (int k = 0 ; k < cycleActiveTrianglesB.size() - 1 ; k++)
-                    {
-                        std::cerr << "Adding a triangle\n";
-                        std::vector<FiberPoint> componentFiberPoints;
-
-                        const int triangleIdA = cycleB[cycleActiveTrianglesB[k]];
-                        const int triangleIdB = cycleB[cycleActiveTrianglesB[k + 1]];
-
-                        const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i].at(triangleIdA);
-                        const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i].at(triangleIdB);
-
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                    a[0], 
-                                    a[1], 
-                                    tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                                    sheetColour,
-                                    sheetId,
-                                    triangleIdA
-                                    ));
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                    b[0], 
-                                    b[1], 
-                                    tetMesh.getTriangleVerticesCoordinates(triangleIdB),
-                                    sheetColour,
-                                    sheetId,
-                                    triangleIdB
-                                    ));
-
-
-                        componentFiberPoints.push_back(FiberPoint(
-                                    edgePointDomain,
-                                    sheetColour,
-                                    sheetId,
-                                    -1
-                                    ));
-
-
-                        allFiberPoints[i].push_back(componentFiberPoints[0]);
-                        allFiberPoints[i].push_back(componentFiberPoints[1]);
-                        allFiberPoints[i].push_back(componentFiberPoints[2]);
-                    }
-
-                    // The last two triangles
-                    //
-                    //      a-------b
-                    //       \     /.
-                    //        \   /  
-                    //         \ /  
-                    //          o
-                    //         / \
-                    //        /   \
-                    //       /     \
-                    //      c-------d
-
-
-                    const int triangleIdA = cycleA[cycleActiveTrianglesA[0]];
-                    const int triangleIdB = cycleB[cycleActiveTrianglesB[0]];
-
-                    const int triangleIdC = cycleA[cycleActiveTrianglesA.back()];
-                    const int triangleIdD = cycleB[cycleActiveTrianglesB.back()];
+                    const int triangleIdC = path[j];
+                    const int triangleIdD = path[j+1];
 
                     const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
-                    const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i].at(triangleIdB);
-                    const std::array<double, 3> &c = barycentricCoordinatesPerTriangle[i-1].at(triangleIdC);
+                    const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i-1].at(triangleIdB);
+
+                    const std::array<double, 3> &c = barycentricCoordinatesPerTriangle[i].at(triangleIdC);
                     const std::array<double, 3> &d = barycentricCoordinatesPerTriangle[i].at(triangleIdD);
-
-
 
                     std::vector<FiberPoint> componentFiberPoints;
 
+                    //
+                    //
+                    //      a------c
+                    //      |     /|
+                    //      |    / |
+                    //      |   /  |
+                    //      |  /   |
+                    //      | /    |
+                    //      |/     |
+                    //      b------d
+                    //      
+                    //
+
+
+                    // Triangle abd
                     componentFiberPoints.push_back(FiberPoint(
                                 a[0], 
                                 a[1], 
@@ -1128,15 +680,6 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                                 triangleIdB
                                 ));
 
-
-                    componentFiberPoints.push_back(FiberPoint(
-                                edgePointDomain,
-                                sheetColour,
-                                sheetId,
-                                -1
-                                ));
-
-
                     componentFiberPoints.push_back(FiberPoint(
                                 c[0], 
                                 c[1], 
@@ -1146,6 +689,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                                 triangleIdC
                                 ));
 
+                    // Triangle dbc
                     componentFiberPoints.push_back(FiberPoint(
                                 d[0], 
                                 d[1], 
@@ -1155,12 +699,22 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                                 triangleIdD
                                 ));
 
-
                     componentFiberPoints.push_back(FiberPoint(
-                                edgePointDomain,
+                                b[0], 
+                                b[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
                                 sheetColour,
                                 sheetId,
-                                -1
+                                triangleIdB
+                                ));
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                c[0], 
+                                c[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdC),
+                                sheetColour,
+                                sheetId,
+                                triangleIdC
                                 ));
 
 
@@ -1171,100 +725,84 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                     allFiberPoints[i].push_back(componentFiberPoints[4]);
                     allFiberPoints[i].push_back(componentFiberPoints[5]);
 
+                    //faceFibers.push_back(fb);
+                    //faceFibers.push_back(fb2);
+                }
 
 
 
 
 
-                        //      u------v
-                        //      |     /|
-                        //      |    / |
-                        //      |   /  |
-                        //      |  /   |
-                        //      | /    |
-                        //      |/     |
-                        //      a------b
-                        //         .
-                        //         .
-                        //         .
-                        //      c------d
-                        //      |     /|
-                        //      |    / |
-                        //      |   /  |
-                        //      |  /   |
-                        //      | /    |
-                        //      |/     |
-                        //      w------z
+                //if (pathsA.at(componentA) != pathsB.at(componentB))
+                //{
+                //printf("\n\n--------------------------------------------------------------------------------------\n");
+
+                //std::cout << "\nHere's the path fiber from correspondence A\n";
+                //for (const int &triangleId : pathsA.at(componentA))
+                //{
+                //std::cout << triangleId << " ";
+                //}
+
+                //std::cout << "\n\nHere's the path fiber from correspondence B\n";
+                //for (const int &triangleId : pathsB.at(componentB))
+                //{
+                //std::cout << triangleId << " ";
+                //}
+                //std::cout << std::endl;
+
+                //return {};
+
+                //throw std::runtime_error("Corresponding paths are not equal.");
+                //}
+
+            }
+            // If it's a cycle
+            else if (cyclesA.contains(componentA))
+            {
+                std::vector<int> cycle = cyclesA.at(componentA);
 
 
-                    const int index_a = cycleActiveTrianglesA[0];
-                    const int index_b = cycleActiveTrianglesB[0];
+                for (int j = 0 ; j  < cycle.size() ; j++)
+                {
+                    const int triangleIdA = cycle[j];
+                    const int triangleIdB = cycle[(j + 1) % (cycle.size())];
 
-                    const int index_c = cycleActiveTrianglesA.back();
-                    const int index_d = cycleActiveTrianglesB.back();
+                    // If either of the triangle is affected, skip for now
+                    if (
+                            true == minusTrianglesSet.contains(triangleIdA) ||
+                            true == minusTrianglesSet.contains(triangleIdB)
+                       )
+                    {
+                        continue;
+                    }
 
-                    const int sizeA = static_cast<int>(cycleA.size());
-                    const int sizeB = static_cast<int>(cycleB.size());
+                    // If A and B are not affect, then C and C must not be
+                    const int triangleIdC = cycle[j];
+                    const int triangleIdD = cycle[(j + 1) % (cycle.size())];
 
+                    const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
+                    const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i-1].at(triangleIdB);
 
+                    const std::array<double, 3> &c = barycentricCoordinatesPerTriangle[i].at(triangleIdC);
+                    const std::array<double, 3> &d = barycentricCoordinatesPerTriangle[i].at(triangleIdD);
 
+                    std::vector<FiberPoint> componentFiberPoints;
 
-                    const int previous_a = (index_a == 0) ? sizeA - 1 : index_a - 1;
-                    const int previous_b = (index_b == 0) ? sizeB - 1 : index_b - 1;
-
-                    const int next_c = (index_c + 1) % sizeA;
-                    const int next_d = (index_d + 1) % sizeB;
-
-
-
-                    const int triangleIdU = cycleA[previous_a];
-                    const int triangleIdV = cycleB[previous_b];
-
-                    const int triangleIdW = cycleA[next_c];
-                    const int triangleIdZ = cycleB[next_d];
-
-                    const std::array<double, 3> &u = barycentricCoordinatesPerTriangle[i-1].at(triangleIdU);
-                    const std::array<double, 3> &v = barycentricCoordinatesPerTriangle[i].at(triangleIdV);
-                    const std::array<double, 3> &w = barycentricCoordinatesPerTriangle[i-1].at(triangleIdW);
-                    const std::array<double, 3> &z = barycentricCoordinatesPerTriangle[i].at(triangleIdZ);
-
-
-
-
-
-
-
-
-                    //auv
-                    componentFiberPoints.push_back(FiberPoint(
-                                a[0], 
-                                a[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdA),
-                                sheetColour,
-                                sheetId,
-                                triangleIdA
-                                ));
-
-                    componentFiberPoints.push_back(FiberPoint(
-                                u[0], 
-                                u[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdU),
-                                sheetColour,
-                                sheetId,
-                                triangleIdU
-                                ));
-
-                    componentFiberPoints.push_back(FiberPoint(
-                                v[0], 
-                                v[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdV),
-                                sheetColour,
-                                sheetId,
-                                triangleIdV
-                                ));
+                    //
+                    //
+                    //      a------c
+                    //      |     /|
+                    //      |    / |
+                    //      |   /  |
+                    //      |  /   |
+                    //      | /    |
+                    //      |/     |
+                    //      b------d
+                    //      
+                    //
 
 
-                    //dcw
+                    // Triangle abd
                     componentFiberPoints.push_back(FiberPoint(
                                 a[0], 
                                 a[1], 
@@ -1284,17 +822,15 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                                 ));
 
                     componentFiberPoints.push_back(FiberPoint(
-                                v[0], 
-                                v[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdV),
+                                c[0], 
+                                c[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdC),
                                 sheetColour,
                                 sheetId,
-                                triangleIdV
+                                triangleIdC
                                 ));
 
-
-                    // dcw
-
+                    // Triangle dcb
                     componentFiberPoints.push_back(FiberPoint(
                                 d[0], 
                                 d[1], 
@@ -1314,75 +850,476 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                                 ));
 
                     componentFiberPoints.push_back(FiberPoint(
-                                w[0], 
-                                w[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdW),
+                                b[0], 
+                                b[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
                                 sheetColour,
                                 sheetId,
-                                triangleIdW
+                                triangleIdB
                                 ));
 
-                    // dzw
-                    componentFiberPoints.push_back(FiberPoint(
-                                d[0], 
-                                d[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdD),
-                                sheetColour,
-                                sheetId,
-                                triangleIdD
-                                ));
-
-                    componentFiberPoints.push_back(FiberPoint(
-                                z[0], 
-                                z[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdZ),
-                                sheetColour,
-                                sheetId,
-                                triangleIdZ
-                                ));
-
-                    componentFiberPoints.push_back(FiberPoint(
-                                w[0], 
-                                w[1], 
-                                tetMesh.getTriangleVerticesCoordinates(triangleIdW),
-                                sheetColour,
-                                sheetId,
-                                triangleIdW
-                                ));
-
-
-
-
-
-
-                    for (int k = 0 ; k < 12 ; k++)
-                    {
-                        std::cout << "ADDING MANy TIRANGLESSSSSSSSSSSSSSSSSSSSSS";
-                        allFiberPoints[i].push_back(componentFiberPoints[k]);
-
-                    }
-
-
-
-
-
-
-
-
+                    allFiberPoints[i].insert(
+                            allFiberPoints[i].end(), 
+                            std::make_move_iterator(componentFiberPoints.begin()), 
+                            std::make_move_iterator(componentFiberPoints.end())
+                            );
                 }
-                else
-                {
-                    throw std::runtime_error("Neither a path nor a cycle.");
-                }
+            }
+            else
+            {
+                throw std::runtime_error("Neither a path nor a cycle.");
+            }
+        }
+
+        const int intersectedSegmentType = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(intersectedSegments[i].second));
+
+        // If we are intersecting a regular segment
+        //
+        if (intersectedSegmentType == 1 || intersectedSegmentType == -1)
+        {
+            std::cerr << "Regular segment " << std::endl;
+
+            // Find the componentIds
+            const int componentA = fiberGraphs[i-1].componentRoot.at(minusTriangles[0]);
+            const int componentB = fiberGraphs[i].componentRoot.at(plusTriangles[0]);
+
+
+            const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
+            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+
+
+            // If it's a path
+            if (pathsA.contains(componentA))
+            {
+                std::cerr << "It's a path " << std::endl;
             }
 
 
 
-            //printf("\n\n");
+
+
+
+
+
+            // If it's a cycle
+            else if (cyclesA.contains(componentA))
+            {
+                const auto cycleA = cyclesA.at(componentA);
+                const auto cycleB = cyclesB.at(componentB);
+
+                const auto &[cycleActiveTrianglesA, cycleActiveTrianglesB] = getActiveTrianglesInCycle(
+                        cycleA, 
+                        cycleB,
+                        minusTrianglesSet, 
+                        plusTrianglesSet
+                        );
+
+
+
+
+                //
+                //      Connect cycleA
+                //
+                //      a
+                //      |\
+                //      | \
+                //      |  \
+                //      b---o
+                //      .  .
+                //      . .
+                //      ..
+                //      c
+                //      
+                //
+
+
+                for (int k = 0 ; k < cycleActiveTrianglesA.size() - 1 ; k++)
+                {
+                    std::vector<FiberPoint> componentFiberPoints;
+
+                    const int triangleIdA = cycleA[cycleActiveTrianglesA[k]];
+                    const int triangleIdB = cycleA[cycleActiveTrianglesA[k + 1]];
+
+                    const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
+                    const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i-1].at(triangleIdB);
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                a[0], 
+                                a[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                                sheetColour,
+                                sheetId,
+                                triangleIdA
+                                ));
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                b[0], 
+                                b[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                                sheetColour,
+                                sheetId,
+                                triangleIdB
+                                ));
+
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                edgePointDomain,
+                                sheetColour,
+                                sheetId,
+                                -1
+                                ));
+
+
+                    allFiberPoints[i].insert(
+                            allFiberPoints[i].end(), 
+                            std::make_move_iterator(componentFiberPoints.begin()), 
+                            std::make_move_iterator(componentFiberPoints.end())
+                            );
+
+                }
+
+                //
+                //
+                //      Connect cycleB
+                //
+                //            a
+                //           /|
+                //          / | 
+                //         /  |  
+                //        o---b
+                //         \  |
+                //          \ |
+                //           \|
+                //            c
+                //      
+                //
+                for (int k = 0 ; k < cycleActiveTrianglesB.size() - 1 ; k++)
+                {
+                    std::vector<FiberPoint> componentFiberPoints;
+
+                    const int triangleIdA = cycleB[cycleActiveTrianglesB[k]];
+                    const int triangleIdB = cycleB[cycleActiveTrianglesB[k + 1]];
+
+                    const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i].at(triangleIdA);
+                    const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i].at(triangleIdB);
+
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                a[0], 
+                                a[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                                sheetColour,
+                                sheetId,
+                                triangleIdA
+                                ));
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                edgePointDomain,
+                                sheetColour,
+                                sheetId,
+                                -1
+                                ));
+
+                    componentFiberPoints.push_back(FiberPoint(
+                                b[0], 
+                                b[1], 
+                                tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                                sheetColour,
+                                sheetId,
+                                triangleIdB
+                                ));
+
+                    allFiberPoints[i].insert(
+                            allFiberPoints[i].end(), 
+                            std::make_move_iterator(componentFiberPoints.begin()), 
+                            std::make_move_iterator(componentFiberPoints.end())
+                            );
+                }
+
+                // The last two triangles
+                //
+                //      a-------b
+                //       \     /.
+                //        \   /  
+                //         \ /  
+                //          o
+                //         / \
+                //        /   \
+                //       /     \
+                //      c-------d
+
+
+                const int triangleIdA = cycleA[cycleActiveTrianglesA[0]];
+                const int triangleIdB = cycleB[cycleActiveTrianglesB[0]];
+
+                const int triangleIdC = cycleA[cycleActiveTrianglesA.back()];
+                const int triangleIdD = cycleB[cycleActiveTrianglesB.back()];
+
+                const std::array<double, 3> &a = barycentricCoordinatesPerTriangle[i-1].at(triangleIdA);
+                const std::array<double, 3> &b = barycentricCoordinatesPerTriangle[i].at(triangleIdB);
+                const std::array<double, 3> &c = barycentricCoordinatesPerTriangle[i-1].at(triangleIdC);
+                const std::array<double, 3> &d = barycentricCoordinatesPerTriangle[i].at(triangleIdD);
+
+
+
+                std::vector<FiberPoint> componentFiberPoints;
+
+                // Add aob
+                componentFiberPoints.push_back(FiberPoint(
+                            a[0], 
+                            a[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                            sheetColour,
+                            sheetId,
+                            triangleIdA
+                            ));
+
+
+                componentFiberPoints.push_back(FiberPoint(
+                            edgePointDomain,
+                            sheetColour,
+                            sheetId,
+                            -1
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            b[0], 
+                            b[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                            sheetColour,
+                            sheetId,
+                            triangleIdB
+                            ));
+
+
+
+                // Add cdo
+                componentFiberPoints.push_back(FiberPoint(
+                            c[0], 
+                            c[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdC),
+                            sheetColour,
+                            sheetId,
+                            triangleIdC
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            d[0], 
+                            d[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdD),
+                            sheetColour,
+                            sheetId,
+                            triangleIdD
+                            ));
+
+
+                componentFiberPoints.push_back(FiberPoint(
+                            edgePointDomain,
+                            sheetColour,
+                            sheetId,
+                            -1
+                            ));
+
+
+
+
+
+
+
+
+
+                //      u------v
+                //      |     /|
+                //      |    / |
+                //      |   /  |
+                //      |  /   |
+                //      | /    |
+                //      |/     |
+                //      a------b
+                //         .
+                //         .
+                //         .
+                //      c------d
+                //      |     /|
+                //      |    / |
+                //      |   /  |
+                //      |  /   |
+                //      | /    |
+                //      |/     |
+                //      w------z
+
+
+                const int index_a = cycleActiveTrianglesA[0];
+                const int index_b = cycleActiveTrianglesB[0];
+
+                const int index_c = cycleActiveTrianglesA.back();
+                const int index_d = cycleActiveTrianglesB.back();
+
+                const int sizeA = static_cast<int>(cycleA.size());
+                const int sizeB = static_cast<int>(cycleB.size());
+
+
+                const int previous_a = (index_a == 0) ? sizeA - 1 : index_a - 1;
+                const int previous_b = (index_b == 0) ? sizeB - 1 : index_b - 1;
+
+                const int next_c = (index_c + 1) % sizeA;
+                const int next_d = (index_d + 1) % sizeB;
+
+
+                const int triangleIdU = cycleA[previous_a];
+                const int triangleIdV = cycleB[previous_b];
+
+                const int triangleIdW = cycleA[next_c];
+                const int triangleIdZ = cycleB[next_d];
+
+                const std::array<double, 3> &u = barycentricCoordinatesPerTriangle[i-1].at(triangleIdU);
+                const std::array<double, 3> &v = barycentricCoordinatesPerTriangle[i].at(triangleIdV);
+                const std::array<double, 3> &w = barycentricCoordinatesPerTriangle[i-1].at(triangleIdW);
+                const std::array<double, 3> &z = barycentricCoordinatesPerTriangle[i].at(triangleIdZ);
+
+
+
+
+                //avu
+                componentFiberPoints.push_back(FiberPoint(
+                            a[0], 
+                            a[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                            sheetColour,
+                            sheetId,
+                            triangleIdA
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            v[0], 
+                            v[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdV),
+                            sheetColour,
+                            sheetId,
+                            triangleIdV
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            u[0], 
+                            u[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdU),
+                            sheetColour,
+                            sheetId,
+                            triangleIdU
+                            ));
+
+
+                //abv
+                componentFiberPoints.push_back(FiberPoint(
+                            a[0], 
+                            a[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdA),
+                            sheetColour,
+                            sheetId,
+                            triangleIdA
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            b[0], 
+                            b[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdB),
+                            sheetColour,
+                            sheetId,
+                            triangleIdB
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            v[0], 
+                            v[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdV),
+                            sheetColour,
+                            sheetId,
+                            triangleIdV
+                            ));
+
+
+                // dcw
+
+                componentFiberPoints.push_back(FiberPoint(
+                            d[0], 
+                            d[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdD),
+                            sheetColour,
+                            sheetId,
+                            triangleIdD
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            c[0], 
+                            c[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdC),
+                            sheetColour,
+                            sheetId,
+                            triangleIdC
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            w[0], 
+                            w[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdW),
+                            sheetColour,
+                            sheetId,
+                            triangleIdW
+                            ));
+
+                // dwz
+                componentFiberPoints.push_back(FiberPoint(
+                            d[0], 
+                            d[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdD),
+                            sheetColour,
+                            sheetId,
+                            triangleIdD
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            w[0], 
+                            w[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdW),
+                            sheetColour,
+                            sheetId,
+                            triangleIdW
+                            ));
+
+                componentFiberPoints.push_back(FiberPoint(
+                            z[0], 
+                            z[1], 
+                            tetMesh.getTriangleVerticesCoordinates(triangleIdZ),
+                            sheetColour,
+                            sheetId,
+                            triangleIdZ
+                            ));
+
+
+
+
+
+                allFiberPoints[i].insert(
+                        allFiberPoints[i].end(), 
+                        std::make_move_iterator(componentFiberPoints.begin()), 
+                        std::make_move_iterator(componentFiberPoints.end())
+                        );
+
+
+            }
+            else
+            {
+                throw std::runtime_error("Neither a path nor a cycle.");
+            }
         }
+
+
+        //printf("\n\n");
     }
 
-    Timer::stop("Computing fibers                       :");
+    Timer::stop("Computing fiber surface triangles      :");
+    std::cout << std::endl << std::flush;
 
     std::vector<FiberPoint> result;
 

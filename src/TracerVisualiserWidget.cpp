@@ -17,14 +17,6 @@
 
 using namespace std;
 
-void
-TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha, GLfloat shininess)
-{
-    glMaterialfv(GL_FRONT, GL_AMBIENT, &(vector<GLfloat>({ red, green, blue, alpha })[0]));
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, &(vector<GLfloat>({ red, green, blue, alpha })[0]));
-    glMaterialfv(GL_FRONT, GL_SPECULAR, &(vector<GLfloat>({ red, green, blue, alpha })[0]));
-    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
-}
 
 TracerVisualiserWidget::TracerVisualiserWidget(QWidget* parent, Data &_data)
   : QOpenGLWidget(parent)
@@ -49,6 +41,9 @@ TracerVisualiserWidget::initializeGL()
         glEnable(GL_LIGHTING);
         glEnable(GL_LIGHT0);
         glEnable(GL_COLOR_MATERIAL);
+        glDisable(GL_CULL_FACE);
+
+        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     }
 
@@ -68,6 +63,20 @@ TracerVisualiserWidget::resizeGL(int w, int h)
     glViewport(0, 0, w, h);
 }
 
+void
+TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha, GLfloat shininess)
+{
+    //glMaterialfv(GL_FRONT, GL_AMBIENT, &(vector<GLfloat>({ red, green, blue, alpha })[0]));
+    //glMaterialfv(GL_FRONT, GL_DIFFUSE, &(vector<GLfloat>({ red, green, blue, alpha })[0]));
+    //glMaterialfv(GL_FRONT, GL_SPECULAR, &(vector<GLfloat>({ red, green, blue, alpha })[0]));
+    //glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+
+    GLfloat mat[4] = { red, green, blue, alpha };
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat); // optional
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+}
 
 // Draw fibers
 void
@@ -93,10 +102,42 @@ TracerVisualiserWidget::generateDisplayList()
 
     glBegin(GL_TRIANGLES);
     {
-        for(const auto &faceFiber : this->faceFibers)
+        //for(const auto &faceFiber : this->faceFibers)
+        for(int i = 0 ; i < this->faceFibers.size() ; i+=3)
         {
-            glColor3fv(faceFiber.colour.data());
+            const auto &faceFiber = this->faceFibers[i];
+            const auto &faceFiber2 = this->faceFibers[i+1];
+            const auto &faceFiber3 = this->faceFibers[i+2];
+
+
+
+            if (this->enableLighting)
+            {
+                setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+
+                GLfloat vertices[3][3] = {
+                    {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
+                    {faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
+                    {faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
+
+                };
+
+                std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
+
+
+                // Set normal for OpenGL
+                glNormal3fv(normal.data());
+            }
+            else
+            {
+                glColor3fv(faceFiber.colour.data());
+
+            }
+
             glVertex3fv(faceFiber.point.data());
+            glVertex3fv(faceFiber2.point.data());
+            glVertex3fv(faceFiber3.point.data());
+
         }
     }
     glEnd();
@@ -106,9 +147,9 @@ TracerVisualiserWidget::generateDisplayList()
 
 
     // Draw fiber endpoints (in every tet)
-    //for(const auto &faceFiber : this->data.faceFibers)
+    //for(const auto &faceFiber : this->faceFibers)
     //{
-        //glColor3fv(faceFiber.colour.data());
+        //glColor3f(1.0f, 1.0f, 1.0f);
 
         //glPushMatrix();
         //{
@@ -122,6 +163,34 @@ TracerVisualiserWidget::generateDisplayList()
     //}
 
     glEndList();
+}
+
+std::array<GLfloat, 3> TracerVisualiserWidget::computeTriangleNormal(const GLfloat* v0, const GLfloat* v1, const GLfloat* v2)
+{
+    // Edge vectors
+    GLfloat ax = v1[0] - v0[0];
+    GLfloat ay = v1[1] - v0[1];
+    GLfloat az = v1[2] - v0[2];
+
+    GLfloat bx = v2[0] - v0[0];
+    GLfloat by = v2[1] - v0[1];
+    GLfloat bz = v2[2] - v0[2];
+
+    // Cross product a × b
+    GLfloat nx = ay * bz - az * by;
+    GLfloat ny = az * bx - ax * bz;
+    GLfloat nz = ax * by - ay * bx;
+
+    // Normalize
+    GLfloat len = std::sqrt(nx*nx + ny*ny + nz*nz);
+    if (len > 0.0f)
+    {
+        nx /= len;
+        ny /= len;
+        nz /= len;
+    }
+
+    return { nx, ny, nz };
 }
 
 void TracerVisualiserWidget::drawSolidTriangle(GLfloat vertices[3][3])
