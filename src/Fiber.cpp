@@ -1234,8 +1234,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     //const Point_2 startPoint(0.479988 , 0.215557);
     //const Point_2 endPoint(0.259815, 0.116635);
 
-    //const Point_2 startPoint(0.215557, 0.479988);
-    //const Point_2 endPoint(0.116635, 0.259815);
+    //const Point_2 startPoint(-0.031168186836691678, 0.14228954860228807);
+    //const Point_2 endPoint(0.038491389921685215, -0.15976729170485587);
 
     const Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
     const Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
@@ -1506,6 +1506,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
     std::cout << "Computing " << fiberPoints.size() << " fibers...\n";
 
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 1 ; i < fiberPoints.size() ; i++)
     {
         // Set up the fiber point

@@ -70,6 +70,7 @@ class ReebSpace2
         std::map<int, double> sheetAreaProportion;
 
 
+        std::map<int, std::vector<Halfedge_const_handle>> sheetBoundaries;
 
 
 
@@ -122,6 +123,8 @@ class ReebSpace2
         // Additional functions
         //
         void computeSheets(Arrangement &singularArrangement);
+
+        void computeSheetBoundaries(Arrangement &singularArrangement);
 
 
 

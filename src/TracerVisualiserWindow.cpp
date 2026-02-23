@@ -18,6 +18,13 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         QApplication::quit();
     }
 
+    if (event->key() == Qt::Key_W &&
+            event->modifiers() & Qt::ControlModifier)
+    {
+        close();   // closes this window
+        return;
+    }
+
     if (event->key() == Qt::Key_I) {
         this->plotWidget->mousePoint.setY(this->plotWidget->mousePoint.y() - moveSpeed);
         this->plotWidget->recomputeFiber = true;

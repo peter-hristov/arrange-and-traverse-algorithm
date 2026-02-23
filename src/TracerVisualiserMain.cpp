@@ -187,9 +187,37 @@ int main(int argc, char* argv[])
     reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
     Timer::stop("Computed singular traversal            :");
 
+
+    Timer::start();
+    reebSpace2.computeSheetBoundaries(singularArrangement);
+    Timer::stop("Computing sheet boundaries             :");
+
+
+    //for (const auto &[sheetId, boundary] : reebSpace2.sheetBoundaries)
+    //{
+        //printf("--------------------------------------------------- sheet with ID %d has this boundary: \n", sheetId);
+
+        //for (const Halfedge_const_handle &he : boundary)
+        //{
+            //std::cout << he->source()->point() << std::endl;
+
+        //}
+
+
+    //}
+
+
+
     Timer::start();
     reebSpace2.computeSheets(singularArrangement);
     Timer::stop("Postprocessing                         :");
+
+
+
+
+
+
+
 
     Timer::start();
     singularArrangement.buildAABBtree(tetMesh);
@@ -328,7 +356,12 @@ int main(int argc, char* argv[])
     window->setWindowTitle("Fiber Visualiser");
 
     // Make the window full screen by default
-    window->showMaximized();
+    //window->showMaximized();
+
+    window->setWindowState(Qt::WindowNoState);
+    window->setMinimumSize(1800, 1200);
+    window->showNormal();
+    window->move(0, 0);
 
     // Show the label
     window->show();

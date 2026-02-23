@@ -1,4 +1,5 @@
 #include <cassert>
+#include <unordered_set>
 #include <utility>
 #include <omp.h>
 
@@ -9,11 +10,12 @@
 #include "./LoadingBar.hpp"
 #include "src/CGALTypedefs.h"
 
-void ReebSpace2::computeSheets(Arrangement &singularArrangement)
+void ReebSpace2::computeSheetBoundaries(Arrangement &singularArrangement)
 {
-    std::map<Vertex_const_handle, std::vector<int>> sheetsPerVertex;
 
-    std::map<int, std::set<Halfedge_const_handle>> halfEdgePerSheet;
+    // Collect the half-edge on the boundary of each sheet 
+    //
+    std::map<int, std::unordered_set<Halfedge_const_handle>> halfEdgePerSheet;
 
     for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
     {
@@ -44,75 +46,54 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 
 
         // If this face has a sheet, that the twin does not, it's on the boundary
+        //
         for (const int sheetId : faceSheets)
         {
             if (false == twinFaceSheets.contains(sheetId))
             {
                 halfEdgePerSheet[sheetId].insert(he);
-
-                sheetsPerVertex[he->source()].push_back(sheetId);
-                sheetsPerVertex[he->target()].push_back(sheetId);
-            }
-        }
-    }
-
-
-    for (const auto &[vertexHandle, sheets] : sheetsPerVertex)
-    {
-        for (int i = 0 ; i < sheets.size() ; i++)
-        {
-            for (int j = i + 1 ; j < sheets.size() ; j++)
-            {
-                this->areSheetsConnected.insert({sheets[i], sheets[j]});
             }
         }
     }
 
 
 
-
-    // Sanity check, make sure the boundary is a simple polygon, each vertex has in and out degree 1
+    // Loop around each sheet to collect the boundary
     //
-    std::map<int, std::map<Vertex_const_handle, std::vector<Halfedge_const_handle>>> sourceCountPerSheet;
-    std::map<int, std::map<Vertex_const_handle, std::vector<Halfedge_const_handle>>> targetCountPerSheet;
-
-    for (const auto& [sheetId, halfEdges] : halfEdgePerSheet)
+    for (const auto &[sheetId, halfEdges] : halfEdgePerSheet)
     {
-        for (Halfedge_const_handle he : halfEdges)
+        const auto &sheetHalfEdges = halfEdgePerSheet.at(sheetId);
+
+        std::vector<Halfedge_const_handle> sheetBoundary = {*halfEdges.begin()};
+
+        auto current = sheetBoundary[0];
+        do
         {
-            sourceCountPerSheet[sheetId][he->source()].push_back(he);
-            targetCountPerSheet[sheetId][he->target()].push_back(he);
-        }
-    }
+            auto next = current->next();
 
-
-    for (const auto& [sheetId, sourceVertexDegrees] : sourceCountPerSheet)
-    {
-        for (const auto& [vertex, halfEdges] : sourceVertexDegrees)
-        {
-            const int sourceDegree = halfEdges.size();
-            const int targetDegree = targetCountPerSheet[sheetId][vertex].size();
-
-            if (sourceDegree != targetDegree)
+            while (false == sheetHalfEdges.contains(next))
             {
-                std::cout << "------------------------------ ERROR --------------------------------\n";
-                std::cout << "\n\nSheet with ID = " << sheetId << std::endl;
-                std::cout << "Source degree " << sourceDegree << " and target degree " << targetDegree << " for vertex " << vertex->point() << std::endl;
-
-                for (const Halfedge_const_handle he : halfEdges)
-                {
-
-                    std::cout << "Half edge from " << he->source()->point() << " to " << he->target()->point() << std::endl;
-                }
-                std::cout << "\n\n\n";
+                next = next->twin()->next();
             }
 
-            //assert(degree == 1 && targetDegree == 1);
-        }
+            const Point_2& p = current->target()->point();
 
+            current = next;
+
+            sheetBoundary.push_back(current);
+
+        } while (current->target() != sheetBoundary[0]->source());
+
+        this->sheetBoundaries[sheetId] = sheetBoundary;
     }
 
+}
 
+
+
+
+void ReebSpace2::computeSheets(Arrangement &singularArrangement)
+{
     double totalArea;
 
     for (auto face = singularArrangement.arr.faces_begin(); face != singularArrangement.arr.faces_end(); ++face) 
@@ -171,11 +152,11 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
             return a.second > b.second; // ascending by area
             });
 
-    //for (int i = 0 ; i < sortedSheets.size() ; i++)
-    //{
-        //const auto &[sheetId, area] = sortedSheets[i];
-        //std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
-    //}
+    for (int i = 0 ; i < sortedSheets.size() ; i++)
+    {
+        const auto &[sheetId, area] = sortedSheets[i];
+        std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
+    }
 
 
 

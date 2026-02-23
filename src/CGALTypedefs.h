@@ -141,3 +141,4 @@ typedef CGAL::AABB_tree<Traits> TreeAABB;
 //using PrimitiveAABB = CGAL::AABB_segment_primitive<K, std::vector<Segment_2>::iterator>;
 //using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
 //using TreeAABB = CGAL::AABB_tree<TraitsAABB>;
+
