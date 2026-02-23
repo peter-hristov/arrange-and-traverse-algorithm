@@ -69,7 +69,7 @@ class PlotWidget : public QWidget
 
         std::vector<QPointF> controlPoints;
 
-        int desiredSheetId = 17;
+        int desiredSheetId = 15;
 
         // Whether the mouse is being dragged over the widget
         bool dragging = false;

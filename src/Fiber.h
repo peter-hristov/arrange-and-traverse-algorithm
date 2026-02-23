@@ -23,7 +23,7 @@ namespace fiber
 
     std::vector<FiberPoint> processFiberGraph2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets);
 
-    std::vector<FiberPoint> computeFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & );
+    std::vector<FiberPoint> computeFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
 
 
 

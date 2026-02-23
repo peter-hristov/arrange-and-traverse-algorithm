@@ -1228,7 +1228,7 @@ std::array<double, 3> computeBarycentricCoordinates(const TetMesh &tetMesh, cons
 }
 
 
-std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints)
+std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, int _sheetId)
 {
 
     //const Point_2 startPoint(0.479988 , 0.215557);
@@ -1643,6 +1643,10 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
             const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
+            if (sheetId != _sheetId)
+            {
+                continue;
+            }
 
             // If it's a path
             if (pathsA.contains(componentA))
@@ -1929,6 +1933,13 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
 
             const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
+
+            if (sheetId != _sheetId)
+            {
+                continue;
+            }
+
+
             const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
 
@@ -1991,6 +2002,11 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                 const int componentB = fiberGraphs[i].componentRoot.at(plusTriangles[0]);
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentB);
                 const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+                if (sheetId != _sheetId)
+                {
+                    continue;
+                }
 
                 if (pathsB.contains(componentB))
                 {
@@ -2102,6 +2118,11 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                 const int componentA = fiberGraphs[i-1].componentRoot.at(minusTriangles[0]);
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
                 const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+
+                if (sheetId != _sheetId)
+                {
+                    continue;
+                }
 
                 if (pathsA.contains(componentA))
                 {

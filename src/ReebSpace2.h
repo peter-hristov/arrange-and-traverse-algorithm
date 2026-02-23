@@ -125,6 +125,7 @@ class ReebSpace2
         void computeSheets(Arrangement &singularArrangement);
 
         void computeSheetBoundaries(Arrangement &singularArrangement);
+        std::vector<std::array<double, 2>> computeSheetBoundary(const int);
 
 
 

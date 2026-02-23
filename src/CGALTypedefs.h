@@ -38,6 +38,7 @@ typedef CGAL::Arr_segment_traits_2<K> Traits_2;
 typedef CGAL::Arr_extended_dcel<Traits_2, bool, HalfEdgeData, int> Dcel;
 typedef CGAL::Arrangement_with_history_2<Traits_2, Dcel> Arrangement_2;
 typedef K::Point_2 Point_2;
+typedef K::Vector_2 Vector_2;
 typedef K::Segment_2 Segment_2;
 typedef K::Line_2 Line_2;
 

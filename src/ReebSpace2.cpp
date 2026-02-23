@@ -10,6 +10,53 @@
 #include "./LoadingBar.hpp"
 #include "src/CGALTypedefs.h"
 
+std::vector<std::array<double, 2>> ReebSpace2::computeSheetBoundary(const int sheetId)
+{
+    std::vector<std::array<double, 2>> polygonBoundary;
+
+    const auto sheetBoundary = this->sheetBoundaries.at(sheetId);
+
+    for (int i = 0 ; i < sheetBoundary.size() ; i++)
+    {
+        auto h1 = sheetBoundary[i];
+        auto h2 = sheetBoundary[(i + 1) % sheetBoundary.size()];
+
+        Point_2 A = h1->source()->point();
+        Point_2 B = h1->target()->point();
+        Point_2 C = h2->target()->point();
+
+        // Edge directions
+        Vector_2 u = B - A;
+        Vector_2 v = C - B;
+
+        // Left normals
+        Vector_2 nu(-u.y(), u.x());
+        Vector_2 nv(-v.y(), v.x());
+
+        // Interior direction (unnormalized)
+        Vector_2 d = nu + nv;
+
+        // Handle collinear case
+        if (d == CGAL::NULL_VECTOR)
+        {
+            d = nu;   // or nv — they are identical up to sign here
+        }
+
+        // Small exact displacement
+        K::FT eps = K::FT(1) / K::FT(1000000);   // rational epsilon
+
+        Point_2 B_prime = B + eps * d;
+
+        const double x = CGAL::to_double(B_prime.x());
+        const double y = CGAL::to_double(B_prime.y());
+
+        polygonBoundary.push_back({x, y});
+
+    }
+
+    return polygonBoundary;
+}
+
 void ReebSpace2::computeSheetBoundaries(Arrangement &singularArrangement)
 {
 

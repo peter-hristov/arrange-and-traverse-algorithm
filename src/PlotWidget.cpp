@@ -438,7 +438,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
     p.setPen(penGrey);
     p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
 
-    auto &sheetPolygon = data.reebSpace2.sheetBoundaries.at(desiredSheetId);
+    //auto &sheetPolygon = data.reebSpace2.sheetBoundaries.at(desiredSheetId);
+    auto sheetPolygon = data.reebSpace2.computeSheetBoundary(desiredSheetId);
 
     // Draw the control points and control polygon
     //QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
@@ -452,11 +453,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         //p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
 
-        const float u = CGAL::to_double(sheetPolygon[i]->source()->point().x());
-        const float v = CGAL::to_double(sheetPolygon[i]->source()->point().y());
-        controlPointsTransformed[i] = rescalePoint(u, v);
+        controlPointsTransformed[i] = rescalePoint(sheetPolygon[i][0], sheetPolygon[i][1]);
 
-        p.drawEllipse(rescalePoint(u, v), 20, 20);
+        p.drawEllipse(controlPointsTransformed[i], 20, 20);
 
     }
 
@@ -487,7 +486,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
     
 
 
-    if (this->recomputeFiber == true && controlPointsTransformed.size() >= 2)
+    //if (this->recomputeFiber == true && controlPointsTransformed.size() >= 2)
     {
         this->recomputeFiber = false;
 
@@ -495,13 +494,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
         std::vector<std::array<double, 2>> controlPointsInternal;
         //controlPointsInternal.reserve(controlPointsTransformed.size());
 
-        for (const auto &he : data.reebSpace2.sheetBoundaries.at(desiredSheetId))
+        for (const auto &p : sheetPolygon)
         {
-            controlPointsInternal.push_back({
-                    CGAL::to_double(he->source()->point().x()) - 0.00001,
-                    CGAL::to_double(he->source()->point().y()) - 0.00001
-                    });
-
+            controlPointsInternal.push_back(p);
         }
 
 
@@ -517,12 +512,12 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         if (controlPointsTransformed.size() == 2)
         {
-            fibersAll = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]});
+            fibersAll = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
         }
 
         for (int i = 0 ; i < controlPointsInternal.size() ; i++)
         {
-            const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]});
+            const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
 
             fibersAll.insert(
                     fibersAll.end(), 
