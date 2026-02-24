@@ -14,26 +14,44 @@
 #include <CGAL/create_offset_polygons_2.h>
 #include <CGAL/Polygon_with_holes_2.h>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K_EPIC;
+#include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 
-typedef CGAL::Polygon_2<K_EPIC>           Polygon_2_EPIC;
-typedef CGAL::Straight_skeleton_2<K_EPIC> Ss;
-typedef std::shared_ptr<Ss> SsPtr;
+//typedef CGAL::Exact_predicates_inexact_constructions_kernel K_EPIC;
 
+//typedef CGAL::Polygon_2<K_EPIC>           Polygon_2_EPIC;
+//typedef CGAL::Polygon_with_holes_2<K_EPIC> Polygon_with_holes_EPIC ;
+
+//typedef CGAL::Straight_skeleton_2<K_EPIC> Ss;
+//typedef std::shared_ptr<Ss> SsPtr;
+
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K_EPIC ;
+ 
+typedef K_EPIC::Point_2                    Point_EPIC ;
+typedef CGAL::Polygon_2<K_EPIC>            Polygon_2_EPIC ;
+typedef CGAL::Polygon_with_holes_2<K_EPIC> Polygon_with_holes_EPIC ;
+typedef CGAL::Straight_skeleton_2<K_EPIC>  Ss_EPIC ;
+ 
+typedef std::shared_ptr<Polygon_2_EPIC> PolygonPtr_EPIC;
+typedef std::shared_ptr<Ss_EPIC> SsPtr_EPIC ;
+ 
+typedef std::vector<PolygonPtr_EPIC> PolygonPtrVector_EPIC;
+
+typedef std::shared_ptr<Polygon_with_holes_EPIC> PolygonWithHolesPtr_EPIC;
+typedef std::vector<PolygonWithHolesPtr_EPIC> PolygonWithHolesPtrVector;
 
 
 std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlPolygons(const int sheetId)
 {
     const std::vector<std::vector<Halfedge_const_handle>> &currentSheetBoundaries = this->sheetBoundaries.at(sheetId);
 
-    std::vector<std::vector<std::array<double, 2>>> sheetControlPolygonsPoints;
-    sheetControlPolygonsPoints.resize(currentSheetBoundaries.size());
 
-    //for (int i = 0 ; i <  currentSheetBoundaries.size() ; i++)
-    int i = 0 ;
+    Polygon_2_EPIC sheetBoundaryPolygon;
+    std::vector<Polygon_2_EPIC> sheetHolesBoundaryPolygons;
+
+    // The sheet boundary is CCW, the holes are CW
+    for (int i = 0 ; i <  currentSheetBoundaries.size() ; i++)
     {
         const auto &sheetBoundaryComponent = currentSheetBoundaries[i];
-        sheetControlPolygonsPoints[i].reserve(sheetBoundaryComponent.size());
 
         Polygon_2_EPIC poly;
 
@@ -44,31 +62,101 @@ std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlP
             const double x = CGAL::to_double(h1->source()->point().x());
             const double y = CGAL::to_double(h1->source()->point().y());
 
-            poly.push_back({x, y});
+            //poly.push_back({x, y});
+
+            poly.push_back(K_EPIC::Point_2(x, y));
         }
 
-        if (false == poly.is_counterclockwise_oriented())
+        if (true == poly.is_counterclockwise_oriented())
         {
-            throw std::runtime_error("Boundary Polygon is not clockwise oriented.");
-        }
-
-        SsPtr iss = CGAL::create_interior_straight_skeleton_2(poly.vertices_begin(), poly.vertices_end());
-
-        double epsilon = 0.01; // your offset distance
-        auto offset_polygons = CGAL::create_offset_polygons_2<Polygon_2_EPIC>(epsilon, *iss);
-
-        for (const auto& offset_poly : offset_polygons)
-        {
-            for (auto v = offset_poly->vertices_begin(); v != offset_poly->vertices_end(); ++v)
+            if (sheetBoundaryPolygon.size() == 0)
             {
-                const double x = CGAL::to_double(v->x());
-                const double y = CGAL::to_double(v->y());
-
-                sheetControlPolygonsPoints[i].emplace_back(std::array<double, 2>{x, y});
+                sheetBoundaryPolygon = poly;
+            }
+            else
+            {
+                throw std::runtime_error("More than one boundary polygon is CCW!!!!");
             }
         }
-
+        else
+        {
+            sheetHolesBoundaryPolygons.push_back(poly);
+        }
     }
+
+    Polygon_with_holes_EPIC boundaryPolygon(sheetBoundaryPolygon, sheetHolesBoundaryPolygons.begin(), sheetHolesBoundaryPolygons.end());
+
+    double offset = 0.000001; // your offset distance
+    PolygonWithHolesPtrVector offset_poly_with_holes = CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(offset, boundaryPolygon);
+
+    if (offset_poly_with_holes.size() != 1)
+    {
+        std::cerr << offset_poly_with_holes.size() << std::endl;
+        throw std::runtime_error("Output polygon has more than one component.");
+    }
+
+    // Unpack the shrunk polygond with holes
+    Polygon_with_holes_EPIC &shrunkBoundaryPolygon = *offset_poly_with_holes[0];
+
+    if (shrunkBoundaryPolygon.number_of_holes() != boundaryPolygon.number_of_holes())
+    {
+        std::cerr << "Previous number of holes : " << boundaryPolygon.number_of_holes() << " new number of holes : " <<  shrunkBoundaryPolygon.number_of_holes() << std::endl;
+        throw std::runtime_error("Output polygon has too many holes.");
+    }
+
+    std::vector<std::vector<std::array<double, 2>>> sheetControlPolygonsPoints;
+
+
+    // Unpack the outer boundary
+    std::vector<std::array<double, 2>> shrunkBoundary;
+    shrunkBoundary.reserve(shrunkBoundaryPolygon.outer_boundary().size());
+
+    for (auto vit = shrunkBoundaryPolygon.outer_boundary().vertices_begin(); vit != shrunkBoundaryPolygon.outer_boundary().vertices_end(); ++vit)
+    {
+        shrunkBoundary.emplace_back(std::array<double, 2>{vit->x(), vit->y()});
+    }
+
+    sheetControlPolygonsPoints.push_back(std::move(shrunkBoundary));
+
+
+    // Unpack the holes
+    int hole_index = 0;
+    for (auto hit = shrunkBoundaryPolygon.holes_begin(); hit != shrunkBoundaryPolygon.holes_end(); ++hit)
+    {
+        std::vector<std::array<double, 2>> shrunkHoleBoundary;
+        shrunkHoleBoundary.reserve(hit->size());
+
+        for (auto vit = hit->vertices_begin(); vit != hit->vertices_end(); ++vit)
+        {
+            shrunkHoleBoundary.emplace_back(std::array<double, 2>{vit->x(), vit->y()});
+        }
+
+        sheetControlPolygonsPoints.push_back(std::move(shrunkHoleBoundary));
+    }
+
+    //sheetControlPolygonsPoints.push_back(std::move(shrunkBoundary));
+    //for (const auto &shrunkHoleBoundary : shrunkHolesBoundaries)
+    //{
+        //sheetControlPolygonsPoints.push_back(std::move(shrunkHoleBoundary));
+    //}
+
+
+
+    //SsPtr iss = CGAL::create_interior_straight_skeleton_2(boundaryPolygon);
+
+    //double epsilon = 0.01; // your offset distance
+    ////auto offset_polygons = CGAL::create_offset_polygons_2<Polygon_with_holes_EPIC>(epsilon, *iss);
+    //auto offset_polygons = CGAL::create_offset_polygons_2<Polygon_2_EPIC>(epsilon, *iss);
+
+    //for (const auto& offset_poly : offset_polygons)
+    //{
+        //std::vector<std::array<double, 2>> pts; // new vector for this polygon
+        //for (auto v = offset_poly->vertices_begin(); v != offset_poly->vertices_end(); ++v)
+        //{
+            //pts.push_back({ CGAL::to_double(v->x()), CGAL::to_double(v->y()) });
+        //}
+        //sheetControlPolygonsPoints.push_back(std::move(pts)); // add as a separate polygon
+    //}
 
 
     return sheetControlPolygonsPoints;
@@ -89,6 +177,28 @@ std::vector<Halfedge_const_handle> getBoundaryComponent(const std::unordered_set
         {
             next = next->twin()->next();
         }
+
+
+
+        int counter = 0;
+        auto test = current;
+        do
+        {
+            if (sheetHalfEdges.contains(test))
+            {
+                counter++;
+            }
+
+            test = test->twin()->next();
+        } while (test != current);
+
+        if (counter != 2)
+        {
+            std::cout << "------------------------------------- Pinch point detected! " << counter << "\n";
+        }
+
+
+
 
         const Point_2& p = current->target()->point();
 
