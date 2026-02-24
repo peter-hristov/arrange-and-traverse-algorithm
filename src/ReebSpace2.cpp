@@ -14,13 +14,13 @@ std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlP
 {
     const std::vector<std::vector<Halfedge_const_handle>> &currentSheetBoundaries = this->sheetBoundaries.at(sheetId);
 
-    std::vector<std::vector<std::array<double, 2>>> polygonBoundary;
-    polygonBoundary.resize(currentSheetBoundaries.size());
+    std::vector<std::vector<std::array<double, 2>>> sheetControlPolygonsPoints;
+    sheetControlPolygonsPoints.resize(currentSheetBoundaries.size());
 
     for (int i = 0 ; i <  currentSheetBoundaries.size() ; i++)
     {
         const auto &sheetBoundaryComponent = currentSheetBoundaries[i];
-        polygonBoundary[i].reserve(sheetBoundaryComponent.size());
+        sheetControlPolygonsPoints[i].reserve(sheetBoundaryComponent.size());
 
         for (int j = 0 ; j < sheetBoundaryComponent.size() ; j++)
         {
@@ -57,13 +57,13 @@ std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlP
             const double x = CGAL::to_double(B_prime.x());
             const double y = CGAL::to_double(B_prime.y());
 
-            polygonBoundary[i].emplace_back(std::array<double, 2>{x, y});
+            sheetControlPolygonsPoints[i].emplace_back(std::array<double, 2>{x, y});
         }
 
     }
 
 
-    return polygonBoundary;
+    return sheetControlPolygonsPoints;
 }
 
 
@@ -144,7 +144,7 @@ void ReebSpace2::computeSheetBoundaries(Arrangement &singularArrangement)
 
 
 
-    // Loop around each sheet to collect the boundary
+    // Loop around the boundaries of each sheet to sort the half-edges
     //
     for (const auto &[sheetId, halfEdges] : halfEdgePerSheet)
     {
@@ -160,7 +160,6 @@ void ReebSpace2::computeSheetBoundaries(Arrangement &singularArrangement)
             }
         }
     }
-
 }
 
 

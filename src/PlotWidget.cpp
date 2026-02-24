@@ -438,6 +438,20 @@ void PlotWidget::paintEvent(QPaintEvent*)
     p.setPen(penGrey);
     p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     //auto &sheetPolygon = data.reebSpace2.sheetBoundaries.at(desiredSheetId);
     const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
 
@@ -463,7 +477,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
             controlPointsTransformed[i][j] = rescalePoint(sheetPolygon[j][0], sheetPolygon[j][1]);
 
             p.drawEllipse(controlPointsTransformed[i][j], 20, 20);
-
         }
 
         p.drawPolygon(QPolygonF(controlPointsTransformed[i]));
