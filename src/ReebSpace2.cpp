@@ -8,7 +8,19 @@
 #include "./ReebSpace2.h"
 #include "./DisjointSet.h"
 #include "./LoadingBar.hpp"
-#include "src/CGALTypedefs.h"
+
+
+#include <CGAL/create_straight_skeleton_2.h>
+#include <CGAL/create_offset_polygons_2.h>
+#include <CGAL/Polygon_with_holes_2.h>
+
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K_EPIC;
+
+typedef CGAL::Polygon_2<K_EPIC>           Polygon_2_EPIC;
+typedef CGAL::Straight_skeleton_2<K_EPIC> Ss;
+typedef std::shared_ptr<Ss> SsPtr;
+
+
 
 std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlPolygons(const int sheetId)
 {
@@ -17,47 +29,43 @@ std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlP
     std::vector<std::vector<std::array<double, 2>>> sheetControlPolygonsPoints;
     sheetControlPolygonsPoints.resize(currentSheetBoundaries.size());
 
-    for (int i = 0 ; i <  currentSheetBoundaries.size() ; i++)
+    //for (int i = 0 ; i <  currentSheetBoundaries.size() ; i++)
+    int i = 0 ;
     {
         const auto &sheetBoundaryComponent = currentSheetBoundaries[i];
         sheetControlPolygonsPoints[i].reserve(sheetBoundaryComponent.size());
 
+        Polygon_2_EPIC poly;
+
         for (int j = 0 ; j < sheetBoundaryComponent.size() ; j++)
         {
             const auto h1 = sheetBoundaryComponent[j];
-            const auto h2 = sheetBoundaryComponent[(j + 1) % sheetBoundaryComponent.size()];
 
-            const Point_2 A = h1->source()->point();
-            const Point_2 B = h1->target()->point();
-            const Point_2 C = h2->target()->point();
+            const double x = CGAL::to_double(h1->source()->point().x());
+            const double y = CGAL::to_double(h1->source()->point().y());
 
-            // Edge directions
-            const Vector_2 u = B - A;
-            const Vector_2 v = C - B;
+            poly.push_back({x, y});
+        }
 
-            // Left normals
-            const Vector_2 nu(-u.y(), u.x());
-            const Vector_2 nv(-v.y(), v.x());
+        if (false == poly.is_counterclockwise_oriented())
+        {
+            throw std::runtime_error("Boundary Polygon is not clockwise oriented.");
+        }
 
-            // Interior direction (unnormalized)
-            const Vector_2 d = nu + nv;
+        SsPtr iss = CGAL::create_interior_straight_skeleton_2(poly.vertices_begin(), poly.vertices_end());
 
-            // Handle collinear case
-            if (d == CGAL::NULL_VECTOR)
+        double epsilon = 0.01; // your offset distance
+        auto offset_polygons = CGAL::create_offset_polygons_2<Polygon_2_EPIC>(epsilon, *iss);
+
+        for (const auto& offset_poly : offset_polygons)
+        {
+            for (auto v = offset_poly->vertices_begin(); v != offset_poly->vertices_end(); ++v)
             {
-                //d = nu;   // or nv — they are identical up to sign here
-                throw std::runtime_error("Cannot move by epsilon.");
+                const double x = CGAL::to_double(v->x());
+                const double y = CGAL::to_double(v->y());
+
+                sheetControlPolygonsPoints[i].emplace_back(std::array<double, 2>{x, y});
             }
-
-            // Small exact displacement
-            K::FT eps = K::FT(1) / K::FT(1000000);   // rational epsilon
-
-            Point_2 B_prime = B + eps * d;
-
-            const double x = CGAL::to_double(B_prime.x());
-            const double y = CGAL::to_double(B_prime.y());
-
-            sheetControlPolygonsPoints[i].emplace_back(std::array<double, 2>{x, y});
         }
 
     }

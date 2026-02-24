@@ -101,6 +101,7 @@ typedef CGAL::Arr_walk_along_line_point_location<Arrangement_2> Point_location;
 
 typedef CGAL::Simple_cartesian<double> CartesianKernel;
 typedef CartesianKernel::Point_2 CartesianPoint;
+typedef CartesianKernel::Vector_2 CartesianVector;
 typedef CartesianKernel::Segment_2 CartesianSegment;
 typedef CartesianKernel::Line_2 CartesianLine;
 typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;

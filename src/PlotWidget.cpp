@@ -446,8 +446,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
-    // Draw a fiber
-    //
+    // ----------------------------------------------------------------
+    // Fiber Drawing
+    // ----------------------------------------------------------------
 
     //if (this->recomputeFiber == true)
     //{
@@ -474,8 +475,107 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
+
+
+    // ----------------------------------------------------------------
+    // Custom Control Polygon Drawing
+    // ----------------------------------------------------------------
+
+
+    if (this->recomputeFiber == true && controlPoints.size() >= 2)
+    {
+
+        // Draw the control points and control polygon
+        QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
+
+        penGrey.setWidthF(8.0);
+        p.setPen(penGrey);
+        for (int i = 0 ; i < this->controlPoints.size() ; i++)
+        {
+            const QPointF &controlPoint = this->controlPoints[i];
+            const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
+            controlPointsTransformed[i] = controlPointTransformed;
+
+            p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
+        }
+
+        p.drawPolygon(QPolygonF(controlPointsTransformed));
+
+
+        this->recomputeFiber = false;
+
+
+        std::vector<std::array<double, 2>> controlPointsInternal;
+        controlPointsInternal.reserve(controlPointsTransformed.size());
+
+
+        for (const QPointF &controlPoint : controlPointsTransformed)
+        {
+            const double u = this->paddedMinF + (controlPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
+            const double v = this->paddedMinG + (controlPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+
+            controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
+        }
+
+        std::vector<FiberPoint> fibersAll;
+
+        if (controlPointsTransformed.size() == 2)
+        {
+            fibersAll = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+        }
+
+        for (int i = 0 ; i < controlPointsInternal.size() ; i++)
+        {
+            const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
+
+            fibersAll.insert(
+                    fibersAll.end(), 
+                    std::make_move_iterator(fibers.begin()), 
+                    std::make_move_iterator(fibers.end())
+                    );
+
+        }
+
+
+        //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, controlPointsInternal);
+
+
+        //qDebug() << "Computing fiber (" << u << ", " << v << ")";
+
+        //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
+        //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+
+        sibling->updateFiber(fibersAll);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ----------------------------------------------------------------
     // Feature Drawing
-    //
+    // ----------------------------------------------------------------
 
     if (true)
     {
