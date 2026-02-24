@@ -10,52 +10,91 @@
 #include "./LoadingBar.hpp"
 #include "src/CGALTypedefs.h"
 
-std::vector<std::array<double, 2>> ReebSpace2::computeSheetBoundary(const int sheetId)
+std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlPolygons(const int sheetId)
 {
-    std::vector<std::array<double, 2>> polygonBoundary;
+    const std::vector<std::vector<Halfedge_const_handle>> &currentSheetBoundaries = this->sheetBoundaries.at(sheetId);
 
-    const auto sheetBoundary = this->sheetBoundaries.at(sheetId);
+    std::vector<std::vector<std::array<double, 2>>> polygonBoundary;
+    polygonBoundary.resize(currentSheetBoundaries.size());
 
-    for (int i = 0 ; i < sheetBoundary.size() ; i++)
+    for (int i = 0 ; i <  currentSheetBoundaries.size() ; i++)
     {
-        auto h1 = sheetBoundary[i];
-        auto h2 = sheetBoundary[(i + 1) % sheetBoundary.size()];
+        const auto &sheetBoundaryComponent = currentSheetBoundaries[i];
+        polygonBoundary[i].reserve(sheetBoundaryComponent.size());
 
-        Point_2 A = h1->source()->point();
-        Point_2 B = h1->target()->point();
-        Point_2 C = h2->target()->point();
-
-        // Edge directions
-        Vector_2 u = B - A;
-        Vector_2 v = C - B;
-
-        // Left normals
-        Vector_2 nu(-u.y(), u.x());
-        Vector_2 nv(-v.y(), v.x());
-
-        // Interior direction (unnormalized)
-        Vector_2 d = nu + nv;
-
-        // Handle collinear case
-        if (d == CGAL::NULL_VECTOR)
+        for (int j = 0 ; j < sheetBoundaryComponent.size() ; j++)
         {
-            d = nu;   // or nv — they are identical up to sign here
+            const auto h1 = sheetBoundaryComponent[j];
+            const auto h2 = sheetBoundaryComponent[(j + 1) % sheetBoundaryComponent.size()];
+
+            const Point_2 A = h1->source()->point();
+            const Point_2 B = h1->target()->point();
+            const Point_2 C = h2->target()->point();
+
+            // Edge directions
+            const Vector_2 u = B - A;
+            const Vector_2 v = C - B;
+
+            // Left normals
+            const Vector_2 nu(-u.y(), u.x());
+            const Vector_2 nv(-v.y(), v.x());
+
+            // Interior direction (unnormalized)
+            const Vector_2 d = nu + nv;
+
+            // Handle collinear case
+            if (d == CGAL::NULL_VECTOR)
+            {
+                //d = nu;   // or nv — they are identical up to sign here
+                throw std::runtime_error("Cannot move by epsilon.");
+            }
+
+            // Small exact displacement
+            K::FT eps = K::FT(1) / K::FT(1000000);   // rational epsilon
+
+            Point_2 B_prime = B + eps * d;
+
+            const double x = CGAL::to_double(B_prime.x());
+            const double y = CGAL::to_double(B_prime.y());
+
+            polygonBoundary[i].emplace_back(std::array<double, 2>{x, y});
         }
-
-        // Small exact displacement
-        K::FT eps = K::FT(1) / K::FT(1000000);   // rational epsilon
-
-        Point_2 B_prime = B + eps * d;
-
-        const double x = CGAL::to_double(B_prime.x());
-        const double y = CGAL::to_double(B_prime.y());
-
-        polygonBoundary.push_back({x, y});
 
     }
 
+
     return polygonBoundary;
 }
+
+
+
+std::vector<Halfedge_const_handle> getBoundaryComponent(const std::unordered_set<Halfedge_const_handle> &sheetHalfEdges, const Halfedge_const_handle &startingHalfedge, std::unordered_set<Halfedge_const_handle> &visitedHalfEdges)
+{
+    std::vector<Halfedge_const_handle> sheetBoundaryComponent = {startingHalfedge};
+
+    auto current = sheetBoundaryComponent[0];
+    do
+    {
+        auto next = current->next();
+
+        while (false == sheetHalfEdges.contains(next))
+        {
+            next = next->twin()->next();
+        }
+
+        const Point_2& p = current->target()->point();
+
+        current = next;
+
+        sheetBoundaryComponent.push_back(current);
+        visitedHalfEdges.insert(current);
+
+    } while (current->target() != sheetBoundaryComponent[0]->source());
+
+    return sheetBoundaryComponent;
+}
+
+
 
 void ReebSpace2::computeSheetBoundaries(Arrangement &singularArrangement)
 {
@@ -111,27 +150,15 @@ void ReebSpace2::computeSheetBoundaries(Arrangement &singularArrangement)
     {
         const auto &sheetHalfEdges = halfEdgePerSheet.at(sheetId);
 
-        std::vector<Halfedge_const_handle> sheetBoundary = {*halfEdges.begin()};
+        std::unordered_set<Halfedge_const_handle> visitedHalfEdges;
 
-        auto current = sheetBoundary[0];
-        do
+        for (const auto &halfEdge : halfEdges)
         {
-            auto next = current->next();
-
-            while (false == sheetHalfEdges.contains(next))
+            if (false == visitedHalfEdges.contains(halfEdge))
             {
-                next = next->twin()->next();
+                this->sheetBoundaries[sheetId].push_back(getBoundaryComponent(sheetHalfEdges, halfEdge, visitedHalfEdges));
             }
-
-            const Point_2& p = current->target()->point();
-
-            current = next;
-
-            sheetBoundary.push_back(current);
-
-        } while (current->target() != sheetBoundary[0]->source());
-
-        this->sheetBoundaries[sheetId] = sheetBoundary;
+        }
     }
 
 }

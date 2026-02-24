@@ -359,7 +359,8 @@ int main(int argc, char* argv[])
     //window->showMaximized();
 
     window->setWindowState(Qt::WindowNoState);
-    window->setMinimumSize(1800, 1200);
+    //window->setMinimumSize(1800, 1200);
+    window->setMinimumSize(1200, 800);
     window->showNormal();
     window->move(0, 0);
 
