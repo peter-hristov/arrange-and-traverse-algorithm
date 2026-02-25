@@ -24,7 +24,6 @@
 //#include <vtkPolygon.h>
 #include <vtkIntArray.h>
 #include <vtkCellData.h>
-#include <vtkXMLPolyDataWriter.h>
 #include <vtkTriangleFilter.h>
 #include <vtkTriangle.h>
 
@@ -32,11 +31,118 @@
 
 
 #include <vtkXMLPolyDataWriter.h>
+#include <vtkXMLPolyDataReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
 
 #include "./io.h"
 #include "./TetMesh.h"
 #include "./Fiber.h"
+#include "src/SurfaceMesh.h"
+
+
+
+
+
+SurfaceMesh io::readDataVtp(const std::string &filename)
+{
+
+    // Read VTP file
+    vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+    reader->SetFileName(filename.c_str());
+    reader->Update();
+
+    vtkPolyData* polyData = reader->GetOutput();
+
+    if (!polyData)
+    {
+        std::cerr << "Failed to read polydata.\n";
+    }
+
+    vtkPoints* points = polyData->GetPoints();
+    vtkCellArray* cells = polyData->GetPolys();
+
+    // Get first scalar array (vertex data)
+    vtkDataArray* scalars = polyData->GetPointData()->GetArray("EdgeParameterization");  
+
+    if (!scalars)
+    {
+        std::cerr << "No point scalar data found.\n";
+        return {};
+    }
+
+    std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
+    std::cout << "Number of cells: " << polyData->GetNumberOfCells() << "\n";
+
+    SurfaceMesh mesh;
+    mesh.vertexCoordinates.resize(points->GetNumberOfPoints());
+    mesh.edgeParam.resize(points->GetNumberOfPoints());
+    
+    for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
+    {
+        double p[3];
+        points->GetPoint(i, p);
+        mesh.vertexCoordinates[i] = {static_cast<float>(p[0]),
+                                     static_cast<float>(p[1]),
+                                     static_cast<float>(p[2])};
+
+        mesh.edgeParam[i] = scalars->GetTuple1(i);
+    }
+
+    // --- read triangles ---
+    vtkIdType npts = 0;
+    const vtkIdType* pts = nullptr;
+
+    cells->InitTraversal();
+    while (cells->GetNextCell(npts, pts))
+    {
+        if (npts != 3)
+            continue; // skip non-triangle cells
+
+        mesh.triangles.push_back({static_cast<int>(pts[0]),
+                static_cast<int>(pts[1]),
+                static_cast<int>(pts[2])});
+    }
+
+    return mesh;
+
+
+    //const vtkIdType* pts = nullptr;
+
+    //cells->InitTraversal();
+
+    //while (cells->GetNextCell(npts, pts))
+    //{
+        //if (npts != 3)
+        //{
+            //std::cerr << "Non-triangle cell encountered.\n";
+            //continue;
+        //}
+
+        //std::cout << "Triangle:\n";
+
+        //for (int i = 0; i < 3; ++i)
+        //{
+            //double p[3];
+            //points->GetPoint(pts[i], p);
+
+            //double value = scalars->GetTuple1(pts[i]);
+
+            //std::cout << "  Vertex " << i
+                      //<< " | ID: " << pts[i]
+                      //<< " | Pos: (" << p[0] << ", "
+                                     //<< p[1] << ", "
+                                     //<< p[2] << ")"
+                      //<< " | Scalar: " << value
+                      //<< "\n";
+
+            //std::array<float, 3> point = {(float)p[0], (float)p[1], (float)p[2]};
+
+
+        //}
+    //}
+
+}
+
 
 TetMesh io::readData(const std::string &filename)
 {
@@ -615,4 +721,3 @@ void io::saveSheetGraph(ReebSpace2 &reebSpace, const std::string &filename)
     out << "}\n";
     out.close();
 }
-

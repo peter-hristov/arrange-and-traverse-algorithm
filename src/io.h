@@ -3,6 +3,7 @@
 #include <string>
 
 #include "./TetMesh.h"
+#include "./SurfaceMesh.h"
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
@@ -14,6 +15,8 @@ namespace io
     TetMesh readData(const std::string&);
     TetMesh readDataTxt(const std::string&);
     TetMesh readDataVtu(const std::string&);
+
+    SurfaceMesh readDataVtp(const std::string&);
 
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);

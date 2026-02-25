@@ -344,6 +344,7 @@ int main(int argc, char* argv[])
     }
 
 
+    //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
 
     // Set up QT Application
     QApplication app(argc, argv);
