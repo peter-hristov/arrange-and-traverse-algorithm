@@ -17,18 +17,17 @@
 
 
 
-
 std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, int _sheetId)
 {
     //const Point_2 startPoint(0.479988 , 0.215557);
     //const Point_2 endPoint(0.259815, 0.116635);
 
         //Start point : 0.033263165761928781 0.14687746720889849 end point 0.21512107934692115 0.10335287336486487
-    const Point_2 startPoint(0.033263165761928781, 0.14687746720889849);
-    const Point_2 endPoint(0.21512107934692115, 0.10335287336486487);
+    //const Point_2 startPoint(0.033263165761928781, 0.14687746720889849);
+    //const Point_2 endPoint(0.21512107934692115, 0.10335287336486487);
 
-    //const Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
-    //const Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
+    const Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
+    const Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
 
 
     const Segment_2 controlSegment(startPoint, endPoint);
@@ -45,21 +44,19 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
     Timer::stop("Computed AABB intersections in         :");
 
+
+
+
+
+    // Compute the intersectiong alpha and the types
+
     Timer::start();
 
-    SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
+    std::vector<K::FT> intersectionAlpha;
+    intersectionAlpha.reserve(intersectedSegmentsAABB.size());
 
-    const std::vector<int> triangleSheets = surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
-
-    return surfaceMesh.getFiberPoints(triangleSheets);
-
-
-
-
-
-
-    std::vector<K::FT> edgeIntersectionAlpha(tetMesh.edgeIndices.size(), -1);
-
+    std::vector<int> intersectionType;
+    intersectionType.reserve(intersectedSegmentsAABB.size());
 
     for (auto id : intersectedSegmentsAABB)
     {
@@ -68,227 +65,188 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
         // Get the ID of the original segment.
         const int segmentIndex = id - singularArrangement.allSegments.begin();
 
+        const int type = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex));
+        intersectionType.emplace_back(type);
 
-        const int indexSource = singularArrangement.arrangementPointIndices[s.source()];
-        const int indexTarget = singularArrangement.arrangementPointIndices[s.target()];
-
-        const int edgeId = tetMesh.edgeIndices.at({indexSource, indexTarget});
-
-        if (segmentIndex != edgeId)
-        {
-            throw std::runtime_error("Issue in AABB tree segments indices.");
-        }
-
-        // Double check we get the same segment back.
-        Point_2 a = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][0]];
-        Point_2 b = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][1]];
-
-        const bool match =
-            (s.source() == a && s.target() == b) ||
-            (s.source() == b && s.target() == a);
-
-        if (match == false)
-        {
-            throw std::runtime_error("Issue in AABB tree segments interation.");
-        }
-
-        // ---- Collinear check with your controlSegment ----
-        if (CGAL::collinear(controlSegment.source(), controlSegment.target(), s.source()) &&
-                CGAL::collinear(controlSegment.source(), controlSegment.target(), s.target()))
-        {
-            // The intersection segment is collinear with the control segment
-            std::cerr << "------------------------------------------ Collinear overlap detected for segment " << segmentIndex << std::endl;
-            continue;
-        }
-
-
-        //
-        //
-        //
-        //                          s.source()
-        //                              |
-        //                              |
-        //                              |
-        // searchSegment.source() ------x---------- searchSegment.target()
-        //                              |
-        //                              |
-        //                              |
-        //                              |
-        //                          s.target()
-        //
-        K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+        const K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
                 controlSegment.target().x(), controlSegment.target().y(),
                 controlSegment.source().x(), controlSegment.source().y(),
                 s.source().x(), s.source().y(),
                 s.target().x(), s.target().y()
                 );
 
-        //intersectedSegments.emplace_back(alpha, segmentIndex);
+        intersectionAlpha.emplace_back(alpha);
 
-        edgeIntersectionAlpha[segmentIndex] = alpha;
-
-        if (tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex)) == 2)
-        {
-            std::cout << "---- Intersected segment with ID " << segmentIndex << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex)) << " and alpha " << alpha << std::endl;
-            std::cout << "Before triangles = " << surfaceMesh.triangles.size() << "\n";
-
-            surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(alpha));
-            //surfaceMesh.print();
-
-            std::cout << "After triangles = " << surfaceMesh.triangles.size() << "\n";
-            std::cout << "----------------------------\n\n";
-        }
-
-
-
+        //std::cout << "---- Intersected segment with ID " << segmentIndex << " and type " << type << " and alpha " << alpha << std::endl;
     }
-
     Timer::stop("Computed Alpha intersections           :");
-    //Timer::stop("Computed AABB intersections in         :");
-
-    //surfaceMesh.splitSurfaceMesh();
-
-    return surfaceMesh.getFiberPoints();
 
 
+    // Subdivide fiber surfaces along the singular fibers
+    //
 
-    std::vector<FiberPoint> allFiberPoints;
+    Timer::start();
+    SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
+    Timer::stop("Read surface mesh                      :");
 
-    for (const std::array<int, 4> tet : tetMesh.tetrahedra)
+    Timer::start();
+    for (int i = 0 ; i < intersectionAlpha.size() ; i++)
     {
-        std::vector<int> intersectedEdges;
-        std::vector<std::array<float, 3>> intersectedEdgesPoint;
-
-        // All pairs give you all six edges
-        for (int a = 0 ; a < 4 ; a++)
-        {
-            for (int b = a + 1 ; b < 4 ; b++)
-            {
-                // Get the indices of the vertices for the edge
-                int aIndex = tet[a];
-                int bIndex = tet[b];
-
-                // Make sure the vertices of the edge are in sorted order to have consistent orientation
-                if (aIndex > bIndex)
-                {
-                    std::swap(aIndex, bIndex);
-                }
-
-                const int edgeId = tetMesh.edgeIndices.at({aIndex, bIndex});
-
-                if (K::FT(-1.0) != edgeIntersectionAlpha[edgeId])
-                {
-                    intersectedEdges.push_back(edgeId);
-
-                    std::array<float, 3> vertexA = tetMesh.vertexDomainCoordinates[aIndex];
-                    std::array<float, 3> vertexB = tetMesh.vertexDomainCoordinates[bIndex];
-
-                    Point_3 pointA(vertexA[0], vertexA[1], vertexA[2]);
-                    Point_3 pointB(vertexB[0], vertexB[1], vertexB[2]);
-
-                    K::FT alpha = edgeIntersectionAlpha[edgeId];
-
-                    Point_3 interpolatedPoint(
-                            (K::FT(1.0) - alpha) * pointA.x() + alpha * pointB.x(),
-                            (K::FT(1.0) - alpha) * pointA.y() + alpha * pointB.y(),
-                            (K::FT(1.0) - alpha) * pointA.z() + alpha * pointB.z()
-                            );
-
-                    intersectedEdgesPoint.push_back({
-                            CGAL::to_double(interpolatedPoint.x()),
-                            CGAL::to_double(interpolatedPoint.y()),
-                            CGAL::to_double(interpolatedPoint.z())
-                            });
-                }
-            }
-        }
-
-
-        if (intersectedEdges.size() == 3)
-        {
-            allFiberPoints.push_back(FiberPoint(
-                        intersectedEdgesPoint[0],
-                        {1.0, 1.0, 1.0},
-                        1,
-                        -1
-                        ));
-
-            allFiberPoints.push_back(FiberPoint(
-                        intersectedEdgesPoint[1],
-                        {1.0, 1.0, 1.0},
-                        1,
-                        -1
-                        ));
-
-            allFiberPoints.push_back(FiberPoint(
-                        intersectedEdgesPoint[2],
-                        {1.0, 1.0, 1.0},
-                        1,
-                        -1
-                        ));
-        }
-
-        else if (intersectedEdges.size() == 4)
+        if (intersectionType[i] == 2)
         {
 
-
-                allFiberPoints.push_back(FiberPoint(
-                            intersectedEdgesPoint[0],
-                            {1.0, 1.0, 1.0},
-                            1,
-                            -1
-                            ));
-
-                allFiberPoints.push_back(FiberPoint(
-                            intersectedEdgesPoint[1],
-                            {1.0, 1.0, 1.0},
-                            1,
-                            -1
-                            ));
-
-                allFiberPoints.push_back(FiberPoint(
-                            intersectedEdgesPoint[2],
-                            {1.0, 1.0, 1.0},
-                            1,
-                            -1
-                            ));
-
-
-
-
-
-
-                allFiberPoints.push_back(FiberPoint(
-                            intersectedEdgesPoint[0],
-                            {1.0, 1.0, 1.0},
-                            1,
-                            -1
-                            ));
-
-                allFiberPoints.push_back(FiberPoint(
-                            intersectedEdgesPoint[1],
-                            {1.0, 1.0, 1.0},
-                            1,
-                            -1
-                            ));
-
-                allFiberPoints.push_back(FiberPoint(
-                            intersectedEdgesPoint[3],
-                            {1.0, 1.0, 1.0},
-                            1,
-                            -1
-                            ));
-
-
-
+            surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
+            //surfaceMesh.print();
         }
-
-
-
     }
+    Timer::stop("Subdivided mesh                        :");
 
 
-    return allFiberPoints;
+    Timer::start();
+    const std::vector<int> triangleSheets = surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    Timer::stop("Computed triangle sheets               :");
+
+    return surfaceMesh.getFiberPoints(triangleSheets);
+
+
+
+    //std::vector<FiberPoint> allFiberPoints;
+
+    //for (const std::array<int, 4> tet : tetMesh.tetrahedra)
+    //{
+        //std::vector<int> intersectedEdges;
+        //std::vector<std::array<float, 3>> intersectedEdgesPoint;
+
+        //// All pairs give you all six edges
+        //for (int a = 0 ; a < 4 ; a++)
+        //{
+            //for (int b = a + 1 ; b < 4 ; b++)
+            //{
+                //// Get the indices of the vertices for the edge
+                //int aIndex = tet[a];
+                //int bIndex = tet[b];
+
+                //// Make sure the vertices of the edge are in sorted order to have consistent orientation
+                //if (aIndex > bIndex)
+                //{
+                    //std::swap(aIndex, bIndex);
+                //}
+
+                //const int edgeId = tetMesh.edgeIndices.at({aIndex, bIndex});
+
+                //if (K::FT(-1.0) != edgeIntersectionAlpha[edgeId])
+                //{
+                    //intersectedEdges.push_back(edgeId);
+
+                    //std::array<float, 3> vertexA = tetMesh.vertexDomainCoordinates[aIndex];
+                    //std::array<float, 3> vertexB = tetMesh.vertexDomainCoordinates[bIndex];
+
+                    //Point_3 pointA(vertexA[0], vertexA[1], vertexA[2]);
+                    //Point_3 pointB(vertexB[0], vertexB[1], vertexB[2]);
+
+                    //K::FT alpha = edgeIntersectionAlpha[edgeId];
+
+                    //Point_3 interpolatedPoint(
+                            //(K::FT(1.0) - alpha) * pointA.x() + alpha * pointB.x(),
+                            //(K::FT(1.0) - alpha) * pointA.y() + alpha * pointB.y(),
+                            //(K::FT(1.0) - alpha) * pointA.z() + alpha * pointB.z()
+                            //);
+
+                    //intersectedEdgesPoint.push_back({
+                            //CGAL::to_double(interpolatedPoint.x()),
+                            //CGAL::to_double(interpolatedPoint.y()),
+                            //CGAL::to_double(interpolatedPoint.z())
+                            //});
+                //}
+            //}
+        //}
+
+
+        //if (intersectedEdges.size() == 3)
+        //{
+            //allFiberPoints.push_back(FiberPoint(
+                        //intersectedEdgesPoint[0],
+                        //{1.0, 1.0, 1.0},
+                        //1,
+                        //-1
+                        //));
+
+            //allFiberPoints.push_back(FiberPoint(
+                        //intersectedEdgesPoint[1],
+                        //{1.0, 1.0, 1.0},
+                        //1,
+                        //-1
+                        //));
+
+            //allFiberPoints.push_back(FiberPoint(
+                        //intersectedEdgesPoint[2],
+                        //{1.0, 1.0, 1.0},
+                        //1,
+                        //-1
+                        //));
+        //}
+
+        //else if (intersectedEdges.size() == 4)
+        //{
+
+
+                //allFiberPoints.push_back(FiberPoint(
+                            //intersectedEdgesPoint[0],
+                            //{1.0, 1.0, 1.0},
+                            //1,
+                            //-1
+                            //));
+
+                //allFiberPoints.push_back(FiberPoint(
+                            //intersectedEdgesPoint[1],
+                            //{1.0, 1.0, 1.0},
+                            //1,
+                            //-1
+                            //));
+
+                //allFiberPoints.push_back(FiberPoint(
+                            //intersectedEdgesPoint[2],
+                            //{1.0, 1.0, 1.0},
+                            //1,
+                            //-1
+                            //));
+
+
+
+
+
+
+                //allFiberPoints.push_back(FiberPoint(
+                            //intersectedEdgesPoint[0],
+                            //{1.0, 1.0, 1.0},
+                            //1,
+                            //-1
+                            //));
+
+                //allFiberPoints.push_back(FiberPoint(
+                            //intersectedEdgesPoint[1],
+                            //{1.0, 1.0, 1.0},
+                            //1,
+                            //-1
+                            //));
+
+                //allFiberPoints.push_back(FiberPoint(
+                            //intersectedEdgesPoint[3],
+                            //{1.0, 1.0, 1.0},
+                            //1,
+                            //-1
+                            //));
+
+
+
+        //}
+
+
+
+    //}
+
+
+    //return allFiberPoints;
 
 }
 

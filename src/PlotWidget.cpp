@@ -522,17 +522,17 @@ void PlotWidget::paintEvent(QPaintEvent*)
             controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
         }
 
+        controlPointsInternal = {{-0.0037455886297257379, 0.16425657720883236}, {0.15634494002768617, 0.030135895339866492}};
 
+        // TTK FS
+        //
         //Start point : 0.033263165761928781 0.14687746720889849 end point 0.21512107934692115 0.10335287336486487
-
         std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
         
 
 
 
         //std::vector<FiberPoint> fibersAll;
-
-
         //if (controlPointsTransformed.size() == 2)
         //{
             //fibersAll = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
@@ -548,9 +548,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
                         //std::make_move_iterator(fibers.begin()), 
                         //std::make_move_iterator(fibers.end())
                         //);
-
             //}
-
         //}
 
 

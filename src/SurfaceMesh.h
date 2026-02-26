@@ -48,7 +48,7 @@ class SurfaceMesh
                     }
                     else
                     {
-                        fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                        triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
                     }
 
                 }
@@ -197,7 +197,7 @@ class SurfaceMesh
 
                 // Compute the fiber graph
                 //
-                auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
+                const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
 
 
                 // Find which componnt we are in
@@ -218,7 +218,7 @@ class SurfaceMesh
                     }
                 }
 
-                printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
+                //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
             }
 
             return triangleSheet;
@@ -373,7 +373,6 @@ class SurfaceMesh
 
 
             // Set up the new triangles
-            newMesh.triangleTetId = this->triangleTetId;
             for (int i = 0 ; i < this->triangles.size() ; i++)
             {
                 const auto &triangle = this->triangles[i];
@@ -386,6 +385,7 @@ class SurfaceMesh
                 const bool v0v1Intersected = triangleIntersectionIndices.contains({v0, v1});
                 const bool v1v2Intersected = triangleIntersectionIndices.contains({v1, v2});
                 const bool v2v0Intersected = triangleIntersectionIndices.contains({v2, v0});
+
 
                 // No intersected, skip this case
                 if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 0)

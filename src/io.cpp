@@ -75,8 +75,8 @@ SurfaceMesh io::readDataVtp(const std::string &filename)
         return {};
     }
 
-    std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
-    std::cout << "Number of cells: " << polyData->GetNumberOfCells() << "\n";
+    //std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
+    //std::cout << "Number of cells: " << polyData->GetNumberOfCells() << "\n";
 
     SurfaceMesh mesh;
     mesh.vertexCoordinates.resize(points->GetNumberOfPoints());
