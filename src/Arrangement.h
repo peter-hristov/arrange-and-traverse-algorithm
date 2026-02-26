@@ -65,6 +65,7 @@ class Arrangement
 
     void assignIndices();
 
+    Point_2 findVisibleVertex(const Face_const_handle activeFace, const Point_2 p);
 
     void buildAABBtree(const TetMesh &tetMesh);
 

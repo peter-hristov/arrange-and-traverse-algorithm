@@ -41,6 +41,16 @@ class FiberPoint{
             (1 - alpha - beta) * triangleVertices[2][2];
     }
 
+    FiberPoint(const std::array<double, 3> &vertex, const std::array<float, 3> _colour, const int _sheetId = -1, const int _triangleId = -1)
+    {
+        //FiberPoint(std::array<float, 3>{(float)vertex[0], (float)vertex[1], (float)vertex[2]}, _colour, _sheetId, _triangleId);
+        this->colour = _colour;
+        this->sheetId = _sheetId;
+        this->triangleId = _triangleId;
+
+        this->point = std::array<float, 3>{(float)vertex[0], (float)vertex[1], (float)vertex[2]};
+
+    }
     FiberPoint(const std::array<float, 3> &vertex, const std::array<float, 3> _colour, const int _sheetId = -1, const int _triangleId = -1)
     {
         this->colour = _colour;

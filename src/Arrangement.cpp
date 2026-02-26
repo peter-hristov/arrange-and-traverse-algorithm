@@ -308,3 +308,41 @@ void Arrangement::assignHalfEdgePseudoSingular(const TetMesh &tetMesh, Arrangeme
     }
 
 }
+
+// Given a point p within a face F, find a vertex v in the polygon such that the segment pv is entirely within F
+// This relies on that fact given a point in a simple, non-intersecting polygon there at least one visible vertex from p.
+//
+// In practise we use the number of intersected halfEdge, which sould be zero, and only one vertex should be intersected.
+//
+Point_2 Arrangement::findVisibleVertex(const Face_const_handle activeFace, const Point_2 p)
+{
+    auto circ = activeFace->outer_ccb();
+    auto start = circ;
+    do
+    {
+        Arrangement_2::X_monotone_curve_2 segmentMonotoneCurve(
+                p,
+                circ->source()->point());
+
+            std::vector<Arrangement_2::Vertex_handle> vertices;
+            std::vector<Arrangement_2::Halfedge_handle> halfEdges;
+
+            CGAL::zone(
+                    this->arr, 
+                    segmentMonotoneCurve, 
+                    CGAL::dispatch_or_drop_output<Arrangement_2::Vertex_handle, Arrangement_2::Halfedge_handle>(
+                        std::back_inserter(vertices), 
+                        std::back_inserter(halfEdges))
+                    );
+
+            if (halfEdges.size() == 0 && vertices.size() == 1)
+            {
+                return circ->source()->point();
+            }
+
+
+        ++circ;
+    } while (circ != start);
+
+    throw std::runtime_error("No arrangement vertices are visible from the control point.");
+}

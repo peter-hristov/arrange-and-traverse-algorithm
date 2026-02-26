@@ -8,9 +8,11 @@
     [ ] Using TTK's fiber surface
         [x] Make sure the coordinates match in the range.
         [x] Read their fiber surface.
-        [ ] Extract singular fibers
-        [ ] Remesh along singular fibers.
+        [x] Remesh along singular fibers.
         [ ] Extract regions based on the segmentation
+            [ ] Map non-singular vertices of FS triangles to the range
+            [ ] Extract singular fibers
+            [ ] Identify components and sheets
         [ ] Find the sheet of each region
 
         [ ] Reeb graph of the restriction?
@@ -34,3 +36,11 @@
 
 
 Plus of speeding up SFS - exactness, our method
+
+
+Indeed the remeshing along the singular fiber doesn't need to be so exact, even if it's not i'll be a little off, maybe not even visible.
+Then get the regions and try out a few fibers points.
+Because we have the tet id, one fiber has one component per tet, so maybe we don't need the edge id, that could be fine.
+I could also find the singular point and remesh around it manually.
+This could actually work.
+Also you could do the Delaneu? Or too complex actually...

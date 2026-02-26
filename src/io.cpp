@@ -45,7 +45,6 @@
 
 SurfaceMesh io::readDataVtp(const std::string &filename)
 {
-
     // Read VTP file
     vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
     reader->SetFileName(filename.c_str());
@@ -62,11 +61,17 @@ SurfaceMesh io::readDataVtp(const std::string &filename)
     vtkCellArray* cells = polyData->GetPolys();
 
     // Get first scalar array (vertex data)
-    vtkDataArray* scalars = polyData->GetPointData()->GetArray("EdgeParameterization");  
+    vtkDataArray* scalarEdgeParam = polyData->GetPointData()->GetArray("EdgeParameterization");  
+    vtkDataArray* scalarTetId = polyData->GetCellData()->GetArray("TetIds");  
 
-    if (!scalars)
+    if (!scalarEdgeParam)
     {
         std::cerr << "No point scalar data found.\n";
+        return {};
+    }
+    if (!scalarTetId)
+    {
+        std::cerr << "No cell scalar data found.\n";
         return {};
     }
 
@@ -85,7 +90,7 @@ SurfaceMesh io::readDataVtp(const std::string &filename)
                                      static_cast<float>(p[1]),
                                      static_cast<float>(p[2])};
 
-        mesh.edgeParam[i] = scalars->GetTuple1(i);
+        mesh.edgeParam[i] = scalarEdgeParam->GetTuple1(i);
     }
 
     // --- read triangles ---
@@ -98,10 +103,20 @@ SurfaceMesh io::readDataVtp(const std::string &filename)
         if (npts != 3)
             continue; // skip non-triangle cells
 
-        mesh.triangles.push_back({static_cast<int>(pts[0]),
+        mesh.triangles.push_back({
+                static_cast<int>(pts[0]),
                 static_cast<int>(pts[1]),
-                static_cast<int>(pts[2])});
+                static_cast<int>(pts[2])}
+                );
+
+        // Get the TetId for this cell
+        vtkIdType cellId = mesh.triangles.size() - 1; 
+        int tetId = static_cast<int>(scalarTetId->GetTuple1(cellId));
+        mesh.triangleTetId.push_back(tetId);
+
     }
+
+    mesh.isVertexSingular = std::vector<bool>(mesh.vertexCoordinates.size(), false);
 
     return mesh;
 

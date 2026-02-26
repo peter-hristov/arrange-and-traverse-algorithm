@@ -97,11 +97,13 @@ typedef CGAL::Arr_walk_along_line_point_location<Arrangement_2> Point_location;
 //
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Barycentric_coordinates_2/triangle_coordinates_2.h>
+
 #include <CGAL/Kernel/global_functions_2.h>  // For bounded_side_2
 #include <CGAL/Polygon_2.h>
 
 typedef CGAL::Simple_cartesian<double> CartesianKernel;
 typedef CartesianKernel::Point_2 CartesianPoint;
+typedef CartesianKernel::Point_3 CartesianPoint_3;
 typedef CartesianKernel::Vector_2 CartesianVector;
 typedef CartesianKernel::Segment_2 CartesianSegment;
 typedef CartesianKernel::Line_2 CartesianLine;
@@ -145,3 +147,4 @@ typedef CGAL::AABB_tree<Traits> TreeAABB;
 //using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
 //using TreeAABB = CGAL::AABB_tree<TraitsAABB>;
 
+#include <CGAL/Surface_mesh.h>

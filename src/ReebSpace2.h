@@ -128,6 +128,7 @@ class ReebSpace2
         std::vector<std::vector<std::array<double, 2>>> computeSheetControlPolygons(const int);
 
 
+        FiberGraph computeFiberGraph(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
 
         // Unit Tests, mostly depricated
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
