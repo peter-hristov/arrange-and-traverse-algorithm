@@ -33,7 +33,7 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-
+#include <vtkCleanPolyData.h>
 
 #include<ttkFiberSurface.h>
 #include<ttkRangePolygon.h>
@@ -52,12 +52,20 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
         std::cerr << "Failed to read polydata.\n";
     }
 
-    vtkPoints* points = polyData->GetPoints();
-    vtkCellArray* cells = polyData->GetPolys();
+    // Clean up if it's a triangle soup, merge duplicated triangles
+    vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
+    cleaner->SetInputData(polyData);
+    cleaner->SetTolerance(1e-6);
+    cleaner->Update();
+
+    vtkSmartPointer<vtkPolyData> cleanedPolyData = cleaner->GetOutput();
+    
+    vtkPoints* points = cleanedPolyData->GetPoints();
+    vtkCellArray* cells = cleanedPolyData->GetPolys();
 
     // Get first scalar array (vertex data)
-    vtkDataArray* scalarEdgeParam = polyData->GetPointData()->GetArray("EdgeParameterization");  
-    vtkDataArray* scalarTetId = polyData->GetCellData()->GetArray("TetIds");  
+    vtkDataArray* scalarEdgeParam = cleanedPolyData->GetPointData()->GetArray("EdgeParameterization");  
+    vtkDataArray* scalarTetId = cleanedPolyData->GetCellData()->GetArray("TetIds");  
 
     if (!scalarEdgeParam)
     {
@@ -70,54 +78,25 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
         return {};
     }
 
+    std::cout << "Before Number of points: " << polyData->GetPoints()->GetNumberOfPoints() << "\n";
+    std::cout << "Before Number of cells: " << polyData->GetNumberOfCells() << "\n";
+
+    std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
+    std::cout << "Number of cells: " << cleanedPolyData->GetNumberOfCells() << "\n";
 
     SurfaceMesh mesh;
-
-    // Point -> newIndex
-    std::map<std::array<double, 3>, int> uniquePoints;
-
-    // Old Index -> new Index
-    std::vector<int> oldIndices(points->GetNumberOfPoints());
-
+    mesh.vertexCoordinates.resize(points->GetNumberOfPoints());
+    mesh.edgeParam.resize(points->GetNumberOfPoints());
+    
     for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
     {
         double p[3];
         points->GetPoint(i, p);
-        std::array<double, 3> point({p[0], p[1], p[2]});
+        mesh.vertexCoordinates[i] = {static_cast<float>(p[0]),
+                                     static_cast<float>(p[1]),
+                                     static_cast<float>(p[2])};
 
-        if (false == uniquePoints.contains(point))
-        {
-            const int newIndex = uniquePoints.size();
-            uniquePoints[point] = newIndex;
-            oldIndices[i] = newIndex;
-        }
-        else
-        {
-
-            oldIndices[i] = uniquePoints.at(point);
-
-        }
-
-        //mesh.edgeParam[i] = scalarEdgeParam->GetTuple1(i);
-    }
-
-
-    mesh.edgeParam.resize(uniquePoints.size());
-    for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
-    {
-        const int newIndex = oldIndices[i];
-        mesh.edgeParam[newIndex] = scalarEdgeParam->GetTuple1(i);
-    }
-
-    mesh.vertexCoordinates.resize(uniquePoints.size());
-    for (auto const& [pt, idx] : uniquePoints)
-    {
-        mesh.vertexCoordinates[idx] =
-        {
-            static_cast<float>(pt[0]),
-            static_cast<float>(pt[1]),
-            static_cast<float>(pt[2])
-        };
+        mesh.edgeParam[i] = scalarEdgeParam->GetTuple1(i);
     }
 
     // --- read triangles ---
@@ -128,14 +107,12 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
     while (cells->GetNextCell(npts, pts))
     {
         if (npts != 3)
-        {
-            throw std::runtime_error("Cell in a vtp is not a triangle: ");
-        }
+            continue; // skip non-triangle cells
 
         mesh.triangles.push_back({
-                static_cast<int>(oldIndices[pts[0]]),
-                static_cast<int>(oldIndices[pts[1]]),
-                static_cast<int>(oldIndices[pts[2]])}
+                static_cast<int>(pts[0]),
+                static_cast<int>(pts[1]),
+                static_cast<int>(pts[2])}
                 );
 
         // Get the TetId for this cell
@@ -147,11 +124,110 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
 
     mesh.isVertexSingular = std::vector<bool>(mesh.vertexCoordinates.size(), false);
 
-    std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
-    std::cout << "new Number of points: " << mesh.vertexCoordinates.size() << "\n";
-    std::cout << "Number of cells: " << polyData->GetNumberOfCells() << "\n";
-
     return mesh;
+
+
+    // Manual merge
+    //vtkPoints* points = merged->GetPoints();
+    //vtkCellArray* cells = merged->GetPolys();
+
+    //// Get first scalar array (vertex data)
+    //vtkDataArray* scalarEdgeParam = merged->GetPointData()->GetArray("EdgeParameterization");  
+    //vtkDataArray* scalarTetId = merged->GetCellData()->GetArray("TetIds");  
+
+    //if (!scalarEdgeParam)
+    //{
+        //std::cerr << "No point scalar data found.\n";
+        //return {};
+    //}
+    //if (!scalarTetId)
+    //{
+        //std::cerr << "No cell scalar data found.\n";
+        //return {};
+    //}
+
+
+    //SurfaceMesh mesh;
+
+    //// Point -> newIndex
+    //std::map<std::array<double, 3>, int> uniquePoints;
+
+    //// Old Index -> new Index
+    //std::vector<int> oldIndices(points->GetNumberOfPoints());
+
+    //for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
+    //{
+        //double p[3];
+        //points->GetPoint(i, p);
+        //std::array<double, 3> point({p[0], p[1], p[2]});
+
+        //if (false == uniquePoints.contains(point))
+        //{
+            //const int newIndex = uniquePoints.size();
+            //uniquePoints[point] = newIndex;
+            //oldIndices[i] = newIndex;
+        //}
+        //else
+        //{
+
+            //oldIndices[i] = uniquePoints.at(point);
+
+        //}
+
+        ////mesh.edgeParam[i] = scalarEdgeParam->GetTuple1(i);
+    //}
+
+
+    //mesh.edgeParam.resize(uniquePoints.size());
+    //for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
+    //{
+        //const int newIndex = oldIndices[i];
+        //mesh.edgeParam[newIndex] = scalarEdgeParam->GetTuple1(i);
+    //}
+
+    //mesh.vertexCoordinates.resize(uniquePoints.size());
+    //for (auto const& [pt, idx] : uniquePoints)
+    //{
+        //mesh.vertexCoordinates[idx] =
+        //{
+            //static_cast<float>(pt[0]),
+            //static_cast<float>(pt[1]),
+            //static_cast<float>(pt[2])
+        //};
+    //}
+
+    //// --- read triangles ---
+    //vtkIdType npts = 0;
+    //const vtkIdType* pts = nullptr;
+
+    //cells->InitTraversal();
+    //while (cells->GetNextCell(npts, pts))
+    //{
+        //if (npts != 3)
+        //{
+            //throw std::runtime_error("Cell in a vtp is not a triangle: ");
+        //}
+
+        //mesh.triangles.push_back({
+                //static_cast<int>(oldIndices[pts[0]]),
+                //static_cast<int>(oldIndices[pts[1]]),
+                //static_cast<int>(oldIndices[pts[2]])}
+                //);
+
+        //// Get the TetId for this cell
+        //vtkIdType cellId = mesh.triangles.size() - 1; 
+        //int tetId = static_cast<int>(scalarTetId->GetTuple1(cellId));
+        //mesh.triangleTetId.push_back(tetId);
+
+    //}
+
+    //mesh.isVertexSingular = std::vector<bool>(mesh.vertexCoordinates.size(), false);
+
+    //std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
+    //std::cout << "new Number of points: " << mesh.vertexCoordinates.size() << "\n";
+    //std::cout << "Number of cells: " << polyData->GetNumberOfCells() << "\n";
+
+    //return mesh;
 
 
     //const vtkIdType* pts = nullptr;
@@ -352,6 +428,7 @@ SurfaceMesh io::readDataVtuTTK(const std::string &filename, double u1, double v1
         throw std::runtime_error("Failed to get mesh output from the file: " + filename);
     }
 
+    // This is correct I tested now
     std::string field1Name = mesh->GetPointData()->GetArrayName(0);
     std::string field2Name = mesh->GetPointData()->GetArrayName(1);
 

@@ -13,11 +13,15 @@
             [x] Map non-singular vertices of FS triangles to the range
             [x] Extract singular fibers
             [x] Identify components and sheets
-        [x] Find the sheet of each region
+        [x] Find the sheet of each region.
+        [x] Import TTK.
+        [x] Use TTK's fiber surface algorithm.
 
+        [ ] Refactor code to make it more usable 
+        [ ] Compute connected components
         [ ] Start using CGAL's mesh operations and polygon soup operations.
 
-        [ ] Reeb graph of the restriction?
+        [ ] (Optional) Reeb graph of the restriction?
 
 [ ] Stiched Fiber Surfaces
     [x] Implement the unaffected and regular cases
