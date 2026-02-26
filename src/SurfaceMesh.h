@@ -12,8 +12,6 @@
 #include "./Fiber.h"
 
 
-using Mesh = CGAL::Surface_mesh<CartesianPoint_3>;
-
 class SurfaceMesh
 {
     public:
@@ -22,6 +20,7 @@ class SurfaceMesh
         std::vector<double> edgeParam;
         std::vector<bool> isVertexSingular;
         std::vector<int> triangleTetId;
+        std::vector<int> triangleComponentId;
 
         std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
         {
@@ -41,6 +40,7 @@ class SurfaceMesh
                 else
                 {
                     const int sheetId = triangleSheets[i];
+                    //const int sheetId = triangleComponentId[i];
 
                     if (sheetId == -1)
                     {
@@ -157,6 +157,7 @@ class SurfaceMesh
         {
             std::vector<int> triangleSheet(this->triangles.size(), -1);
 
+            #pragma omp parallel for schedule(dynamic)
             for (int i = 0 ; i < this->triangles.size() ; i++)
             {
                 // Compute a midpoint in the triangle and its coordinates in the range
@@ -247,10 +248,33 @@ class SurfaceMesh
             };
         }
 
+
         Mesh to_cgal_mesh()
         {
-            Mesh mesh;
+            // 1. Build polygon soup
+            //std::vector<CartesianPoint_3> points;
+            //std::vector<std::vector<std::size_t>> polygons;
+            //for (auto& p : vertexCoordinates)
+            //{
+                //points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
+            //}
+            //for (auto& tri : triangles)
+            //{
+                //polygons.push_back({(std::size_t)tri[0], (std::size_t)tri[1], (std::size_t)tri[2]});
+            //}
 
+            //// 2. Remove duplicate points / faces
+            //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons);
+            //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
+
+            //// 3. Build Surface_mesh
+            //Mesh mesh;
+            //CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
+
+
+
+
+            Mesh mesh;
             std::vector<Mesh::Vertex_index> vmap;
             vmap.reserve(this->vertexCoordinates.size());
 
@@ -280,6 +304,104 @@ class SurfaceMesh
             return mesh;
         }
 
+
+        void computeConnectedComponents(Mesh mesh)
+        {
+            std::vector<bool> visited(mesh.number_of_faces(), false);
+            int component_id = 0;
+
+            for (auto f : mesh.faces())
+            {
+                if (visited[f.idx()]) continue;
+
+                // BFS queue
+                std::queue<Face_index> q;
+                q.push(f);
+                visited[f.idx()] = true;
+
+                while (!q.empty())
+                {
+                    Face_index current = q.front();
+                    q.pop();
+
+                    // iterate neighbors
+                    for (auto h : halfedges_around_face(mesh.halfedge(current), mesh))
+                    {
+                        Face_index neighbor = mesh.face(mesh.opposite(h));
+                        if (neighbor == Mesh::null_face()) continue; // boundary, skip
+
+                        if (!visited[neighbor.idx()])
+                        {
+                            visited[neighbor.idx()] = true;
+                            q.push(neighbor);
+                        }
+                    }
+                }
+                component_id++;
+            }
+
+            std::cout << "---- number of connected components: " << component_id << "\n";
+
+            // Example: print which component each face belongs to
+            //for (auto f : mesh.faces())
+            //{
+                //std::cout << "Face " << f << " -> component " << face_component[f] << "\n";
+            //}
+        }
+
+        // Compute connected components using BFS on faces
+        std::vector<int> compute_face_connected_components(const Mesh& mesh)
+        {
+            this->triangleComponentId.resize(mesh.number_of_faces(), -1);
+
+            std::set<Face_index> visited;
+            int component_id = 0;
+
+            for (Face_index f : mesh.faces())
+            {
+                if (visited.contains(f))
+                    continue; // already visited
+
+                std::queue<Face_index> q;
+                q.push(f);
+                visited.insert(f);
+                this->triangleComponentId[f] = component_id;
+
+                std::cout << "------------------------------------------------------------------------------ Component " << component_id << std::endl;
+                while (!q.empty())
+                {
+                    Face_index current = q.front();
+                    q.pop();
+
+                    std::cout << "At " << current.id() << " / " << current.idx() << std::endl;
+
+                    // iterate over all neighbors (faces sharing an edge)
+                    for (auto h : mesh.halfedges_around_face(mesh.halfedge(current)))
+                    {
+                        Face_index neighbor = mesh.face(mesh.opposite(h));
+
+                        if (neighbor == Mesh::null_face())
+                        {
+                            continue;
+                        }
+
+                        std::cout << "------- Looking At " << neighbor.id() << " / " << neighbor.idx() << std::endl;
+
+                        if (false == visited.contains(neighbor))
+                        {
+                            visited.insert(neighbor);
+                            q.push(neighbor);
+                            this->triangleComponentId[neighbor] = component_id;
+                        }
+                    }
+                }
+
+                component_id++;
+            }
+
+            return {};
+            //return face_component;
+        }
 
         // Marching triangles
         //std::vector<SurfaceMesh> splitSurfaceMesh()
@@ -322,6 +444,9 @@ class SurfaceMesh
                 //}
             //}
         //}
+
+
+
 
         // Marching triangles
         SurfaceMesh splitSingularTriangles(const double isovalue)

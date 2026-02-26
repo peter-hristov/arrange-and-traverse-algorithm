@@ -86,15 +86,27 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     //
 
     Timer::start();
-    SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
+    //SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
+    SurfaceMesh surfaceMesh = io::readDataVtuTTK("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_3.vtu", controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
     Timer::stop("Read surface mesh                      :");
+
+
+    //auto mesh = surfaceMesh.to_cgal_mesh();
+
+    //Mesh mesh = io::readCGALMesh("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
+    //surfaceMesh.compute_face_connected_components(mesh);
+    //surfaceMesh.computeConnectedComponents(mesh);
+
+
+
+    io::saveFiberSurface(surfaceMesh, "./fs.vtp");
+
 
     Timer::start();
     for (int i = 0 ; i < intersectionAlpha.size() ; i++)
     {
         if (intersectionType[i] == 2)
         {
-
             surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
             //surfaceMesh.print();
         }
@@ -106,6 +118,10 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     const std::vector<int> triangleSheets = surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     Timer::stop("Computed triangle sheets               :");
 
+
+
+
+    //return surfaceMesh.getFiberPoints({});
     return surfaceMesh.getFiberPoints(triangleSheets);
 
 

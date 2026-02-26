@@ -148,3 +148,15 @@ typedef CGAL::AABB_tree<Traits> TreeAABB;
 //using TreeAABB = CGAL::AABB_tree<TraitsAABB>;
 
 #include <CGAL/Surface_mesh.h>
+
+typedef CGAL::Surface_mesh<CartesianPoint_3> Mesh;
+typedef Mesh::Vertex_index Vertex_index;
+typedef Mesh::Face_index Face_index;
+
+
+
+// Polygon mesh processing utilities
+#include <CGAL/Polygon_mesh_processing/repair.h>      // merge_duplicate_points_in_polygon_soup
+#include <CGAL/Polygon_mesh_processing/connected_components.h> // optional for built-in connected components
+#include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h> // convert soup -> Surface_mesh
+#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>

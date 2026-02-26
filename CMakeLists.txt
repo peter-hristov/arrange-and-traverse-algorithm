@@ -24,6 +24,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 
+find_package(TTKVTK REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
@@ -67,4 +68,5 @@ target_link_libraries(${PROJECT_NAME}
     ${VTK_LIBRARIES}
     CGAL::CGAL
     OpenMP::OpenMP_CXX
+    ttk::vtk::ttkAll
     )

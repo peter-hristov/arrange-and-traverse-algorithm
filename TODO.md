@@ -9,11 +9,13 @@
         [x] Make sure the coordinates match in the range.
         [x] Read their fiber surface.
         [x] Remesh along singular fibers.
-        [ ] Extract regions based on the segmentation
-            [ ] Map non-singular vertices of FS triangles to the range
-            [ ] Extract singular fibers
-            [ ] Identify components and sheets
-        [ ] Find the sheet of each region
+        [x] Extract regions based on the segmentation
+            [x] Map non-singular vertices of FS triangles to the range
+            [x] Extract singular fibers
+            [x] Identify components and sheets
+        [x] Find the sheet of each region
+
+        [ ] Start using CGAL's mesh operations and polygon soup operations.
 
         [ ] Reeb graph of the restriction?
 

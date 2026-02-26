@@ -522,7 +522,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
             controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
         }
 
-        controlPointsInternal = {{-0.0037455886297257379, 0.16425657720883236}, {0.15634494002768617, 0.030135895339866492}};
+        //controlPointsInternal = {{-0.0037455886297257379, 0.16425657720883236}, {0.15634494002768617, 0.030135895339866492}};
 
         // TTK FS
         //
@@ -535,7 +535,13 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //std::vector<FiberPoint> fibersAll;
         //if (controlPointsTransformed.size() == 2)
         //{
-            //fibersAll = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+            //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+
+            //fibersAll.insert(
+                    //fibersAll.end(), 
+                    //std::make_move_iterator(fibers.begin()), 
+                    //std::make_move_iterator(fibers.end())
+                    //);
         //}
         //else
         //{
@@ -548,8 +554,10 @@ void PlotWidget::paintEvent(QPaintEvent*)
                         //std::make_move_iterator(fibers.begin()), 
                         //std::make_move_iterator(fibers.end())
                         //);
+
             //}
         //}
+
 
 
         //std::vector<FiberPoint> fibersAll = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp").getFiberPoints();

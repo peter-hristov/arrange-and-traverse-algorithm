@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./CGALTypedefs.h"
+
 #include <string>
 
 #include "./TetMesh.h"
@@ -15,8 +17,12 @@ namespace io
     TetMesh readData(const std::string&);
     TetMesh readDataTxt(const std::string&);
     TetMesh readDataVtu(const std::string&);
+    //SurfaceMesh readDataVtuTTK(const std::string &filename);
+    
+    SurfaceMesh readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2);
 
     SurfaceMesh readDataVtp(const std::string&);
+    Mesh readCGALMesh(const std::string& filename);
 
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
@@ -24,7 +30,9 @@ namespace io
 
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 
+    void saveFiberSurface(SurfaceMesh& mesh, const std::string& filename);
     void saveSheetsFeatures(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
+
 
     std::vector<FiberPoint> generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints);
     void generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string);
