@@ -101,69 +101,33 @@ class SurfaceMesh
             }
 
 
-            // Compute the connectivity of the mesh
-            //
-            std::vector<std::size_t> component(num_faces(mesh));
-            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
-
-            std::cout << "There are " << num << " components\n";
-
-
-        }
-
-
-        void print()
-        {
-            std::cout << "Vertices:\n";
-            for (auto v : mesh.vertices())
-            {
-                const auto &p = mesh.point(v);
-                double e = edgeParam[v];
-                std::cout << "  Vertex " << v << ": ("
-                    << p[0] << ", " << p[1] << ", " << p[2]
-                    << "), edgeParam = " << e << "\n";
-            }
-
-            std::cout << "\nFaces:\n";
-            for (auto f : mesh.faces())
-            {
-                std::cout << "  Face " << f << ": [";
-                bool first = true;
-                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                {
-                    if (!first) std::cout << ", ";
-                    std::cout << v;
-                    first = false;
-                }
-                std::cout << "], tetId = " << tetId[f]
-                    << ", sheetId = " << sheetId[f] << "\n";
-            }
-
         }
 
 
 
-        std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
-        {
-            std::vector<FiberPoint> allFiberPoints;
 
-            std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
-            for (auto f : mesh.faces())
-            {
-                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                {
-                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
 
-                    allFiberPoints.push_back(FiberPoint(
-                                point,
-                                triangleColour, 
-                                1,
-                                -1
-                                ));
-                }
-            }
-            return allFiberPoints;
-        }
+        //std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
+        //{
+            //std::vector<FiberPoint> allFiberPoints;
+
+            //std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+            //for (auto f : mesh.faces())
+            //{
+                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                //{
+                    //std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
+
+                    //allFiberPoints.push_back(FiberPoint(
+                                //point,
+                                //triangleColour, 
+                                //1,
+                                //-1
+                                //));
+                //}
+            //}
+            //return allFiberPoints;
+        //}
 
 
         //std::vector<std::array<double, 3>> vertexCoordinates;
@@ -177,57 +141,40 @@ class SurfaceMesh
 
 
 
-        //std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
-        //{
-            //std::vector<FiberPoint> allFiberPoints;
+        std::vector<FiberPoint> getFiberPoints()
+        {
+            std::vector<FiberPoint> allFiberPoints;
 
-            //for (int i = 0 ; i < this->triangles.size() ; i++)
-            //{
-                //const auto &triangle = this->triangles[i];
+            for (auto f : mesh.faces())
+            {
 
-                //// Find the colour of the triangle based on the sheet
-                ////
-                //std::array<float, 3> triangleColour;
-                //if (triangleSheets.size() == 0)
-                //{
-                    //triangleColour = {1.0, 1.0, 0.0};
-                //}
-                //else
-                //{
-                    //const int sheetId = triangleSheets[i];
-                    ////const int sheetId = triangleComponentId[i];
+                const int sheetId = this->sheetId[f];
 
-                    //if (sheetId == -1)
-                    //{
-                        //triangleColour = {1.0, 0.0, 1.0};
-                    //}
-                    //else
-                    //{
-                        //triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
-                    //}
+                // Default triangle colour
+                std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
 
-                //}
+                if (sheetId != -1)
+                {
+                    triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                }
 
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
+                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
 
+                    allFiberPoints.push_back(FiberPoint(
+                                point,
+                                triangleColour, 
+                                1,
+                                -1
+                                ));
+                }
 
-                //// Output the triangle pints
-                ////
-                //for (const auto &vertex : triangle)
-                //{
-                    //allFiberPoints.push_back(FiberPoint(
-                                //vertexCoordinates[vertex],
-                                //triangleColour, 
-                                //1,
-                                //-1
-                                //));
+            }
 
-                //}
+            return allFiberPoints;
 
-            //}
-
-            //return allFiberPoints;
-
-        //}
+        }
 
         //void print()
         //{
@@ -295,132 +242,157 @@ class SurfaceMesh
             return w;
         }
 
-        std::array<double, 3> triangleMidpoint(
-                const std::array<double, 3>& v0,
-                const std::array<double, 3>& v1,
-                const std::array<double, 3>& v2)
+        //std::array<double, 3> triangleMidpoint(
+                //const std::array<double, 3>& v0,
+                //const std::array<double, 3>& v1,
+                //const std::array<double, 3>& v2)
+        //{
+            //return {
+                //(v0[0] + v1[0] + v2[0]) / 3.0,
+                //(v0[1] + v1[1] + v2[1]) / 3.0,
+                //(v0[2] + v1[2] + v2[2]) / 3.0
+            //};
+        //}
+
+
+        // Function to compute midpoint of a triangular face
+        std::array<double, 3> triangleMidpoint(CGALMesh::Face_index f)
         {
-            return {
-                (v0[0] + v1[0] + v2[0]) / 3.0,
-                (v0[1] + v1[1] + v2[1]) / 3.0,
-                (v0[2] + v1[2] + v2[2]) / 3.0
-            };
+            std::array<double, 3> midpoint = {0.0, 0.0, 0.0};
+            int count = 0;
+
+            // Iterate over the three vertices of the face
+            for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+            {
+                const auto &p = mesh.point(v);
+                midpoint[0] += p[0];
+                midpoint[1] += p[1];
+                midpoint[2] += p[2];
+                ++count;
+            }
+
+            // Average coordinates
+            midpoint[0] /= count;
+            midpoint[1] /= count;
+            midpoint[2] /= count;
+
+            return midpoint;
         }
 
 
-        //int computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const int triangleId)
-        //{
-            //// Compute a midpoint in the triangle and its coordinates in the range
-            ////
-            //const int tetId = this->triangleTetId[triangleId];
-            //const std::array<int, 3> &triangle = triangles[triangleId];
-
-            //const std::array<double, 3> midpoint = this->triangleMidpoint(
-                    //this->vertexCoordinates[this->triangles[triangleId][0]], 
-                    //this->vertexCoordinates[this->triangles[triangleId][1]], 
-                    //this->vertexCoordinates[this->triangles[triangleId][2]]
-                    //);
-
-            //const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
-
-            //const int a = tetMesh.tetrahedra[tetId][0];
-            //const int b = tetMesh.tetrahedra[tetId][1];
-            //const int c = tetMesh.tetrahedra[tetId][2];
-            //const int d = tetMesh.tetrahedra[tetId][3];
-
-            //const double ua = tetMesh.vertexCoordinatesF[a];
-            //const double va = tetMesh.vertexCoordinatesG[a];
-
-            //const double ub = tetMesh.vertexCoordinatesF[b];
-            //const double vb = tetMesh.vertexCoordinatesG[b];
-
-            //const double uc = tetMesh.vertexCoordinatesF[c];
-            //const double vc = tetMesh.vertexCoordinatesG[c];
-
-            //const double ud = tetMesh.vertexCoordinatesF[d];
-            //const double vd = tetMesh.vertexCoordinatesG[d];
-
-
-            //const double u = barycentricCoordinates[0] * ua + barycentricCoordinates[1] * ub + barycentricCoordinates[2] * uc + barycentricCoordinates[3] * ud;
-            //const double v = barycentricCoordinates[0] * va + barycentricCoordinates[1] * vb + barycentricCoordinates[2] * vc + barycentricCoordinates[3] * vd;
-
-
-
-            //// Compute the fiber graph
-            ////
-            //const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
-
-
-            //// Find which componnt we are in
-            ////
-            //const std::vector<int> tetTriangleIds = {
-                //tetMesh.triangleIndices.at({a, b, c}),
-                //tetMesh.triangleIndices.at({a, b, d}),
-                //tetMesh.triangleIndices.at({a, c, d}),
-                //tetMesh.triangleIndices.at({b, c, d}),
-            //};
-
-            //for (const int triangleId : tetTriangleIds)
-            //{
-                //if (fg.componentRoot.contains(triangleId))
-                //{
-                    //return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
-                //}
-
-                ////printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
-            //}
-
-            //return -1;
-
-        //}
 
 
 
 
-        //std::vector<int> computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
-        //{
-            //// Compute the connectivity of the mesh
-            ////
-            //Mesh mesh = this->to_cgal_mesh();
-            //std::vector<std::size_t> component(num_faces(mesh));
-            //std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
-
-            //std::cout << "There are " << num << " components\n";
-
-            //std::unordered_map<int, int> componentToSheetId;
-
-
-            //std::cout << "We have this many triangles " << triangles.size() << "and he mesh has this many triangles : " << num_faces(mesh) << std::endl;
-
-            //// Compute only once per region
-            ////
-            //std::vector<int> triangleSheet(this->triangles.size(), -1);
-
-            //for (int i = 0 ; i < this->triangles.size() ; i++)
-            //{
-                //// Get the component of this trianle
-                //const int componentId = component[i];
-
-                //std::cout << "The component id of triangle " << i << " is " << componentId << std::endl;
-
-                //if (false == componentToSheetId.contains(componentId))
-                //{
-                    //std::cout << "Computing triangle ID" << std::endl; 
-                    //componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
-                //}
-
-                ////triangleSheet[i] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
-                //triangleSheet[i] = componentToSheetId.at(componentId);
 
 
 
+        void print()
+        {
+            std::cout << "Vertices:\n";
+            for (auto v : mesh.vertices())
+            {
+                const auto &p = mesh.point(v);
+                double e = edgeParam[v];
+                std::cout << "  Vertex " << v << ": ("
+                    << p[0] << ", " << p[1] << ", " << p[2]
+                    << "), edgeParam = " << e << "\n";
+            }
 
-            //}
+            std::cout << "\nFaces:\n";
+            for (auto f : mesh.faces())
+            {
+                std::cout << "  Face " << f << ": [";
+                bool first = true;
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
+                    if (!first) std::cout << ", ";
+                    std::cout << v;
+                    first = false;
+                }
+                std::cout << "], tetId = " << tetId[f]
+                    << ", sheetId = " << sheetId[f] << "\n";
+            }
 
-            //return triangleSheet;
-        //}
+        }
+
+        int computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const CGALMesh::Face_index triangle)
+        {
+            const int tetId = this->tetId[triangle];
+
+            const std::array<double, 3> midpoint = this->triangleMidpoint(triangle);
+            const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
+
+            const int a = tetMesh.tetrahedra[tetId][0];
+            const int b = tetMesh.tetrahedra[tetId][1];
+            const int c = tetMesh.tetrahedra[tetId][2];
+            const int d = tetMesh.tetrahedra[tetId][3];
+
+            const double ua = tetMesh.vertexCoordinatesF[a];
+            const double va = tetMesh.vertexCoordinatesG[a];
+
+            const double ub = tetMesh.vertexCoordinatesF[b];
+            const double vb = tetMesh.vertexCoordinatesG[b];
+
+            const double uc = tetMesh.vertexCoordinatesF[c];
+            const double vc = tetMesh.vertexCoordinatesG[c];
+
+            const double ud = tetMesh.vertexCoordinatesF[d];
+            const double vd = tetMesh.vertexCoordinatesG[d];
 
 
+            const double u = barycentricCoordinates[0] * ua + barycentricCoordinates[1] * ub + barycentricCoordinates[2] * uc + barycentricCoordinates[3] * ud;
+            const double v = barycentricCoordinates[0] * va + barycentricCoordinates[1] * vb + barycentricCoordinates[2] * vc + barycentricCoordinates[3] * vd;
+
+
+
+            // Compute the fiber graph
+            //
+            const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
+
+
+            // Find which componnt we are in
+            //
+            const std::vector<int> tetTriangleIds = {
+                tetMesh.triangleIndices.at({a, b, c}),
+                tetMesh.triangleIndices.at({a, b, d}),
+                tetMesh.triangleIndices.at({a, c, d}),
+                tetMesh.triangleIndices.at({b, c, d}),
+            };
+
+            for (const int triangleId : tetTriangleIds)
+            {
+                if (fg.componentRoot.contains(triangleId))
+                {
+                    return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
+                }
+
+                //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
+            }
+
+            return -1;
+        }
+
+
+
+        void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+        {
+            // Compute the connectivity of the mesh
+            //
+            std::vector<std::size_t> component(num_faces(mesh));
+            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
+
+            std::cout << "There are " << num << " components\n";
+
+            #pragma omp parallel for schedule(dynamic)
+            for (auto face : mesh.faces())
+            {
+                this->sheetId[face] =  this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+
+                std::cout << "The sheet id id " << this->sheetId[face] << std::endl;
+
+            }
+        }
 
 
 

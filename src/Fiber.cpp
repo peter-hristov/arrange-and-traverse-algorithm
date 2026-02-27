@@ -93,6 +93,10 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     //surfaceMesh.print();
 
+    Timer::start();
+    surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    Timer::stop("Computing triangle sheets              :");
+
     return surfaceMesh.getFiberPoints();
 
     ////Mesh mesh = io::readCGALMesh("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
