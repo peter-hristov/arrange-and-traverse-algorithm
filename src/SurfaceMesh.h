@@ -527,9 +527,13 @@ class SurfaceMesh
                 const int tetId = this->tetId[f];
 
                 std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
+                std::vector<CGALMesh::Vertex_index> faceVertices;
+
                 for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
                 {
                     auto e = mesh.edge(h);
+
+                    faceVertices.push_back(mesh.source(h));
 
                     if (edgeVertexMap.contains(e))
                     {
@@ -582,8 +586,14 @@ class SurfaceMesh
                     newTetIds.push_back(tetId);
                 }
 
-                else
+                if (activeHalfEdges.size() == 0)
                 {
+                    const CGALMesh::Vertex_index a = oldToNewVertexMap[faceVertices[0]];
+                    const CGALMesh::Vertex_index b = oldToNewVertexMap[faceVertices[1]];
+                    const CGALMesh::Vertex_index c = oldToNewVertexMap[faceVertices[2]];
+
+                    newFaces.push_back({a, b, c});
+                    newTetIds.push_back(tetId);
                 }
             }
 
