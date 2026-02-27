@@ -512,32 +512,87 @@ class SurfaceMesh
             }
 
 
-
-
-
             std::tie(newMesh.tetId, created) = newMesh.mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
             std::tie(newMesh.sheetId, created) = newMesh.mesh.add_property_map<CGALMesh::Face_index, int>("f:sheetId", -1);
 
-            std::vector<CGALMesh::Face_index> facesToTriangulate;
+
+            std::vector<std::array<CGALMesh::Vertex_index, 3>> newFaces;
+
+            std::vector<int> newTetIds;
 
             // 3. Collect faces that are affected by splits
             //
             for (auto f : this->mesh.faces())
             {
+                const int tetId = this->tetId[f];
 
-                std::vector<CGALMesh::Vertex_index> faceVertices;
-
-                for (auto h : halfedges_around_face(this->mesh.halfedge(f), this->mesh))
+                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
+                for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
                 {
-                    auto e = this->mesh.edge(h);
-
-                    faceVertices.push_back(oldToNewVertexMap[mesh.source(h)]);
+                    auto e = mesh.edge(h);
 
                     if (edgeVertexMap.contains(e))
                     {
-                        faceVertices.push_back(edgeVertexMap.at(e));
+                        activeHalfEdges.push_back(h);
                     }
                 }
+
+                if (activeHalfEdges.size() == 1)
+                {
+                    const auto h = activeHalfEdges[0];
+
+                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.source(h)];
+                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.target(h)];
+                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(mesh.next(h))];
+                    const CGALMesh::Vertex_index d = edgeVertexMap.at(mesh.edge(h));
+
+                    newFaces.push_back({b, c, d});
+                    newTetIds.push_back(tetId);
+
+                    newFaces.push_back({a, d, c});
+                    newTetIds.push_back(tetId);
+                }
+
+                if (activeHalfEdges.size() == 2)
+                {
+                    // Find the 3rd vertex
+
+                    auto h1 = activeHalfEdges[0];
+                    auto h2 = activeHalfEdges[1];
+
+                    // Swap to make sure that next(h1) = h2
+                    if (mesh.next(h2) == h1)
+                    {
+                        std::swap(h1, h2);
+                    }
+
+                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.target(h2)];
+                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.source(h1)];
+                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(h1)];
+                    const CGALMesh::Vertex_index d1 = edgeVertexMap.at(mesh.edge(h1));
+                    const CGALMesh::Vertex_index d2 = edgeVertexMap.at(mesh.edge(h2));
+
+                    newFaces.push_back({d1, c, d2});
+                    newTetIds.push_back(tetId);
+
+                    newFaces.push_back({d2, a, d1});
+                    newTetIds.push_back(tetId);
+
+                    newFaces.push_back({a, b, d1});
+                    newTetIds.push_back(tetId);
+                }
+
+                else
+                {
+                }
+            }
+
+
+
+
+            for (int i = 0 ; i < newFaces.size() ; i++)
+            {
+                const std::array<CGALMesh::Vertex_index, 3> faceVertices = newFaces[i];
 
                 auto newFace = newMesh.mesh.add_face(faceVertices);
 
@@ -545,29 +600,14 @@ class SurfaceMesh
                 {
                     throw std::runtime_error("Failed to add a new triangle to the msh.");
                 }
-                //else
-                //{
-                    //std::cerr << "add_face succeeded\n";
 
-                //}
-
-
-                if (faceVertices.size() > 3)
-                {
-                    facesToTriangulate.push_back(newFace);
-                }
-
-                const int tetId = this->tetId[f];
-                newMesh.tetId[newFace] = tetId;
-
-                const int sheetId = this->sheetId[f];
-                newMesh.sheetId[newFace] = sheetId;
+                newMesh.tetId[newFace] = newTetIds[i];
             }
 
             
 
             // 4. Retriangulate affected faces
-            CGAL::Polygon_mesh_processing::triangulate_faces(facesToTriangulate, newMesh.mesh);
+            //CGAL::Polygon_mesh_processing::triangulate_faces(facesToTriangulate, newMesh.mesh);
 
             if (false == CGAL::is_valid_polygon_mesh(newMesh.mesh))
             {
