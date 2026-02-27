@@ -88,50 +88,37 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     Timer::start();
     //SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
-    SurfaceMesh surfaceMesh = io::readDataVtuTTK("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_3.vtu", controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
+    SurfaceMesh surfaceMesh = io::readDataVtuTTK("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_4.vtu", controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
     Timer::stop("Read surface mesh                      :");
 
     //surfaceMesh.print();
 
+
+
+
+
     Timer::start();
-    surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
-    Timer::stop("Computing triangle sheets              :");
+    for (int i = 0 ; i < intersectionAlpha.size() ; i++)
+    {
+        if (intersectionType[i] == 2)
+        {
+            surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
+            surfaceMesh.print();
+        }
+    }
+    Timer::stop("Subdivided mesh                        :");
+
+
+    //Timer::start();
+    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    //Timer::stop("Computing triangle sheets              :");
+
 
     return surfaceMesh.getFiberPoints();
 
-    ////Mesh mesh = io::readCGALMesh("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
-
-    ////surfaceMesh.compute_face_connected_components(mesh);
 
 
 
-    ////io::saveFiberSurface(surfaceMesh, "./fs.vtp");
-
-    //Timer::start();
-    //auto mesh = surfaceMesh.to_cgal_mesh();
-    //surfaceMesh.computeConnectedComponents(mesh);
-    //Timer::stop("Computing connected components         :");
-
-    //Timer::start();
-    //for (int i = 0 ; i < intersectionAlpha.size() ; i++)
-    //{
-        //if (intersectionType[i] == 2)
-        //{
-            ////surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
-            ////surfaceMesh.print();
-        //}
-    //}
-    //Timer::stop("Subdivided mesh                        :");
-
-
-    //Timer::start();
-    //const std::vector<int> triangleSheets = surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
-    //Timer::stop("Computed triangle sheets               :");
-
-
-
-
-    ////return surfaceMesh.getFiberPoints({});
     //return surfaceMesh.getFiberPoints(triangleSheets);
 
 

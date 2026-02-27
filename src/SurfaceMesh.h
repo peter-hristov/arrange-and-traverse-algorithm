@@ -3,6 +3,7 @@
 #include "./CGALTypedefs.h"
 
 #include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
+#include <CGAL/enum.h>
 #include <iostream>
 #include <stack>
 #include <unordered_map>
@@ -16,6 +17,7 @@
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
 #include <CGAL/Polygon_mesh_processing/border.h>
+#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 
 class SurfaceMesh
 {
@@ -403,6 +405,180 @@ class SurfaceMesh
             }
         }
 
+
+
+
+
+
+
+
+
+        // Helper: interpolate two points and scalar values
+        CartesianPoint_3 interpolate_vertex(CGALMesh::Vertex_index v0, CGALMesh::Vertex_index v1, double isovalue)
+        {
+            const double e0 = edgeParam[v0];
+            const double e1 = edgeParam[v1];
+
+            const double t = (isovalue - e0) / (e1 - e0);
+
+            const CartesianPoint_3 &p0 = mesh.point(v0);
+            const CartesianPoint_3 &p1 = mesh.point(v1);
+
+            //return CartesianPoint_3(p0 + t * (p1 - p0));
+            return CartesianPoint_3(
+                    (1.0 - t) * p0.x() + t * p1.x(),
+                    (1.0 - t) * p0.y() + t * p1.y(),
+                    (1.0 - t) * p0.z() + t * p1.z()
+                    );
+        }
+
+
+        // Marching triangles
+        SurfaceMesh splitSingularTriangles(const double isovalue)
+        {
+            // Colour triangles as below, at and above
+            auto [vertexColour, created] = this->mesh.add_property_map<CGALMesh::Vertex_index, int>("v:colour", -2);
+            
+            if (false == created)
+            {
+                throw std::runtime_error("Could not make mesh array.");
+            }
+
+            for (auto v : this->mesh.vertices())
+            {
+                const double e = edgeParam[v];
+
+                if (CGAL::compare(e, isovalue) == CGAL::SMALLER)
+                {
+                    vertexColour[v] = -1;
+                }
+                else if (CGAL::compare(e, isovalue) == CGAL::EQUAL)
+                {
+                    std::cerr << "GRAY VERTEX!";
+                    vertexColour[v] = 0;
+                }
+                else
+                {
+                    vertexColour[v] = +1;
+                }
+            }
+
+
+            SurfaceMesh newMesh;
+            std::tie(newMesh.edgeParam, created) = newMesh.mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
+
+            std::map<CGALMesh::Vertex_index, CGALMesh::Vertex_index> oldToNewVertexMap;
+
+            // Copy over the vertices
+            //
+            for (auto v : this->mesh.vertices())
+            {
+                const auto &point = this->mesh.point(v);
+                const double e = this->edgeParam[v];
+
+                CGALMesh::Vertex_index newVertexId = newMesh.mesh.add_vertex(CartesianPoint_3(point[0], point[1], point[2]));
+                newMesh.edgeParam[newVertexId] = e;
+
+                oldToNewVertexMap[v] = newVertexId;
+            }
+
+
+            // Old Mesh ID and NEW mesh vertex
+            std::map<CGALMesh::Edge_index, CGALMesh::Vertex_index> edgeVertexMap;
+
+            // 1. Find all edges crossing the isovalue
+            for (auto e : this->mesh.edges())
+            {
+                const auto h = this->mesh.halfedge(e);
+
+                const auto v0 = this->mesh.source(h);
+                const auto v1 = this->mesh.target(h);
+
+                const double val0 = edgeParam[v0];
+                const double val1 = edgeParam[v1];
+
+                if (vertexColour[v0] * vertexColour[v1] == -1) // edge crosses isovalue
+                {
+                    const CartesianPoint_3 edgeVertex = interpolate_vertex(v0, v1, isovalue);
+
+                    CGALMesh::Vertex_index edgeVertexIndex = newMesh.mesh.add_vertex(edgeVertex);
+                    newMesh.edgeParam[edgeVertexIndex] = isovalue;
+                    edgeVertexMap[e] = edgeVertexIndex;
+
+                    //const CGALMesh::Vertex_index edgeVertexIndex = mesh.add_vertex(edgeVertex);
+                    //edgeVertexMap[e] = edgeVertexIndex;
+                    //edgeParam[edgeVertexIndex] = isovalue;
+                }
+            }
+
+
+
+
+
+            std::tie(newMesh.tetId, created) = newMesh.mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
+            std::tie(newMesh.sheetId, created) = newMesh.mesh.add_property_map<CGALMesh::Face_index, int>("f:sheetId", -1);
+
+            std::vector<CGALMesh::Face_index> facesToTriangulate;
+
+            // 3. Collect faces that are affected by splits
+            //
+            for (auto f : this->mesh.faces())
+            {
+
+                std::vector<CGALMesh::Vertex_index> faceVertices;
+
+                for (auto h : halfedges_around_face(this->mesh.halfedge(f), this->mesh))
+                {
+                    auto e = this->mesh.edge(h);
+
+                    faceVertices.push_back(oldToNewVertexMap[mesh.source(h)]);
+
+                    if (edgeVertexMap.contains(e))
+                    {
+                        faceVertices.push_back(edgeVertexMap.at(e));
+                    }
+                }
+
+                auto newFace = newMesh.mesh.add_face(faceVertices);
+
+                if (newFace == CGALMesh::null_face())
+                {
+                    throw std::runtime_error("Failed to add a new triangle to the msh.");
+                }
+                //else
+                //{
+                    //std::cerr << "add_face succeeded\n";
+
+                //}
+
+
+                if (faceVertices.size() > 3)
+                {
+                    facesToTriangulate.push_back(newFace);
+                }
+
+                const int tetId = this->tetId[f];
+                newMesh.tetId[newFace] = tetId;
+
+                const int sheetId = this->sheetId[f];
+                newMesh.sheetId[newFace] = sheetId;
+            }
+
+            
+
+            // 4. Retriangulate affected faces
+            CGAL::Polygon_mesh_processing::triangulate_faces(facesToTriangulate, newMesh.mesh);
+
+            if (false == CGAL::is_valid_polygon_mesh(newMesh.mesh))
+            {
+                throw std::runtime_error("New mesh is not valid.");
+            }
+
+            std::cout << "Previous number of faces : " << mesh.num_faces() << std::endl;
+            std::cout << "New number of faces : " << newMesh.mesh.num_faces() << std::endl;
+
+            return newMesh;
+        }
 
 
         // Interpolate a point along an edge for a given isovalue
