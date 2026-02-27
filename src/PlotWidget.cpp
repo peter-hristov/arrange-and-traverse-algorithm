@@ -66,7 +66,9 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
     {
         if (this->controlPoints.size() > 0)
         {
-            this->controlPoints.pop_back();
+            //this->controlPoints.pop_back();
+            this->controlPoints.clear();
+            this->controlPoints.shrink_to_fit();
             recomputeFiber = true;
             update();
         }
@@ -529,6 +531,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //Start point : 0.033263165761928781 0.14687746720889849 end point 0.21512107934692115 0.10335287336486487
         std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
         
+        std::cerr << "------------------------------HELOOO!";
 
 
 

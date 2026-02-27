@@ -91,23 +91,26 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     Timer::stop("Read surface mesh                      :");
 
 
-    //auto mesh = surfaceMesh.to_cgal_mesh();
 
     //Mesh mesh = io::readCGALMesh("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
+
     //surfaceMesh.compute_face_connected_components(mesh);
-    //surfaceMesh.computeConnectedComponents(mesh);
 
 
 
-    io::saveFiberSurface(surfaceMesh, "./fs.vtp");
+    //io::saveFiberSurface(surfaceMesh, "./fs.vtp");
 
+    Timer::start();
+    auto mesh = surfaceMesh.to_cgal_mesh();
+    surfaceMesh.computeConnectedComponents(mesh);
+    Timer::stop("Computing connected components         :");
 
     Timer::start();
     for (int i = 0 ; i < intersectionAlpha.size() ; i++)
     {
         if (intersectionType[i] == 2)
         {
-            surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
+            //surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
             //surfaceMesh.print();
         }
     }

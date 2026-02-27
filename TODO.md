@@ -20,6 +20,7 @@
         [ ] Refactor code to make it more usable 
         [ ] Compute connected components
         [ ] Start using CGAL's mesh operations and polygon soup operations.
+        [ ] Why is he CGAL mesh broken? 2 boundary edges for 2 spheres?
 
         [ ] (Optional) Reeb graph of the restriction?
 

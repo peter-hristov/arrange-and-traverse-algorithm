@@ -2,7 +2,9 @@
 
 #include "./CGALTypedefs.h"
 
+#include <iostream>
 #include <stack>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "./FiberPoint.h"
@@ -11,6 +13,8 @@
 #include "./Arrangement.h"
 #include "./Fiber.h"
 
+#include <CGAL/Polygon_mesh_processing/connected_components.h>
+#include <CGAL/Polygon_mesh_processing/border.h>
 
 class SurfaceMesh
 {
@@ -153,73 +157,113 @@ class SurfaceMesh
         }
 
 
-        std::vector<int> computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+        int computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const int triangleId)
         {
-            std::vector<int> triangleSheet(this->triangles.size(), -1);
+            // Compute a midpoint in the triangle and its coordinates in the range
+            //
+            const int tetId = this->triangleTetId[triangleId];
+            const std::array<int, 3> &triangle = triangles[triangleId];
 
-            #pragma omp parallel for schedule(dynamic)
-            for (int i = 0 ; i < this->triangles.size() ; i++)
+            const std::array<double, 3> midpoint = this->triangleMidpoint(
+                    this->vertexCoordinates[this->triangles[triangleId][0]], 
+                    this->vertexCoordinates[this->triangles[triangleId][1]], 
+                    this->vertexCoordinates[this->triangles[triangleId][2]]
+                    );
+
+            const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
+
+            const int a = tetMesh.tetrahedra[tetId][0];
+            const int b = tetMesh.tetrahedra[tetId][1];
+            const int c = tetMesh.tetrahedra[tetId][2];
+            const int d = tetMesh.tetrahedra[tetId][3];
+
+            const double ua = tetMesh.vertexCoordinatesF[a];
+            const double va = tetMesh.vertexCoordinatesG[a];
+
+            const double ub = tetMesh.vertexCoordinatesF[b];
+            const double vb = tetMesh.vertexCoordinatesG[b];
+
+            const double uc = tetMesh.vertexCoordinatesF[c];
+            const double vc = tetMesh.vertexCoordinatesG[c];
+
+            const double ud = tetMesh.vertexCoordinatesF[d];
+            const double vd = tetMesh.vertexCoordinatesG[d];
+
+
+            const double u = barycentricCoordinates[0] * ua + barycentricCoordinates[1] * ub + barycentricCoordinates[2] * uc + barycentricCoordinates[3] * ud;
+            const double v = barycentricCoordinates[0] * va + barycentricCoordinates[1] * vb + barycentricCoordinates[2] * vc + barycentricCoordinates[3] * vd;
+
+
+
+            // Compute the fiber graph
+            //
+            const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
+
+
+            // Find which componnt we are in
+            //
+            const std::vector<int> tetTriangleIds = {
+                tetMesh.triangleIndices.at({a, b, c}),
+                tetMesh.triangleIndices.at({a, b, d}),
+                tetMesh.triangleIndices.at({a, c, d}),
+                tetMesh.triangleIndices.at({b, c, d}),
+            };
+
+            for (const int triangleId : tetTriangleIds)
             {
-                // Compute a midpoint in the triangle and its coordinates in the range
-                //
-                const int tetId = this->triangleTetId[i];
-                const std::array<int, 3> &triangle = triangles[i];
-
-                const std::array<double, 3> midpoint = this->triangleMidpoint(
-                        this->vertexCoordinates[this->triangles[i][0]], 
-                        this->vertexCoordinates[this->triangles[i][1]], 
-                        this->vertexCoordinates[this->triangles[i][2]]
-                        );
-
-                const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
-
-                const int a = tetMesh.tetrahedra[tetId][0];
-                const int b = tetMesh.tetrahedra[tetId][1];
-                const int c = tetMesh.tetrahedra[tetId][2];
-                const int d = tetMesh.tetrahedra[tetId][3];
-
-                const double ua = tetMesh.vertexCoordinatesF[a];
-                const double va = tetMesh.vertexCoordinatesG[a];
-
-                const double ub = tetMesh.vertexCoordinatesF[b];
-                const double vb = tetMesh.vertexCoordinatesG[b];
-
-                const double uc = tetMesh.vertexCoordinatesF[c];
-                const double vc = tetMesh.vertexCoordinatesG[c];
-
-                const double ud = tetMesh.vertexCoordinatesF[d];
-                const double vd = tetMesh.vertexCoordinatesG[d];
-
-
-                const double u = barycentricCoordinates[0] * ua + barycentricCoordinates[1] * ub + barycentricCoordinates[2] * uc + barycentricCoordinates[3] * ud;
-                const double v = barycentricCoordinates[0] * va + barycentricCoordinates[1] * vb + barycentricCoordinates[2] * vc + barycentricCoordinates[3] * vd;
-
-
-
-                // Compute the fiber graph
-                //
-                const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
-
-
-                // Find which componnt we are in
-                //
-                std::vector<int> tetTriangleIds = {
-                    tetMesh.triangleIndices.at({a, b, c}),
-                    tetMesh.triangleIndices.at({a, b, d}),
-                    tetMesh.triangleIndices.at({a, c, d}),
-                    tetMesh.triangleIndices.at({b, c, d}),
-                };
-
-                for (const int triangleId : tetTriangleIds)
+                if (fg.componentRoot.contains(triangleId))
                 {
-                    if (fg.componentRoot.contains(triangleId))
-                    {
-                        triangleSheet[i] = reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
-                        break;
-                    }
+                    return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
                 }
 
                 //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
+            }
+
+            return -1;
+
+        }
+
+
+
+
+        std::vector<int> computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+        {
+            // Compute the connectivity of the mesh
+            //
+            Mesh mesh = this->to_cgal_mesh();
+            std::vector<std::size_t> component(num_faces(mesh));
+            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
+
+            std::cout << "There are " << num << " components\n";
+
+            std::unordered_map<int, int> componentToSheetId;
+
+
+            std::cout << "We have this many triangles " << triangles.size() << "and he mesh has this many triangles : " << num_faces(mesh) << std::endl;
+
+            // Compute only once per region
+            //
+            std::vector<int> triangleSheet(this->triangles.size(), -1);
+
+            for (int i = 0 ; i < this->triangles.size() ; i++)
+            {
+                // Get the component of this trianle
+                const int componentId = component[i];
+
+                std::cout << "The component id of triangle " << i << " is " << componentId << std::endl;
+
+                if (false == componentToSheetId.contains(componentId))
+                {
+                    std::cout << "Computing triangle ID" << std::endl; 
+                    componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
+                }
+
+                //triangleSheet[i] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
+                triangleSheet[i] = componentToSheetId.at(componentId);
+
+
+
+
             }
 
             return triangleSheet;
@@ -252,54 +296,26 @@ class SurfaceMesh
         Mesh to_cgal_mesh()
         {
             // 1. Build polygon soup
-            //std::vector<CartesianPoint_3> points;
-            //std::vector<std::vector<std::size_t>> polygons;
-            //for (auto& p : vertexCoordinates)
-            //{
-                //points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
-            //}
-            //for (auto& tri : triangles)
-            //{
-                //polygons.push_back({(std::size_t)tri[0], (std::size_t)tri[1], (std::size_t)tri[2]});
-            //}
+            std::vector<CartesianPoint_3> points;
+            std::vector<std::vector<std::size_t>> polygons;
+            for (auto& p : vertexCoordinates)
+            {
+                points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
+            }
+            for (auto& tri : triangles)
+            {
+                polygons.push_back({(std::size_t)tri[0], (std::size_t)tri[1], (std::size_t)tri[2]});
+            }
 
-            //// 2. Remove duplicate points / faces
-            //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons);
-            //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
+            // 2. Remove duplicate points / faces
+            CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons);
+            CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
+            CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
 
-            //// 3. Build Surface_mesh
-            //Mesh mesh;
-            //CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
-
-
-
-
+            // 3. Build Surface_mesh
             Mesh mesh;
-            std::vector<Mesh::Vertex_index> vmap;
-            vmap.reserve(this->vertexCoordinates.size());
+            CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
 
-            // Add vertices
-            for (const auto& p : this->vertexCoordinates)
-            {
-                vmap.push_back(
-
-                        mesh.add_vertex(CartesianPoint_3(
-                                static_cast<double>(p[0]),
-                                static_cast<double>(p[1]),
-                                static_cast<double>(p[2])
-                                ))
-                        );
-            }
-
-            // Add faces
-            for (const auto& tri : this->triangles)
-            {
-                mesh.add_face(
-                        vmap[tri[0]],
-                        vmap[tri[1]],
-                        vmap[tri[2]]
-                        );
-            }
 
             return mesh;
         }
@@ -307,144 +323,29 @@ class SurfaceMesh
 
         void computeConnectedComponents(Mesh mesh)
         {
-            std::vector<bool> visited(mesh.number_of_faces(), false);
-            int component_id = 0;
+            std::vector<std::size_t> component(num_faces(mesh));
+            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
 
-            for (auto f : mesh.faces())
-            {
-                if (visited[f.idx()]) continue;
+            std::cerr << "The number of components is ---------------------" << num << std::endl;
+            namespace PMP = CGAL::Polygon_mesh_processing;
 
-                // BFS queue
-                std::queue<Face_index> q;
-                q.push(f);
-                visited[f.idx()] = true;
+            std::cerr << "Vertices: " << num_vertices(mesh) << "\n";
+            std::cerr << "Faces: " << num_faces(mesh) << "\n";
 
-                while (!q.empty())
-                {
-                    Face_index current = q.front();
-                    q.pop();
 
-                    // iterate neighbors
-                    for (auto h : halfedges_around_face(mesh.halfedge(current), mesh))
-                    {
-                        Face_index neighbor = mesh.face(mesh.opposite(h));
-                        if (neighbor == Mesh::null_face()) continue; // boundary, skip
+            std::cerr << "Is valid: "
+                << CGAL::is_valid_polygon_mesh(mesh)
+                << "\n";
 
-                        if (!visited[neighbor.idx()])
-                        {
-                            visited[neighbor.idx()] = true;
-                            q.push(neighbor);
-                        }
-                    }
-                }
-                component_id++;
-            }
+            std::vector< boost::graph_traits<Mesh>::halfedge_descriptor > borders;
+            PMP::border_halfedges(faces(mesh), mesh, std::back_inserter(borders));
 
-            std::cout << "---- number of connected components: " << component_id << "\n";
+            std::size_t boundary_edge_count = borders.size() / 2; // each edge appears twice
+            std::cerr << "Boundary edges: " << boundary_edge_count << "\n";
 
-            // Example: print which component each face belongs to
-            //for (auto f : mesh.faces())
-            //{
-                //std::cout << "Face " << f << " -> component " << face_component[f] << "\n";
-            //}
         }
 
-        // Compute connected components using BFS on faces
-        std::vector<int> compute_face_connected_components(const Mesh& mesh)
-        {
-            this->triangleComponentId.resize(mesh.number_of_faces(), -1);
-
-            std::set<Face_index> visited;
-            int component_id = 0;
-
-            for (Face_index f : mesh.faces())
-            {
-                if (visited.contains(f))
-                    continue; // already visited
-
-                std::queue<Face_index> q;
-                q.push(f);
-                visited.insert(f);
-                this->triangleComponentId[f] = component_id;
-
-                std::cout << "------------------------------------------------------------------------------ Component " << component_id << std::endl;
-                while (!q.empty())
-                {
-                    Face_index current = q.front();
-                    q.pop();
-
-                    std::cout << "At " << current.id() << " / " << current.idx() << std::endl;
-
-                    // iterate over all neighbors (faces sharing an edge)
-                    for (auto h : mesh.halfedges_around_face(mesh.halfedge(current)))
-                    {
-                        Face_index neighbor = mesh.face(mesh.opposite(h));
-
-                        if (neighbor == Mesh::null_face())
-                        {
-                            continue;
-                        }
-
-                        std::cout << "------- Looking At " << neighbor.id() << " / " << neighbor.idx() << std::endl;
-
-                        if (false == visited.contains(neighbor))
-                        {
-                            visited.insert(neighbor);
-                            q.push(neighbor);
-                            this->triangleComponentId[neighbor] = component_id;
-                        }
-                    }
-                }
-
-                component_id++;
-            }
-
-            return {};
-            //return face_component;
-        }
-
-        // Marching triangles
-        //std::vector<SurfaceMesh> splitSurfaceMesh()
-        //{
-            //Mesh meshC = this->to_cgal_mesh();
-
-
-            //std::unordered_set<Mesh::Face_index> visited;
-            //std::stack<Mesh::Face_index> stack;
-
-            //Mesh::Face_index start_face = *meshC.faces().begin(); 
-            //stack.push(start_face);
-            //visited.insert(start_face);
-
-            //while (!stack.empty())
-            //{
-                //auto f = stack.top();
-                //stack.pop();
-
-                //// Print the vertices of the current face
-                ////std::cout << "Face " << f << ": \n";
-                ////for (Mesh::Vertex_index v : vertices_around_face(meshC.halfedge(f), meshC))
-                ////{
-                    ////const auto& p = meshC.point(v);
-                    ////std::cout << "(" << p.x() << ", " << p.y() << ", " << p.z() << ") \n";
-                ////}
-                ////std::cout << "\n\n";
-
-
-
-                //for (Mesh::Halfedge_index h : halfedges_around_face(meshC.halfedge(f), meshC))
-                //{
-                    //Mesh::Face_index fn = meshC.face(meshC.opposite(h));
-
-                    //if (fn != Mesh::null_face() && !visited.contains(fn))
-                    //{
-                        //visited.insert(fn);
-                        //stack.push(fn);
-                    //}
-                //}
-            //}
-        //}
-
+        
 
 
 
