@@ -44,6 +44,7 @@
 #include "./TetMesh.h"
 #include "./Fiber.h"
 #include "./SurfaceMesh.h"
+#include "src/CGALTypedefs.h"
 
 SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
 {
@@ -84,20 +85,23 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
     std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
     std::cout << "Number of cells: " << cleanedPolyData->GetNumberOfCells() << "\n";
 
-    SurfaceMesh mesh;
-    mesh.vertexCoordinates.resize(points->GetNumberOfPoints());
-    mesh.edgeParam.resize(points->GetNumberOfPoints());
+    std::vector<std::array<double, 3>> vertexCoordinates(points->GetNumberOfPoints()); 
+    std::vector<double> edgeParam(points->GetNumberOfPoints()); 
+
     
     for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
     {
         double p[3];
         points->GetPoint(i, p);
-        mesh.vertexCoordinates[i] = {static_cast<float>(p[0]),
-                                     static_cast<float>(p[1]),
-                                     static_cast<float>(p[2])};
+        vertexCoordinates[i] = {static_cast<double>(p[0]),
+                                     static_cast<double>(p[1]),
+                                     static_cast<double>(p[2])};
 
-        mesh.edgeParam[i] = scalarEdgeParam->GetTuple1(i);
+        edgeParam[i] = scalarEdgeParam->GetTuple1(i);
     }
+
+    std::vector<std::array<int, 3>> triangles; 
+    std::vector<int> triangleTetId;
 
     // --- read triangles ---
     vtkIdType npts = 0;
@@ -109,22 +113,21 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
         if (npts != 3)
             continue; // skip non-triangle cells
 
-        mesh.triangles.push_back({
+        triangles.push_back({
                 static_cast<int>(pts[0]),
                 static_cast<int>(pts[1]),
                 static_cast<int>(pts[2])}
                 );
 
         // Get the TetId for this cell
-        vtkIdType cellId = mesh.triangles.size() - 1; 
+        vtkIdType cellId = triangles.size() - 1; 
         int tetId = static_cast<int>(scalarTetId->GetTuple1(cellId));
-        mesh.triangleTetId.push_back(tetId);
+        triangleTetId.push_back(tetId);
 
     }
 
-    mesh.isVertexSingular = std::vector<bool>(mesh.vertexCoordinates.size(), false);
 
-    return mesh;
+    return SurfaceMesh(vertexCoordinates, triangles, edgeParam, triangleTetId);
 
 
     // Manual merge
@@ -268,7 +271,7 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
 }
 
 
-Mesh io::readCGALMesh(const std::string& filename)
+CGALMesh io::readCGALMesh(const std::string& filename)
 {
     // --- 1. Read VTP using VTK ---
     auto reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
@@ -321,7 +324,7 @@ Mesh io::readCGALMesh(const std::string& filename)
     CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
 
     // 3. Build Surface_mesh
-    Mesh mesh;
+    CGALMesh mesh;
     CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
 
 
@@ -331,51 +334,51 @@ Mesh io::readCGALMesh(const std::string& filename)
 void io::saveFiberSurface(SurfaceMesh& mesh, const std::string& filename)
 {
     // Create VTK containers
-    vtkSmartPointer<vtkPoints> points =
-        vtkSmartPointer<vtkPoints>::New();
+    //vtkSmartPointer<vtkPoints> points =
+        //vtkSmartPointer<vtkPoints>::New();
 
-    vtkSmartPointer<vtkCellArray> triangles =
-        vtkSmartPointer<vtkCellArray>::New();
+    //vtkSmartPointer<vtkCellArray> triangles =
+        //vtkSmartPointer<vtkCellArray>::New();
 
-    // --- Add vertices ---
-    points->SetNumberOfPoints(mesh.vertexCoordinates.size());
+    //// --- Add vertices ---
+    //points->SetNumberOfPoints(mesh.vertexCoordinates.size());
 
-    for (vtkIdType i = 0;
-         i < static_cast<vtkIdType>(mesh.vertexCoordinates.size());
-         ++i)
-    {
-        const auto& p = mesh.vertexCoordinates[i];
-        points->SetPoint(i, p[0], p[1], p[2]);
-    }
+    //for (vtkIdType i = 0;
+         //i < static_cast<vtkIdType>(mesh.vertexCoordinates.size());
+         //++i)
+    //{
+        //const auto& p = mesh.vertexCoordinates[i];
+        //points->SetPoint(i, p[0], p[1], p[2]);
+    //}
 
-    // --- Add triangles ---
-    for (const auto& tri : mesh.triangles)
-    {
-        vtkSmartPointer<vtkTriangle> triangle =
-            vtkSmartPointer<vtkTriangle>::New();
+    //// --- Add triangles ---
+    //for (const auto& tri : mesh.triangles)
+    //{
+        //vtkSmartPointer<vtkTriangle> triangle =
+            //vtkSmartPointer<vtkTriangle>::New();
 
-        triangle->GetPointIds()->SetId(0, tri[0]);
-        triangle->GetPointIds()->SetId(1, tri[1]);
-        triangle->GetPointIds()->SetId(2, tri[2]);
+        //triangle->GetPointIds()->SetId(0, tri[0]);
+        //triangle->GetPointIds()->SetId(1, tri[1]);
+        //triangle->GetPointIds()->SetId(2, tri[2]);
 
-        triangles->InsertNextCell(triangle);
-    }
+        //triangles->InsertNextCell(triangle);
+    //}
 
-    // --- Build polydata ---
-    vtkSmartPointer<vtkPolyData> polyData =
-        vtkSmartPointer<vtkPolyData>::New();
+    //// --- Build polydata ---
+    //vtkSmartPointer<vtkPolyData> polyData =
+        //vtkSmartPointer<vtkPolyData>::New();
 
-    polyData->SetPoints(points);
-    polyData->SetPolys(triangles);
+    //polyData->SetPoints(points);
+    //polyData->SetPolys(triangles);
 
-    // --- Write file ---
-    vtkSmartPointer<vtkXMLPolyDataWriter> writer =
-        vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    //// --- Write file ---
+    //vtkSmartPointer<vtkXMLPolyDataWriter> writer =
+        //vtkSmartPointer<vtkXMLPolyDataWriter>::New();
 
-    writer->SetFileName(filename.c_str());
-    writer->SetInputData(polyData);
-    writer->SetDataModeToBinary();   // smaller file
-    writer->Write();
+    //writer->SetFileName(filename.c_str());
+    //writer->SetInputData(polyData);
+    //writer->SetDataModeToBinary();   // smaller file
+    //writer->Write();
 }
 
 

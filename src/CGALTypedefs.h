@@ -149,9 +149,11 @@ typedef CGAL::AABB_tree<Traits> TreeAABB;
 
 #include <CGAL/Surface_mesh.h>
 
-typedef CGAL::Surface_mesh<CartesianPoint_3> Mesh;
-typedef Mesh::Vertex_index Vertex_index;
-typedef Mesh::Face_index Face_index;
+typedef CGAL::Surface_mesh<CartesianPoint_3> CGALMesh;
+//typedef CGALMesh::Vertex_index Vertex_index;
+//typedef CGALMesh::Face_index Face_index;
+//typedef CGALMesh::Vertex_index vertex_descriptor;
+//typedef CGALMesh::Face_index face_descriptor;
 
 
 

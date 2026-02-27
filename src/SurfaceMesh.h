@@ -2,6 +2,7 @@
 
 #include "./CGALTypedefs.h"
 
+#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
 #include <iostream>
 #include <stack>
 #include <unordered_map>
@@ -19,81 +20,231 @@
 class SurfaceMesh
 {
     public:
-        std::vector<std::array<double, 3>> vertexCoordinates;
-        std::vector<std::array<int, 3>> triangles;
-        std::vector<double> edgeParam;
-        std::vector<bool> isVertexSingular;
-        std::vector<int> triangleTetId;
-        std::vector<int> triangleComponentId;
+        CGALMesh mesh;
+        CGALMesh::Property_map<CGALMesh::Vertex_index, double> edgeParam;
+        CGALMesh::Property_map<CGALMesh::Face_index, int> tetId;
+        CGALMesh::Property_map<CGALMesh::Face_index, int> sheetId;
+
+        SurfaceMesh()
+        {
+
+        }
+
+        // Create mesh from a from a triangle soup
+        SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordinates, std::vector<std::array<int, 3>> triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId)
+        {
+            // Unpack the points
+            std::vector<CartesianPoint_3> points;
+            for (auto& p : vertexCoordinates)
+            {
+                points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
+            }
+
+            auto polygons = triangles;
+
+            // Assume that the mesh is already cleaned up
+            //
+            // Merge duplicate vertices
+            //std::vector<std::size_t> old_to_new;
+            //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons,
+                    //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
+                            //old_to_new.begin(), boost::identity_property_map(), std::size_t(0)
+                            //))
+                    //);
+
+
+            //// Merge duplicate polygons
+            //std::vector<std::size_t> old_to_new2;
+            //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons,
+                    //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
+                            //old_to_new2.begin(), boost::identity_property_map(), std::size_t(0)
+                            //))
+                    //);
+
+
+            // Orient triangles
+            CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
+
+            // 3. Build Surface_mesh
+            CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, this->mesh);
+
+            bool created;
+            std::tie(this->edgeParam, created) = this->mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
+
+            if (false == created)
+            {
+                throw std::runtime_error("EdgeParam property could not be added to the mesh.");
+            }
+
+            for (std::size_t i = 0; i < vertexEdgePara.size(); ++i)
+            {
+                this->edgeParam[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
+            }
+
+            std::tie(this->tetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
+            
+            if (false == created)
+            {
+                throw std::runtime_error("TetId property could not be added to the mesh.");
+            }
+
+            for (std::size_t i = 0; i < tetId.size(); ++i)
+            {
+                this->tetId[CGALMesh::Face_index(i)] = tetId[i];
+            }
+
+            std::tie(this->sheetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:sheetId", -1);
+
+            if (false == created)
+            {
+                throw std::runtime_error("SheetId property could not be added to the mesh.");
+            }
+
+
+            // Compute the connectivity of the mesh
+            //
+            std::vector<std::size_t> component(num_faces(mesh));
+            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
+
+            std::cout << "There are " << num << " components\n";
+
+
+        }
+
+
+        void print()
+        {
+            std::cout << "Vertices:\n";
+            for (auto v : mesh.vertices())
+            {
+                const auto &p = mesh.point(v);
+                double e = edgeParam[v];
+                std::cout << "  Vertex " << v << ": ("
+                    << p[0] << ", " << p[1] << ", " << p[2]
+                    << "), edgeParam = " << e << "\n";
+            }
+
+            std::cout << "\nFaces:\n";
+            for (auto f : mesh.faces())
+            {
+                std::cout << "  Face " << f << ": [";
+                bool first = true;
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
+                    if (!first) std::cout << ", ";
+                    std::cout << v;
+                    first = false;
+                }
+                std::cout << "], tetId = " << tetId[f]
+                    << ", sheetId = " << sheetId[f] << "\n";
+            }
+
+        }
+
+
 
         std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
         {
             std::vector<FiberPoint> allFiberPoints;
 
-            for (int i = 0 ; i < this->triangles.size() ; i++)
+            std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+            for (auto f : mesh.faces())
             {
-                const auto &triangle = this->triangles[i];
-
-                // Find the colour of the triangle based on the sheet
-                //
-                std::array<float, 3> triangleColour;
-                if (triangleSheets.size() == 0)
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
                 {
-                    triangleColour = {1.0, 1.0, 0.0};
-                }
-                else
-                {
-                    const int sheetId = triangleSheets[i];
-                    //const int sheetId = triangleComponentId[i];
+                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
 
-                    if (sheetId == -1)
-                    {
-                        triangleColour = {1.0, 0.0, 1.0};
-                    }
-                    else
-                    {
-                        triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
-                    }
-
-                }
-
-
-
-                // Output the triangle pints
-                //
-                for (const auto &vertex : triangle)
-                {
                     allFiberPoints.push_back(FiberPoint(
-                                vertexCoordinates[vertex],
+                                point,
                                 triangleColour, 
                                 1,
                                 -1
                                 ));
-
                 }
-
             }
-
             return allFiberPoints;
-
         }
 
-        void print()
-        {
-            std::cout << "Number of vertices = " << this->vertexCoordinates.size() << "\n";
-            std::cout << "Number of triangles = " << this->triangles.size() << "\n";
 
-            for (int i = 0 ; i < this->vertexCoordinates.size() ; i++)
-            {
-                printf("Vertex %d with coordinates (%f, %f, %f) and edgePara %f and isSingular %d.\n", i, vertexCoordinates[i][0], vertexCoordinates[i][1], vertexCoordinates[i][2], edgeParam[i], (int)isVertexSingular[i]);
-            }
+        //std::vector<std::array<double, 3>> vertexCoordinates;
+        //std::vector<std::array<int, 3>> triangles;
+        ///
+        //std::vector<double> edgeParam;
+        //std::vector<bool> isVertexSingular;
+        //std::vector<int> triangleTetId;
+        //std::vector<int> triangleComponentId;
 
-            for (int i = 0 ; i < this->triangles.size() ; i++)
-            {
-                printf("Triangle %d with vertices (%d, %d, %d) and tetId %d\n", i, triangles[i][0], triangles[i][1], triangles[i][2], triangleTetId[i]);
-            }
 
-        }
+
+
+        //std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
+        //{
+            //std::vector<FiberPoint> allFiberPoints;
+
+            //for (int i = 0 ; i < this->triangles.size() ; i++)
+            //{
+                //const auto &triangle = this->triangles[i];
+
+                //// Find the colour of the triangle based on the sheet
+                ////
+                //std::array<float, 3> triangleColour;
+                //if (triangleSheets.size() == 0)
+                //{
+                    //triangleColour = {1.0, 1.0, 0.0};
+                //}
+                //else
+                //{
+                    //const int sheetId = triangleSheets[i];
+                    ////const int sheetId = triangleComponentId[i];
+
+                    //if (sheetId == -1)
+                    //{
+                        //triangleColour = {1.0, 0.0, 1.0};
+                    //}
+                    //else
+                    //{
+                        //triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                    //}
+
+                //}
+
+
+
+                //// Output the triangle pints
+                ////
+                //for (const auto &vertex : triangle)
+                //{
+                    //allFiberPoints.push_back(FiberPoint(
+                                //vertexCoordinates[vertex],
+                                //triangleColour, 
+                                //1,
+                                //-1
+                                //));
+
+                //}
+
+            //}
+
+            //return allFiberPoints;
+
+        //}
+
+        //void print()
+        //{
+            //std::cout << "Number of vertices = " << this->vertexCoordinates.size() << "\n";
+            //std::cout << "Number of triangles = " << this->triangles.size() << "\n";
+
+            //for (int i = 0 ; i < this->vertexCoordinates.size() ; i++)
+            //{
+                //printf("Vertex %d with coordinates (%f, %f, %f) and edgePara %f and isSingular %d.\n", i, vertexCoordinates[i][0], vertexCoordinates[i][1], vertexCoordinates[i][2], edgeParam[i], (int)isVertexSingular[i]);
+            //}
+
+            //for (int i = 0 ; i < this->triangles.size() ; i++)
+            //{
+                //printf("Triangle %d with vertices (%d, %d, %d) and tetId %d\n", i, triangles[i][0], triangles[i][1], triangles[i][2], triangleTetId[i]);
+            //}
+
+        //}
 
 
 
@@ -157,387 +308,387 @@ class SurfaceMesh
         }
 
 
-        int computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const int triangleId)
-        {
-            // Compute a midpoint in the triangle and its coordinates in the range
-            //
-            const int tetId = this->triangleTetId[triangleId];
-            const std::array<int, 3> &triangle = triangles[triangleId];
+        //int computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const int triangleId)
+        //{
+            //// Compute a midpoint in the triangle and its coordinates in the range
+            ////
+            //const int tetId = this->triangleTetId[triangleId];
+            //const std::array<int, 3> &triangle = triangles[triangleId];
 
-            const std::array<double, 3> midpoint = this->triangleMidpoint(
-                    this->vertexCoordinates[this->triangles[triangleId][0]], 
-                    this->vertexCoordinates[this->triangles[triangleId][1]], 
-                    this->vertexCoordinates[this->triangles[triangleId][2]]
-                    );
+            //const std::array<double, 3> midpoint = this->triangleMidpoint(
+                    //this->vertexCoordinates[this->triangles[triangleId][0]], 
+                    //this->vertexCoordinates[this->triangles[triangleId][1]], 
+                    //this->vertexCoordinates[this->triangles[triangleId][2]]
+                    //);
 
-            const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
+            //const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
 
-            const int a = tetMesh.tetrahedra[tetId][0];
-            const int b = tetMesh.tetrahedra[tetId][1];
-            const int c = tetMesh.tetrahedra[tetId][2];
-            const int d = tetMesh.tetrahedra[tetId][3];
+            //const int a = tetMesh.tetrahedra[tetId][0];
+            //const int b = tetMesh.tetrahedra[tetId][1];
+            //const int c = tetMesh.tetrahedra[tetId][2];
+            //const int d = tetMesh.tetrahedra[tetId][3];
 
-            const double ua = tetMesh.vertexCoordinatesF[a];
-            const double va = tetMesh.vertexCoordinatesG[a];
+            //const double ua = tetMesh.vertexCoordinatesF[a];
+            //const double va = tetMesh.vertexCoordinatesG[a];
 
-            const double ub = tetMesh.vertexCoordinatesF[b];
-            const double vb = tetMesh.vertexCoordinatesG[b];
+            //const double ub = tetMesh.vertexCoordinatesF[b];
+            //const double vb = tetMesh.vertexCoordinatesG[b];
 
-            const double uc = tetMesh.vertexCoordinatesF[c];
-            const double vc = tetMesh.vertexCoordinatesG[c];
+            //const double uc = tetMesh.vertexCoordinatesF[c];
+            //const double vc = tetMesh.vertexCoordinatesG[c];
 
-            const double ud = tetMesh.vertexCoordinatesF[d];
-            const double vd = tetMesh.vertexCoordinatesG[d];
-
-
-            const double u = barycentricCoordinates[0] * ua + barycentricCoordinates[1] * ub + barycentricCoordinates[2] * uc + barycentricCoordinates[3] * ud;
-            const double v = barycentricCoordinates[0] * va + barycentricCoordinates[1] * vb + barycentricCoordinates[2] * vc + barycentricCoordinates[3] * vd;
+            //const double ud = tetMesh.vertexCoordinatesF[d];
+            //const double vd = tetMesh.vertexCoordinatesG[d];
 
 
-
-            // Compute the fiber graph
-            //
-            const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
-
-
-            // Find which componnt we are in
-            //
-            const std::vector<int> tetTriangleIds = {
-                tetMesh.triangleIndices.at({a, b, c}),
-                tetMesh.triangleIndices.at({a, b, d}),
-                tetMesh.triangleIndices.at({a, c, d}),
-                tetMesh.triangleIndices.at({b, c, d}),
-            };
-
-            for (const int triangleId : tetTriangleIds)
-            {
-                if (fg.componentRoot.contains(triangleId))
-                {
-                    return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
-                }
-
-                //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
-            }
-
-            return -1;
-
-        }
+            //const double u = barycentricCoordinates[0] * ua + barycentricCoordinates[1] * ub + barycentricCoordinates[2] * uc + barycentricCoordinates[3] * ud;
+            //const double v = barycentricCoordinates[0] * va + barycentricCoordinates[1] * vb + barycentricCoordinates[2] * vc + barycentricCoordinates[3] * vd;
 
 
 
-
-        std::vector<int> computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
-        {
-            // Compute the connectivity of the mesh
-            //
-            Mesh mesh = this->to_cgal_mesh();
-            std::vector<std::size_t> component(num_faces(mesh));
-            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
-
-            std::cout << "There are " << num << " components\n";
-
-            std::unordered_map<int, int> componentToSheetId;
+            //// Compute the fiber graph
+            ////
+            //const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
 
 
-            std::cout << "We have this many triangles " << triangles.size() << "and he mesh has this many triangles : " << num_faces(mesh) << std::endl;
+            //// Find which componnt we are in
+            ////
+            //const std::vector<int> tetTriangleIds = {
+                //tetMesh.triangleIndices.at({a, b, c}),
+                //tetMesh.triangleIndices.at({a, b, d}),
+                //tetMesh.triangleIndices.at({a, c, d}),
+                //tetMesh.triangleIndices.at({b, c, d}),
+            //};
 
-            // Compute only once per region
-            //
-            std::vector<int> triangleSheet(this->triangles.size(), -1);
+            //for (const int triangleId : tetTriangleIds)
+            //{
+                //if (fg.componentRoot.contains(triangleId))
+                //{
+                    //return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
+                //}
 
-            for (int i = 0 ; i < this->triangles.size() ; i++)
-            {
-                // Get the component of this trianle
-                const int componentId = component[i];
+                ////printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
+            //}
 
-                std::cout << "The component id of triangle " << i << " is " << componentId << std::endl;
+            //return -1;
 
-                if (false == componentToSheetId.contains(componentId))
-                {
-                    std::cout << "Computing triangle ID" << std::endl; 
-                    componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
-                }
-
-                //triangleSheet[i] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
-                triangleSheet[i] = componentToSheetId.at(componentId);
+        //}
 
 
 
 
-            }
+        //std::vector<int> computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+        //{
+            //// Compute the connectivity of the mesh
+            ////
+            //Mesh mesh = this->to_cgal_mesh();
+            //std::vector<std::size_t> component(num_faces(mesh));
+            //std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
 
-            return triangleSheet;
-        }
+            //std::cout << "There are " << num << " components\n";
+
+            //std::unordered_map<int, int> componentToSheetId;
+
+
+            //std::cout << "We have this many triangles " << triangles.size() << "and he mesh has this many triangles : " << num_faces(mesh) << std::endl;
+
+            //// Compute only once per region
+            ////
+            //std::vector<int> triangleSheet(this->triangles.size(), -1);
+
+            //for (int i = 0 ; i < this->triangles.size() ; i++)
+            //{
+                //// Get the component of this trianle
+                //const int componentId = component[i];
+
+                //std::cout << "The component id of triangle " << i << " is " << componentId << std::endl;
+
+                //if (false == componentToSheetId.contains(componentId))
+                //{
+                    //std::cout << "Computing triangle ID" << std::endl; 
+                    //componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
+                //}
+
+                ////triangleSheet[i] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, i);
+                //triangleSheet[i] = componentToSheetId.at(componentId);
+
+
+
+
+            //}
+
+            //return triangleSheet;
+        //}
 
 
 
 
 
         // Interpolate a point along an edge for a given isovalue
-        std::array<double,3> interpolateEdge(int a, int b, double iso) const
-        {
-            const double valA = edgeParam[a];
-            const double valB = edgeParam[b];
+        //std::array<double,3> interpolateEdge(int a, int b, double iso) const
+        //{
+            //const double valA = edgeParam[a];
+            //const double valB = edgeParam[b];
 
-            // Avoid division by zero (flat edge)
-            const double alpha = (valB != valA) ? (iso - valA) / (valB - valA) : 0.5;
+            //// Avoid division by zero (flat edge)
+            //const double alpha = (valB != valA) ? (iso - valA) / (valB - valA) : 0.5;
 
-            const auto &posA = vertexCoordinates[a];
-            const auto &posB = vertexCoordinates[b];
+            //const auto &posA = vertexCoordinates[a];
+            //const auto &posB = vertexCoordinates[b];
 
-            return {
-                posA[0] + alpha * (posB[0] - posA[0]),
-                    posA[1] + alpha * (posB[1] - posA[1]),
-                    posA[2] + alpha * (posB[2] - posA[2])
-            };
-        }
-
-
-        Mesh to_cgal_mesh()
-        {
-            // 1. Build polygon soup
-            std::vector<CartesianPoint_3> points;
-            std::vector<std::vector<std::size_t>> polygons;
-            for (auto& p : vertexCoordinates)
-            {
-                points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
-            }
-            for (auto& tri : triangles)
-            {
-                polygons.push_back({(std::size_t)tri[0], (std::size_t)tri[1], (std::size_t)tri[2]});
-            }
-
-            // 2. Remove duplicate points / faces
-            CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons);
-            CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
-            CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
-
-            // 3. Build Surface_mesh
-            Mesh mesh;
-            CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
+            //return {
+                //posA[0] + alpha * (posB[0] - posA[0]),
+                    //posA[1] + alpha * (posB[1] - posA[1]),
+                    //posA[2] + alpha * (posB[2] - posA[2])
+            //};
+        //}
 
 
-            return mesh;
-        }
+        //Mesh to_cgal_mesh()
+        //{
+            //// 1. Build polygon soup
+            //std::vector<CartesianPoint_3> points;
+            //std::vector<std::vector<std::size_t>> polygons;
+            //for (auto& p : vertexCoordinates)
+            //{
+                //points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
+            //}
+            //for (auto& tri : triangles)
+            //{
+                //polygons.push_back({(std::size_t)tri[0], (std::size_t)tri[1], (std::size_t)tri[2]});
+            //}
+
+            //// 2. Remove duplicate points / faces
+            //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons);
+            //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
+            //CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
+
+            //// 3. Build Surface_mesh
+            //Mesh mesh;
+            //CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
 
 
-        void computeConnectedComponents(Mesh mesh)
-        {
-            std::vector<std::size_t> component(num_faces(mesh));
-            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
-
-            std::cerr << "The number of components is ---------------------" << num << std::endl;
-            namespace PMP = CGAL::Polygon_mesh_processing;
-
-            std::cerr << "Vertices: " << num_vertices(mesh) << "\n";
-            std::cerr << "Faces: " << num_faces(mesh) << "\n";
+            //return mesh;
+        //}
 
 
-            std::cerr << "Is valid: "
-                << CGAL::is_valid_polygon_mesh(mesh)
-                << "\n";
+        //void computeConnectedComponents(Mesh mesh)
+        //{
+            //std::vector<std::size_t> component(num_faces(mesh));
+            //std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
 
-            std::vector< boost::graph_traits<Mesh>::halfedge_descriptor > borders;
-            PMP::border_halfedges(faces(mesh), mesh, std::back_inserter(borders));
+            //std::cerr << "The number of components is ---------------------" << num << std::endl;
+            //namespace PMP = CGAL::Polygon_mesh_processing;
 
-            std::size_t boundary_edge_count = borders.size() / 2; // each edge appears twice
-            std::cerr << "Boundary edges: " << boundary_edge_count << "\n";
+            //std::cerr << "Vertices: " << num_vertices(mesh) << "\n";
+            //std::cerr << "Faces: " << num_faces(mesh) << "\n";
 
-        }
+
+            //std::cerr << "Is valid: "
+                //<< CGAL::is_valid_polygon_mesh(mesh)
+                //<< "\n";
+
+            //std::vector< boost::graph_traits<Mesh>::halfedge_descriptor > borders;
+            //PMP::border_halfedges(faces(mesh), mesh, std::back_inserter(borders));
+
+            //std::size_t boundary_edge_count = borders.size() / 2; // each edge appears twice
+            //std::cerr << "Boundary edges: " << boundary_edge_count << "\n";
+
+        //}
 
         
 
 
 
         // Marching triangles
-        SurfaceMesh splitSingularTriangles(const double isovalue)
-        {
-            std::map<std::set<int>, std::array<double, 3>> triangleIntersectionPoints;
+        //SurfaceMesh splitSingularTriangles(const double isovalue)
+        //{
+            //std::map<std::set<int>, std::array<double, 3>> triangleIntersectionPoints;
 
-            // Find the intersected edges as well as the points of intersection
-            //
-            for (const auto &triangle : this->triangles)
-            {
-                const int v0 = triangle[0];
-                const int v1 = triangle[1];
-                const int v2 = triangle[2];
+            //// Find the intersected edges as well as the points of intersection
+            ////
+            //for (const auto &triangle : this->triangles)
+            //{
+                //const int v0 = triangle[0];
+                //const int v1 = triangle[1];
+                //const int v2 = triangle[2];
 
-                const bool v0Inside = this->edgeParam[v0] < isovalue;
-                const bool v1Inside = this->edgeParam[v1] < isovalue;
-                const bool v2Inside = this->edgeParam[v2] < isovalue;
+                //const bool v0Inside = this->edgeParam[v0] < isovalue;
+                //const bool v1Inside = this->edgeParam[v1] < isovalue;
+                //const bool v2Inside = this->edgeParam[v2] < isovalue;
 
-                if (v0Inside != v1Inside)
-                {
-                    triangleIntersectionPoints[{v0, v1}] = interpolateEdge(v0, v1, isovalue); 
-                }
-                if (v1Inside != v2Inside)
-                {
-                    triangleIntersectionPoints[{v1, v2}] = interpolateEdge(v1, v2, isovalue); 
-                }
-                if (v2Inside != v0Inside)
-                {
-                    triangleIntersectionPoints[{v2, v0}] = interpolateEdge(v2, v0, isovalue); 
-                }
-            }
+                //if (v0Inside != v1Inside)
+                //{
+                    //triangleIntersectionPoints[{v0, v1}] = interpolateEdge(v0, v1, isovalue); 
+                //}
+                //if (v1Inside != v2Inside)
+                //{
+                    //triangleIntersectionPoints[{v1, v2}] = interpolateEdge(v1, v2, isovalue); 
+                //}
+                //if (v2Inside != v0Inside)
+                //{
+                    //triangleIntersectionPoints[{v2, v0}] = interpolateEdge(v2, v0, isovalue); 
+                //}
+            //}
 
-            // Set up the new vertices
-            //
-            std::map<std::set<int>, int> triangleIntersectionIndices;
+            //// Set up the new vertices
+            ////
+            //std::map<std::set<int>, int> triangleIntersectionIndices;
 
-            SurfaceMesh newMesh;
-            newMesh.vertexCoordinates = this->vertexCoordinates;
-            newMesh.edgeParam = this->edgeParam;
-            newMesh.isVertexSingular = this->isVertexSingular;
+            //SurfaceMesh newMesh;
+            //newMesh.vertexCoordinates = this->vertexCoordinates;
+            //newMesh.edgeParam = this->edgeParam;
+            //newMesh.isVertexSingular = this->isVertexSingular;
 
-            for (const auto &[edge, point] : triangleIntersectionPoints)
-            {
-                newMesh.vertexCoordinates.push_back(point);
-                newMesh.edgeParam.push_back(isovalue);
-                newMesh.isVertexSingular.push_back(true);
-                triangleIntersectionIndices[edge] = newMesh.vertexCoordinates.size()-1;
-            }
-
-
-            // Set up the new triangles
-            for (int i = 0 ; i < this->triangles.size() ; i++)
-            {
-                const auto &triangle = this->triangles[i];
-                const int &tetId = this->triangleTetId[i];
-
-                const int v0 = triangle[0];
-                const int v1 = triangle[1];
-                const int v2 = triangle[2];
-
-                const bool v0v1Intersected = triangleIntersectionIndices.contains({v0, v1});
-                const bool v1v2Intersected = triangleIntersectionIndices.contains({v1, v2});
-                const bool v2v0Intersected = triangleIntersectionIndices.contains({v2, v0});
+            //for (const auto &[edge, point] : triangleIntersectionPoints)
+            //{
+                //newMesh.vertexCoordinates.push_back(point);
+                //newMesh.edgeParam.push_back(isovalue);
+                //newMesh.isVertexSingular.push_back(true);
+                //triangleIntersectionIndices[edge] = newMesh.vertexCoordinates.size()-1;
+            //}
 
 
-                // No intersected, skip this case
-                if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 0)
-                {
-                    newMesh.triangles.push_back({
-                            v0, 
-                            v1, 
-                            v2, 
-                            });
+            //// Set up the new triangles
+            //for (int i = 0 ; i < this->triangles.size() ; i++)
+            //{
+                //const auto &triangle = this->triangles[i];
+                //const int &tetId = this->triangleTetId[i];
 
-                    newMesh.triangleTetId.push_back(tetId);
+                //const int v0 = triangle[0];
+                //const int v1 = triangle[1];
+                //const int v2 = triangle[2];
 
-                }
-                else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 1)
-                {
-                    // Rotate so that vB is the intersected vertex is vB and intersected edges is vAvC
-                    //
-                    int vA, vB, vC;
-
-                    if (triangleIntersectionIndices.contains({v0, v1}))
-                    {
-                        vA = v1; vB = v2; vC = v0;
-                    }
-
-                    else if (triangleIntersectionIndices.contains({v1, v2}))
-                    {
-                        vA = v2; vB = v0; vC = v1;
-                    }
-
-                    else if (triangleIntersectionIndices.contains({v2, v0}))
-                    {
-                        vA = v0; vB = v1; vC = v2;
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Impossible else case.");
-                    }
-
-                    newMesh.triangles.push_back({
-                            vA, 
-                            vB, 
-                            triangleIntersectionIndices.at({vA, vC}), 
-                            });
-
-                    newMesh.triangles.push_back({
-                            vB, 
-                            vC, 
-                            triangleIntersectionIndices.at({vA, vC}), 
-                            });
-
-                    newMesh.triangleTetId.push_back(tetId);
-                    newMesh.triangleTetId.push_back(tetId);
-                }
-                else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 2)
-                {
-                    // Rotate so that vB is the odd one out (between the two intersected edges)
-                    //
-                    int vA, vB, vC;
-
-                    if (triangleIntersectionIndices.contains({v0, v1}) && triangleIntersectionIndices.contains({v1, v2}))
-                    {
-                        vA = v0; vB = v1; vC = v2;
-                    }
-
-                    else if (triangleIntersectionIndices.contains({v1, v2}) && triangleIntersectionIndices.contains({v0, v2}))
-                    {
-                        vA = v1; vB = v2; vC = v0;
-                    }
-
-                    else if (triangleIntersectionIndices.contains({v0, v1}) && triangleIntersectionIndices.contains({v0, v2}))
-                    {
-                        vA = v2; vB = v0; vC = v1;
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Impossible else case.");
-                    }
+                //const bool v0v1Intersected = triangleIntersectionIndices.contains({v0, v1});
+                //const bool v1v2Intersected = triangleIntersectionIndices.contains({v1, v2});
+                //const bool v2v0Intersected = triangleIntersectionIndices.contains({v2, v0});
 
 
-                    //         vB
-                    //         /\
-                    //        /  \
-                    //       /____\
-                    //      /      \
-                    //     /________\
-                    //    vC        vA
-                    //
+                //// No intersected, skip this case
+                //if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 0)
+                //{
+                    //newMesh.triangles.push_back({
+                            //v0, 
+                            //v1, 
+                            //v2, 
+                            //});
 
-                    newMesh.triangles.push_back({
-                            vB, 
-                            triangleIntersectionIndices.at({vB, vC}), 
-                            triangleIntersectionIndices.at({vA, vB}), 
-                            });
+                    //newMesh.triangleTetId.push_back(tetId);
 
-                    newMesh.triangles.push_back({
-                            vA, 
-                            triangleIntersectionIndices.at({vA, vB}), 
-                            triangleIntersectionIndices.at({vB, vC}), 
-                            });
+                //}
+                //else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 1)
+                //{
+                    //// Rotate so that vB is the intersected vertex is vB and intersected edges is vAvC
+                    ////
+                    //int vA, vB, vC;
+
+                    //if (triangleIntersectionIndices.contains({v0, v1}))
+                    //{
+                        //vA = v1; vB = v2; vC = v0;
+                    //}
+
+                    //else if (triangleIntersectionIndices.contains({v1, v2}))
+                    //{
+                        //vA = v2; vB = v0; vC = v1;
+                    //}
+
+                    //else if (triangleIntersectionIndices.contains({v2, v0}))
+                    //{
+                        //vA = v0; vB = v1; vC = v2;
+                    //}
+                    //else
+                    //{
+                        //throw std::runtime_error("Impossible else case.");
+                    //}
+
+                    //newMesh.triangles.push_back({
+                            //vA, 
+                            //vB, 
+                            //triangleIntersectionIndices.at({vA, vC}), 
+                            //});
+
+                    //newMesh.triangles.push_back({
+                            //vB, 
+                            //vC, 
+                            //triangleIntersectionIndices.at({vA, vC}), 
+                            //});
+
+                    //newMesh.triangleTetId.push_back(tetId);
+                    //newMesh.triangleTetId.push_back(tetId);
+                //}
+                //else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 2)
+                //{
+                    //// Rotate so that vB is the odd one out (between the two intersected edges)
+                    ////
+                    //int vA, vB, vC;
+
+                    //if (triangleIntersectionIndices.contains({v0, v1}) && triangleIntersectionIndices.contains({v1, v2}))
+                    //{
+                        //vA = v0; vB = v1; vC = v2;
+                    //}
+
+                    //else if (triangleIntersectionIndices.contains({v1, v2}) && triangleIntersectionIndices.contains({v0, v2}))
+                    //{
+                        //vA = v1; vB = v2; vC = v0;
+                    //}
+
+                    //else if (triangleIntersectionIndices.contains({v0, v1}) && triangleIntersectionIndices.contains({v0, v2}))
+                    //{
+                        //vA = v2; vB = v0; vC = v1;
+                    //}
+                    //else
+                    //{
+                        //throw std::runtime_error("Impossible else case.");
+                    //}
 
 
-                    newMesh.triangles.push_back({
-                            vC,
-                            vA,
-                            triangleIntersectionIndices.at({vB, vC}), 
-                            });
+                    ////         vB
+                    ////         /\
+                    ////        /  \
+                    ////       /____\
+                    ////      /      \
+                    ////     /________\
+                    ////    vC        vA
+                    ////
 
-                    newMesh.triangleTetId.push_back(tetId);
-                    newMesh.triangleTetId.push_back(tetId);
-                    newMesh.triangleTetId.push_back(tetId);
+                    //newMesh.triangles.push_back({
+                            //vB, 
+                            //triangleIntersectionIndices.at({vB, vC}), 
+                            //triangleIntersectionIndices.at({vA, vB}), 
+                            //});
 
-                }
-                else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 3)
-                {
-                    throw std::runtime_error("Degenerate triangle detected in remeshing.");
-                }
-                else
-                {
-                    throw std::runtime_error("Impossible else case.");
-
-                }
-            }
+                    //newMesh.triangles.push_back({
+                            //vA, 
+                            //triangleIntersectionIndices.at({vA, vB}), 
+                            //triangleIntersectionIndices.at({vB, vC}), 
+                            //});
 
 
-            return newMesh;
-        }
+                    //newMesh.triangles.push_back({
+                            //vC,
+                            //vA,
+                            //triangleIntersectionIndices.at({vB, vC}), 
+                            //});
+
+                    //newMesh.triangleTetId.push_back(tetId);
+                    //newMesh.triangleTetId.push_back(tetId);
+                    //newMesh.triangleTetId.push_back(tetId);
+
+                //}
+                //else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 3)
+                //{
+                    //throw std::runtime_error("Degenerate triangle detected in remeshing.");
+                //}
+                //else
+                //{
+                    //throw std::runtime_error("Impossible else case.");
+
+                //}
+            //}
+
+
+            //return newMesh;
+        //}
 
 
 };

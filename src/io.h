@@ -22,7 +22,7 @@ namespace io
     SurfaceMesh readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2);
 
     SurfaceMesh readDataVtp(const std::string&);
-    Mesh readCGALMesh(const std::string& filename);
+    CGALMesh readCGALMesh(const std::string& filename);
 
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
