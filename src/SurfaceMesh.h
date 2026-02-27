@@ -384,13 +384,22 @@ class SurfaceMesh
 
             std::cout << "There are " << num << " components\n";
 
-            #pragma omp parallel for schedule(dynamic)
+            std::map<int, int> componentToSheetId;
+
             for (auto face : mesh.faces())
             {
-                this->sheetId[face] =  this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                const int componentId = component[face];
 
-                std::cout << "The sheet id id " << this->sheetId[face] << std::endl;
+                //if (false == componentToSheetId.contains(componentId))
+                //{
+                    //componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                //}
 
+                //this->sheetId[face] =  componentToSheetId.at(componentId);
+
+                this->sheetId[face]    = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+
+                //std::cout << "The sheet id id " << this->sheetId[face] << std::endl;
             }
         }
 
