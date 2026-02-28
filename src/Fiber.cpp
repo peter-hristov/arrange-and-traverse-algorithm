@@ -102,7 +102,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     {
         if (intersectionType[i] == 2)
         {
-            surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
+            //surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
             surfaceMesh.print();
         }
     }
@@ -1785,7 +1785,9 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
     std::cout << "Computing " << fiberPoints.size() << " fibers...\n";
 
-    #pragma omp parallel for schedule(dynamic)
+    std::set<int> uniqueSheetIds;
+
+    //#pragma omp parallel for schedule(dynamic)
     for (int i = 1 ; i < fiberPoints.size() ; i++)
     {
         // Set up the fiber point
@@ -1926,6 +1928,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             {
                 continue;
             }
+
+            uniqueSheetIds.insert(sheetId);
 
             // If it's a path
             if (pathsA.contains(componentA))
@@ -2218,6 +2222,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                 continue;
             }
 
+            uniqueSheetIds.insert(sheetId);
+
 
             const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
@@ -2286,6 +2292,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                 {
                     continue;
                 }
+
+                uniqueSheetIds.insert(sheetId);
 
                 if (pathsB.contains(componentB))
                 {
@@ -2402,6 +2410,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
                 {
                     continue;
                 }
+
+                uniqueSheetIds.insert(sheetId);
 
                 if (pathsA.contains(componentA))
                 {
@@ -2536,6 +2546,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
     std::cerr << "Number of triangles : " << result.size() << std::endl;
     std::cerr << "Number of total fibers : " << totalFiberSize << std::endl;
+    std::cerr << "Number of sheets : " << uniqueSheetIds.size() << std::endl;
 
     return result;
 }

@@ -18,12 +18,15 @@
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
 #include <CGAL/Polygon_mesh_processing/border.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
+#include <CGAL/Polygon_mesh_processing/orientation.h>
 
 class SurfaceMesh
 {
     public:
         CGALMesh mesh;
         CGALMesh::Property_map<CGALMesh::Vertex_index, double> edgeParam;
+        CGALMesh::Property_map<CGALMesh::Vertex_index, bool> isSingular;
+
         CGALMesh::Property_map<CGALMesh::Face_index, int> tetId;
         CGALMesh::Property_map<CGALMesh::Face_index, int> sheetId;
 
@@ -82,6 +85,14 @@ class SurfaceMesh
             {
                 this->edgeParam[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
             }
+
+            std::tie(this->isSingular, created) = this->mesh.add_property_map<CGALMesh::Vertex_index, bool>("v:isSingular", false);
+
+            if (false == created)
+            {
+                throw std::runtime_error("Is singular property could not be added to the mesh.");
+            }
+
 
             std::tie(this->tetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
             
@@ -162,7 +173,18 @@ class SurfaceMesh
 
                 for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
                 {
+                    if (this->isSingular[v])
+                    {
+                        triangleColour = {1.0, 0.0, 0.0};
+                        //triangleColour = { static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX };
+                    }
+
+                }
+
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
                     std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
+
 
                     allFiberPoints.push_back(FiberPoint(
                                 point,
@@ -298,7 +320,8 @@ class SurfaceMesh
                 double e = edgeParam[v];
                 std::cout << "  Vertex " << v << ": ("
                     << p[0] << ", " << p[1] << ", " << p[2]
-                    << "), edgeParam = " << e << "\n";
+                    << "), edgeParam = " << e
+                    << "), isSingular = " << this->isSingular[v] << "\n";
             }
 
             std::cout << "\nFaces:\n";
@@ -376,34 +399,166 @@ class SurfaceMesh
         }
 
 
+        std::size_t computeConnectedComponents(
+                const CGALMesh& mesh,
+                CGALMesh::Property_map<CGALMesh::Face_index, std::size_t>& faceComponent,
+                const std::function<bool(CGALMesh::Edge_index)>& isConstrained)
+        {
+            // Initialize all faces as unvisited
+            for (auto f : mesh.faces())
+                faceComponent[f] = std::numeric_limits<std::size_t>::max();
+
+            std::size_t componentId = 0;
+
+            for (auto startFace : mesh.faces())
+            {
+                if (faceComponent[startFace] != std::numeric_limits<std::size_t>::max())
+                    continue;
+
+                // BFS
+                std::queue<CGALMesh::Face_index> queue;
+                queue.push(startFace);
+                faceComponent[startFace] = componentId;
+
+                while (!queue.empty())
+                {
+                    auto face = queue.front();
+                    queue.pop();
+
+                    // Iterate over adjacent faces via halfedges
+                    for (auto h : mesh.halfedges_around_face(mesh.halfedge(face)))
+                    {
+                        // Skip if on boundary
+                        if (mesh.is_border(h))
+                            continue;
+
+                        if (this->isSingular[mesh.source(h)] && this->isSingular[mesh.target(h)])
+                            continue;
+
+                        //auto edge = mesh.edge(h);
+                        //if (isConstrained(edge))
+                            //continue;
+
+                        auto neighbor = mesh.face(mesh.opposite(h));
+                        if (faceComponent[neighbor] != std::numeric_limits<std::size_t>::max())
+                            continue;
+
+                        faceComponent[neighbor] = componentId;
+                        queue.push(neighbor);
+                    }
+                }
+
+                componentId++;
+            }
+
+            return componentId;
+        }
+
 
         void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
         {
+
+            CGALMesh::Property_map<CGALMesh::Face_index, std::size_t> faceComponent;
+            bool created;
+            std::tie(faceComponent, created) = mesh.add_property_map<CGALMesh::Face_index, std::size_t>("f:component", 0);
+            if (!created)
+            {
+                throw std::runtime_error("Face component property could not be added to the mesh.");
+            }
+
+            std::size_t numComponents = computeConnectedComponents(
+                    this->mesh,
+                    faceComponent,
+                    [&](CGALMesh::Edge_index e) -> bool {
+                    auto h = mesh.halfedge(e);
+                    auto v1 = mesh.source(h);
+                    auto v2 = mesh.target(h);
+                    return isSingular[v1] && isSingular[v2];
+                    }
+                    );
+
+            // Create the lambda that checks if an edge is constrained
+            auto isConstrained = [&](CGALMesh::Edge_index e) -> bool {
+                auto h = mesh.halfedge(e);
+                auto v1 = mesh.source(h);
+                auto v2 = mesh.target(h);
+                return isSingular[v1] && isSingular[v2];
+            };
+
+            // Wrap it in a boost::function_property_map
+            auto edgeIsConstrained = boost::make_function_property_map<CGALMesh::Edge_index, bool>(isConstrained);
+
+            CGALMesh::Property_map<CGALMesh::Face_index, std::size_t> faceComponent2;
+            std::tie(faceComponent2, created) = mesh.add_property_map<CGALMesh::Face_index, std::size_t>("f:component2", 0);
+            if (!created)
+            {
+                throw std::runtime_error("Face component property could not be added to the mesh.");
+            }
+
+            std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
+                    this->mesh,
+                    faceComponent2,
+                    CGAL::parameters::edge_is_constrained_map(edgeIsConstrained)
+                    );
+
+
+
+
+
+            std::cout << "Number of components ours: " << numComponents << " and theirs : " << numComponents2 << std::endl;
+
+
+            namespace PMP = CGAL::Polygon_mesh_processing;
+
+            std::cerr << "Vertices: " << num_vertices(mesh) << "\n";
+            std::cerr << "Faces: " << num_faces(mesh) << "\n";
+
+
+            std::cerr << "Is valid: "
+                << CGAL::is_valid_polygon_mesh(mesh)
+                << "\n";
+
+            std::vector< boost::graph_traits<CGALMesh>::halfedge_descriptor > borders;
+            PMP::border_halfedges(faces(mesh), mesh, std::back_inserter(borders));
+
+            std::size_t boundary_edge_count = borders.size() / 2; // each edge appears twice
+            std::cerr << "Boundary edges: " << boundary_edge_count << "\n";
+
+
+
             // Compute the connectivity of the mesh
             //
-            std::vector<std::size_t> component(num_faces(mesh));
-            std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
+            //std::vector<std::size_t> component(num_faces(mesh));
+            //std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
 
-            std::cout << "There are " << num << " components\n";
+
+
+            return;
+
 
             std::map<int, int> componentToSheetId;
 
             for (auto face : mesh.faces())
             {
-                const int componentId = component[face];
+                const int componentId = faceComponent[face];
 
-                //if (false == componentToSheetId.contains(componentId))
-                //{
-                    //componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
-                //}
+                std::cout << "The comopnent ID of face " << face << " is " << componentId << std::endl;
 
-                //this->sheetId[face] =  componentToSheetId.at(componentId);
+                if (false == componentToSheetId.contains(componentId))
+                {
+                    componentToSheetId[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                }
 
-                this->sheetId[face]    = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                this->sheetId[face] =  componentToSheetId.at(componentId);
+
+                //this->sheetId[face]    = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
 
                 //std::cout << "The sheet id id " << this->sheetId[face] << std::endl;
             }
+
+            std::cout << "Number of components: " << numComponents << std::endl;
         }
+
 
 
 
@@ -466,6 +621,7 @@ class SurfaceMesh
 
             SurfaceMesh newMesh;
             std::tie(newMesh.edgeParam, created) = newMesh.mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
+            std::tie(newMesh.isSingular, created) = newMesh.mesh.add_property_map<CGALMesh::Vertex_index, bool>("v:isSingular", false);
 
             std::map<CGALMesh::Vertex_index, CGALMesh::Vertex_index> oldToNewVertexMap;
 
@@ -475,9 +631,11 @@ class SurfaceMesh
             {
                 const auto &point = this->mesh.point(v);
                 const double e = this->edgeParam[v];
+                const bool vSingular = this->isSingular[v];
 
                 CGALMesh::Vertex_index newVertexId = newMesh.mesh.add_vertex(CartesianPoint_3(point[0], point[1], point[2]));
                 newMesh.edgeParam[newVertexId] = e;
+                newMesh.isSingular[newVertexId] = vSingular;
 
                 oldToNewVertexMap[v] = newVertexId;
             }
@@ -502,8 +660,10 @@ class SurfaceMesh
                     const CartesianPoint_3 edgeVertex = interpolate_vertex(v0, v1, isovalue);
 
                     CGALMesh::Vertex_index edgeVertexIndex = newMesh.mesh.add_vertex(edgeVertex);
-                    newMesh.edgeParam[edgeVertexIndex] = isovalue;
                     edgeVertexMap[e] = edgeVertexIndex;
+
+                    newMesh.edgeParam[edgeVertexIndex] = isovalue;
+                    newMesh.isSingular[edgeVertexIndex] = true;
 
                     //const CGALMesh::Vertex_index edgeVertexIndex = mesh.add_vertex(edgeVertex);
                     //edgeVertexMap[e] = edgeVertexIndex;
@@ -517,7 +677,6 @@ class SurfaceMesh
 
 
             std::vector<std::array<CGALMesh::Vertex_index, 3>> newFaces;
-
             std::vector<int> newTetIds;
 
             // 3. Collect faces that are affected by splits
@@ -526,8 +685,8 @@ class SurfaceMesh
             {
                 const int tetId = this->tetId[f];
 
-                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
                 std::vector<CGALMesh::Vertex_index> faceVertices;
+                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
 
                 for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
                 {
@@ -541,51 +700,6 @@ class SurfaceMesh
                     }
                 }
 
-                if (activeHalfEdges.size() == 1)
-                {
-                    const auto h = activeHalfEdges[0];
-
-                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.source(h)];
-                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.target(h)];
-                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(mesh.next(h))];
-                    const CGALMesh::Vertex_index d = edgeVertexMap.at(mesh.edge(h));
-
-                    newFaces.push_back({b, c, d});
-                    newTetIds.push_back(tetId);
-
-                    newFaces.push_back({a, d, c});
-                    newTetIds.push_back(tetId);
-                }
-
-                if (activeHalfEdges.size() == 2)
-                {
-                    // Find the 3rd vertex
-
-                    auto h1 = activeHalfEdges[0];
-                    auto h2 = activeHalfEdges[1];
-
-                    // Swap to make sure that next(h1) = h2
-                    if (mesh.next(h2) == h1)
-                    {
-                        std::swap(h1, h2);
-                    }
-
-                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.target(h2)];
-                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.source(h1)];
-                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(h1)];
-                    const CGALMesh::Vertex_index d1 = edgeVertexMap.at(mesh.edge(h1));
-                    const CGALMesh::Vertex_index d2 = edgeVertexMap.at(mesh.edge(h2));
-
-                    newFaces.push_back({d1, c, d2});
-                    newTetIds.push_back(tetId);
-
-                    newFaces.push_back({d2, a, d1});
-                    newTetIds.push_back(tetId);
-
-                    newFaces.push_back({a, b, d1});
-                    newTetIds.push_back(tetId);
-                }
-
                 if (activeHalfEdges.size() == 0)
                 {
                     const CGALMesh::Vertex_index a = oldToNewVertexMap[faceVertices[0]];
@@ -595,16 +709,122 @@ class SurfaceMesh
                     newFaces.push_back({a, b, c});
                     newTetIds.push_back(tetId);
                 }
+
+
+                //
+                //           c
+                //          /|\     /\
+                //         / | \     \  next(h)
+                //        /  |  \     \
+                //       /   |   \     \
+                //      /    |    \
+                //   a /_____|_____\ b
+                //           d
+                //       
+                //       -------->
+                //           h
+                //
+
+                else if (activeHalfEdges.size() == 1)
+                {
+                    const auto h = activeHalfEdges[0];
+
+                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.source(h)];
+                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.target(h)];
+                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(mesh.next(h))];
+
+                    const CGALMesh::Vertex_index d = edgeVertexMap.at(mesh.edge(h));
+
+                    newFaces.push_back({a, d, c});
+                    newTetIds.push_back(tetId);
+
+                    newFaces.push_back({b, c, d});
+                    newTetIds.push_back(tetId);
+
+
+                    if (vertexColour[c] != 0)
+                    {
+                        throw std::runtime_error("Vertec c should be gray.");
+                    }
+
+                    if (vertexColour[a] * vertexColour[b] != -1)
+                    {
+                        throw std::runtime_error("Vertices a and b should have different colours, neither gray.");
+                    }
+                }
+
+
+
+                //
+                //                c
+                //               /|
+                //              / |
+                //             /  |      ^
+                //      /     /   |      |
+                //  h1 /  d1 /----| d0   | h0
+                //    /     /\    |      | 
+                //   \/    /  \   |      
+                //        /    \  |
+                //       /      \ |
+                //      /________\|
+                //     a           b
+                //
+                //
+
+                else if (activeHalfEdges.size() == 2)
+                {
+                    // Find the 3rd vertex
+
+                    auto h0 = activeHalfEdges[0];
+                    auto h1 = activeHalfEdges[1];
+
+                    // Swap to make sure that next(h1) = h2
+                    if (mesh.next(h1) == h0)
+                    {
+                        std::swap(h0, h1);
+                    }
+
+                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.target(h1)];
+                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.source(h0)];
+                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(h0)];
+
+                    const CGALMesh::Vertex_index d0 = edgeVertexMap.at(mesh.edge(h0));
+                    const CGALMesh::Vertex_index d1 = edgeVertexMap.at(mesh.edge(h1));
+
+                    newFaces.push_back({d1, a, b});
+                    newTetIds.push_back(tetId);
+
+                    newFaces.push_back({b, d0, d1});
+                    newTetIds.push_back(tetId);
+
+                    newFaces.push_back({d0, c, d1});
+                    newTetIds.push_back(tetId);
+
+                    if (vertexColour[a] * vertexColour[b] * vertexColour[c] == 0)
+                    {
+                        throw std::runtime_error("Neither of a, b, c should be gray.");
+                    }
+
+                    if (vertexColour[a] * vertexColour[c] != -1)
+                    {
+                        throw std::runtime_error("Vertices a and c should have different colours, neither gray.");
+                    }
+
+                    if (vertexColour[a] != vertexColour[b])
+                    {
+                        throw std::runtime_error("Vertices a and b should have the same colour.");
+                    }
+                }
+                else
+                {
+                    throw std::runtime_error("Degenerate remeshing case.");
+                }
             }
-
-
 
 
             for (int i = 0 ; i < newFaces.size() ; i++)
             {
-                const std::array<CGALMesh::Vertex_index, 3> faceVertices = newFaces[i];
-
-                auto newFace = newMesh.mesh.add_face(faceVertices);
+                auto newFace = newMesh.mesh.add_face(newFaces[i]);
 
                 if (newFace == CGALMesh::null_face())
                 {
@@ -618,6 +838,10 @@ class SurfaceMesh
 
             // 4. Retriangulate affected faces
             //CGAL::Polygon_mesh_processing::triangulate_faces(facesToTriangulate, newMesh.mesh);
+
+            // Some postprocessing
+            mesh.collect_garbage(); // before calling connected_components
+            CGAL::Polygon_mesh_processing::orient(newMesh.mesh);
 
             if (false == CGAL::is_valid_polygon_mesh(newMesh.mesh))
             {
