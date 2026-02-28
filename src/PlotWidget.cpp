@@ -524,41 +524,45 @@ void PlotWidget::paintEvent(QPaintEvent*)
             controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
         }
 
-        //controlPointsInternal = {{-0.0037455886297257379, 0.16425657720883236}, {0.15634494002768617, 0.030135895339866492}};
 
         // TTK FS
         //
         //Start point : 0.033263165761928781 0.14687746720889849 end point 0.21512107934692115 0.10335287336486487
-        //std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+        //Start point : 0.0013081379514506108 0.15420964485311991 end point 0.14955198551200763 -0.0054015285199353466
+
+        //controlPointsInternal = {{0.0013081379514506108, 0.15420964485311991}, {0.14955198551200763, -0.0054015285199353466}};
+
+
+        std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
         
 
 
 
-        std::vector<FiberPoint> fibersAll;
-        if (controlPointsTransformed.size() == 2)
-        {
-            const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+        //std::vector<FiberPoint> fibersAll;
+        //if (controlPointsTransformed.size() == 2)
+        //{
+            //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
 
-            fibersAll.insert(
-                    fibersAll.end(), 
-                    std::make_move_iterator(fibers.begin()), 
-                    std::make_move_iterator(fibers.end())
-                    );
-        }
-        else
-        {
-            for (int i = 0 ; i < controlPointsInternal.size() ; i++)
-            {
-                const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
+            //fibersAll.insert(
+                    //fibersAll.end(), 
+                    //std::make_move_iterator(fibers.begin()), 
+                    //std::make_move_iterator(fibers.end())
+                    //);
+        //}
+        //else
+        //{
+            //for (int i = 0 ; i < controlPointsInternal.size() ; i++)
+            //{
+                //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
 
-                fibersAll.insert(
-                        fibersAll.end(), 
-                        std::make_move_iterator(fibers.begin()), 
-                        std::make_move_iterator(fibers.end())
-                        );
+                //fibersAll.insert(
+                        //fibersAll.end(), 
+                        //std::make_move_iterator(fibers.begin()), 
+                        //std::make_move_iterator(fibers.end())
+                        //);
 
-            }
-        }
+            //}
+        //}
 
 
 

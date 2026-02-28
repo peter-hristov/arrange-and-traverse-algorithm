@@ -25,10 +25,11 @@ class SurfaceMesh
     public:
         CGALMesh mesh;
         CGALMesh::Property_map<CGALMesh::Vertex_index, double> edgeParam;
-        CGALMesh::Property_map<CGALMesh::Vertex_index, bool> isSingular;
 
         CGALMesh::Property_map<CGALMesh::Face_index, int> tetId;
         CGALMesh::Property_map<CGALMesh::Face_index, int> sheetId;
+
+        CGALMesh::Property_map<CGALMesh::Edge_index, bool> isImpassable;
 
         SurfaceMesh()
         {
@@ -86,13 +87,6 @@ class SurfaceMesh
                 this->edgeParam[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
             }
 
-            std::tie(this->isSingular, created) = this->mesh.add_property_map<CGALMesh::Vertex_index, bool>("v:isSingular", false);
-
-            if (false == created)
-            {
-                throw std::runtime_error("Is singular property could not be added to the mesh.");
-            }
-
 
             std::tie(this->tetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
             
@@ -113,34 +107,41 @@ class SurfaceMesh
                 throw std::runtime_error("SheetId property could not be added to the mesh.");
             }
 
+            std::tie(this->isImpassable, created) = this->mesh.add_property_map<CGALMesh::Edge_index, bool>("f:isImpassable", false);
 
-        }
-
-
-
-
-
-        std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
-        {
-            std::vector<FiberPoint> allFiberPoints;
-
-            std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
-            for (auto f : mesh.faces())
+            if (false == created)
             {
-                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                {
-                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
-
-                    allFiberPoints.push_back(FiberPoint(
-                                point,
-                                triangleColour, 
-                                1,
-                                -1
-                                ));
-                }
+                throw std::runtime_error("isImpassable property could not be added to the mesh.");
             }
-            return allFiberPoints;
+
+
         }
+
+
+
+
+
+        //std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
+        //{
+            //std::vector<FiberPoint> allFiberPoints;
+
+            //std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+            //for (auto f : mesh.faces())
+            //{
+                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                //{
+                    //std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
+
+                    //allFiberPoints.push_back(FiberPoint(
+                                //point,
+                                //triangleColour, 
+                                //1,
+                                //-1
+                                //));
+                //}
+            //}
+            //return allFiberPoints;
+        //}
 
 
         //std::vector<std::array<double, 3>> vertexCoordinates;
@@ -154,51 +155,41 @@ class SurfaceMesh
 
 
 
-        //std::vector<FiberPoint> getFiberPoints()
-        //{
-            //std::vector<FiberPoint> allFiberPoints;
+        std::vector<FiberPoint> getFiberPoints()
+        {
+            std::vector<FiberPoint> allFiberPoints;
 
-            //for (auto f : mesh.faces())
-            //{
+            for (auto f : mesh.faces())
+            {
 
-                //const int sheetId = this->sheetId[f];
+                const int sheetId = this->sheetId[f];
 
-                //// Default triangle colour
-                //std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+                // Default triangle colour
+                std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
 
-                //if (sheetId != -1)
-                //{
-                    //triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
-                //}
+                if (sheetId != -1)
+                {
+                    triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                }
 
-                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                //{
-                    //if (this->isSingular[v])
-                    //{
-                        //triangleColour = {1.0, 0.0, 0.0};
-                        ////triangleColour = { static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX };
-                    //}
-
-                //}
-
-                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                //{
-                    //std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
+                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
 
 
-                    //allFiberPoints.push_back(FiberPoint(
-                                //point,
-                                //triangleColour, 
-                                //1,
-                                //-1
-                                //));
-                //}
+                    allFiberPoints.push_back(FiberPoint(
+                                point,
+                                triangleColour, 
+                                1,
+                                -1
+                                ));
+                }
 
-            //}
+            }
 
-            //return allFiberPoints;
+            return allFiberPoints;
 
-        //}
+        }
 
         //void print()
         //{
@@ -320,8 +311,7 @@ class SurfaceMesh
                 double e = edgeParam[v];
                 std::cout << "  Vertex " << v << ": ("
                     << p[0] << ", " << p[1] << ", " << p[2]
-                    << "), edgeParam = " << e
-                    << "), isSingular = " << this->isSingular[v] << "\n";
+                    << "), edgeParam = " << e << "\n";
             }
 
             std::cout << "\nFaces:\n";
@@ -399,97 +389,69 @@ class SurfaceMesh
         }
 
 
-        std::size_t computeConnectedComponents(
-                const CGALMesh& mesh,
-                CGALMesh::Property_map<CGALMesh::Face_index, std::size_t>& faceComponent,
-                const std::function<bool(CGALMesh::Edge_index)>& isConstrained)
-        {
-            // Initialize all faces as unvisited
-            for (auto f : mesh.faces())
-                faceComponent[f] = std::numeric_limits<std::size_t>::max();
+        //std::size_t computeConnectedComponents(const CGALMesh& mesh, CGALMesh::Property_map<CGALMesh::Face_index, std::size_t>& faceComponent)
+        //{
+            //// Initialize all faces as unvisited
+            //for (auto f : mesh.faces())
+                //faceComponent[f] = std::numeric_limits<std::size_t>::max();
 
-            std::size_t componentId = 0;
+            //std::size_t componentId = 0;
 
-            for (auto startFace : mesh.faces())
-            {
-                if (faceComponent[startFace] != std::numeric_limits<std::size_t>::max())
-                    continue;
+            //for (auto startFace : mesh.faces())
+            //{
+                //if (faceComponent[startFace] != std::numeric_limits<std::size_t>::max())
+                    //continue;
 
-                // BFS
-                std::queue<CGALMesh::Face_index> queue;
-                queue.push(startFace);
-                faceComponent[startFace] = componentId;
+                //// BFS
+                //std::queue<CGALMesh::Face_index> queue;
+                //queue.push(startFace);
+                //faceComponent[startFace] = componentId;
 
-                while (!queue.empty())
-                {
-                    auto face = queue.front();
-                    queue.pop();
+                //while (!queue.empty())
+                //{
+                    //auto face = queue.front();
+                    //queue.pop();
 
-                    // Iterate over adjacent faces via halfedges
-                    for (auto h : mesh.halfedges_around_face(mesh.halfedge(face)))
-                    {
-                        // Skip if on boundary
-                        if (mesh.is_border(h))
-                            continue;
-
-                        if (this->isSingular[mesh.source(h)] && this->isSingular[mesh.target(h)])
-                            continue;
-
-                        //auto edge = mesh.edge(h);
-                        //if (isConstrained(edge))
+                    //// Iterate over adjacent faces via halfedges
+                    //for (auto h : mesh.halfedges_around_face(mesh.halfedge(face)))
+                    //{
+                        //// Skip if on boundary
+                        //if (mesh.is_border(h))
                             //continue;
 
-                        auto neighbor = mesh.face(mesh.opposite(h));
-                        if (faceComponent[neighbor] != std::numeric_limits<std::size_t>::max())
-                            continue;
+                        ////if (this->isSingular[mesh.source(h)] && this->isSingular[mesh.target(h)])
+                            ////continue;
 
-                        faceComponent[neighbor] = componentId;
-                        queue.push(neighbor);
-                    }
-                }
+                        ////auto edge = mesh.edge(h);
+                        ////if (isConstrained(edge))
+                            ////continue;
 
-                componentId++;
-            }
+                        //auto edge = mesh.edge(h);
+                        //if (this->isImpassable[edge])
+                            //continue;
 
-            return componentId;
-        }
+                        //auto neighbor = mesh.face(mesh.opposite(h));
+                        //if (faceComponent[neighbor] != std::numeric_limits<std::size_t>::max())
+                            //continue;
+
+                        //faceComponent[neighbor] = componentId;
+                        //queue.push(neighbor);
+                    //}
+                //}
+
+                //componentId++;
+            //}
+
+            //return componentId;
+        //}
 
 
         void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
         {
-
             CGALMesh::Property_map<CGALMesh::Face_index, std::size_t> faceComponent;
             bool created;
-            std::tie(faceComponent, created) = mesh.add_property_map<CGALMesh::Face_index, std::size_t>("f:component", 0);
-            if (!created)
-            {
-                throw std::runtime_error("Face component property could not be added to the mesh.");
-            }
 
-            std::size_t numComponents = computeConnectedComponents(
-                    this->mesh,
-                    faceComponent,
-                    [&](CGALMesh::Edge_index e) -> bool {
-                    auto h = mesh.halfedge(e);
-                    auto v1 = mesh.source(h);
-                    auto v2 = mesh.target(h);
-                    return isSingular[v1] && isSingular[v2];
-                    }
-                    );
-
-            // Create the lambda that checks if an edge is constrained
-            auto isConstrained = [&](CGALMesh::Edge_index e) -> bool {
-                auto h = mesh.halfedge(e);
-                auto v1 = mesh.source(h);
-                auto v2 = mesh.target(h);
-                return isSingular[v1] && isSingular[v2];
-            };
-
-            // Wrap it in a boost::function_property_map
-            auto edgeIsConstrained = boost::make_function_property_map<CGALMesh::Edge_index, bool>(isConstrained);
-
-            CGALMesh::Property_map<CGALMesh::Face_index, std::size_t> faceComponent2;
-            std::tie(faceComponent2, created) = mesh.add_property_map<CGALMesh::Face_index, std::size_t>("f:component2", 0);
+            std::tie(faceComponent, created) = mesh.add_property_map<CGALMesh::Face_index, std::size_t>("f:component2", 0);
             if (!created)
             {
                 throw std::runtime_error("Face component property could not be added to the mesh.");
@@ -497,15 +459,11 @@ class SurfaceMesh
 
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
                     this->mesh,
-                    faceComponent2,
-                    CGAL::parameters::edge_is_constrained_map(edgeIsConstrained)
+                    faceComponent,
+                    CGAL::parameters::edge_is_constrained_map(this->isImpassable)
                     );
 
-
-
-
-
-            std::cout << "Number of components ours: " << numComponents << " and theirs : " << numComponents2 << std::endl;
+            std::cout << "Number of components ours: " << numComponents2 << " and theirs : " << numComponents2 << std::endl;
 
 
             namespace PMP = CGAL::Polygon_mesh_processing;
@@ -533,16 +491,13 @@ class SurfaceMesh
 
 
 
-            return;
-
-
             std::map<int, int> componentToSheetId;
 
             for (auto face : mesh.faces())
             {
                 const int componentId = faceComponent[face];
 
-                std::cout << "The comopnent ID of face " << face << " is " << componentId << std::endl;
+                //std::cout << "The comopnent ID of face " << face << " is " << componentId << std::endl;
 
                 if (false == componentToSheetId.contains(componentId))
                 {
@@ -552,11 +507,10 @@ class SurfaceMesh
                 this->sheetId[face] =  componentToSheetId.at(componentId);
 
                 //this->sheetId[face]    = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                //this->sheetId[face]    = componentId;
 
                 //std::cout << "The sheet id id " << this->sheetId[face] << std::endl;
             }
-
-            std::cout << "Number of components: " << numComponents << std::endl;
         }
 
 
@@ -591,51 +545,32 @@ class SurfaceMesh
         // Marching triangles
         SurfaceMesh splitSingularTriangles(const double isovalue)
         {
-            // Colour triangles as below, at and above
-            auto [vertexColour, created] = this->mesh.add_property_map<CGALMesh::Vertex_index, int>("v:colour", -2);
-            
+            // Compute the colours of all the vertices
+            //
+            CGALMesh::Property_map<CGALMesh::Vertex_index, int> vertexColour = getVertexColours(this->mesh, isovalue);
+
+            // Set up the new mesh
+            //
+            SurfaceMesh newMesh;
+
+            bool created;
+            std::tie(newMesh.edgeParam, created) = newMesh.mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
             if (false == created)
             {
-                throw std::runtime_error("Could not make mesh array.");
+                throw std::runtime_error("Could not make new mesh edgeParam array.");
             }
-
-            for (auto v : this->mesh.vertices())
-            {
-                const double e = edgeParam[v];
-
-                if (CGAL::compare(e, isovalue) == CGAL::SMALLER)
-                {
-                    vertexColour[v] = -1;
-                }
-                else if (CGAL::compare(e, isovalue) == CGAL::EQUAL)
-                {
-                    std::cerr << "GRAY VERTEX!";
-                    vertexColour[v] = 0;
-                }
-                else
-                {
-                    vertexColour[v] = +1;
-                }
-            }
-
-
-            SurfaceMesh newMesh;
-            std::tie(newMesh.edgeParam, created) = newMesh.mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
-            std::tie(newMesh.isSingular, created) = newMesh.mesh.add_property_map<CGALMesh::Vertex_index, bool>("v:isSingular", false);
 
             std::map<CGALMesh::Vertex_index, CGALMesh::Vertex_index> oldToNewVertexMap;
 
-            // Copy over the vertices
+            // Copy over the previous vertices and their properties and build oldToNewVertexMap
             //
             for (auto v : this->mesh.vertices())
             {
                 const auto &point = this->mesh.point(v);
                 const double e = this->edgeParam[v];
-                const bool vSingular = this->isSingular[v];
 
                 CGALMesh::Vertex_index newVertexId = newMesh.mesh.add_vertex(CartesianPoint_3(point[0], point[1], point[2]));
                 newMesh.edgeParam[newVertexId] = e;
-                newMesh.isSingular[newVertexId] = vSingular;
 
                 oldToNewVertexMap[v] = newVertexId;
             }
@@ -644,7 +579,8 @@ class SurfaceMesh
             // Old Mesh ID and NEW mesh vertex
             std::map<CGALMesh::Edge_index, CGALMesh::Vertex_index> edgeVertexMap;
 
-            // 1. Find all edges crossing the isovalue
+            // Find all edges crossing the isovalue
+            //
             for (auto e : this->mesh.edges())
             {
                 const auto h = this->mesh.halfedge(e);
@@ -663,186 +599,28 @@ class SurfaceMesh
                     edgeVertexMap[e] = edgeVertexIndex;
 
                     newMesh.edgeParam[edgeVertexIndex] = isovalue;
-                    newMesh.isSingular[edgeVertexIndex] = true;
-
-                    //const CGALMesh::Vertex_index edgeVertexIndex = mesh.add_vertex(edgeVertex);
-                    //edgeVertexMap[e] = edgeVertexIndex;
-                    //edgeParam[edgeVertexIndex] = isovalue;
                 }
             }
 
 
+            // Add new faces to the mesh
+            //
             std::tie(newMesh.tetId, created) = newMesh.mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
             std::tie(newMesh.sheetId, created) = newMesh.mesh.add_property_map<CGALMesh::Face_index, int>("f:sheetId", -1);
+            std::vector<std::pair<CGALMesh::Vertex_index, CGALMesh::Vertex_index>> constraintEdges = buildNewFaces(*this, newMesh, oldToNewVertexMap, edgeVertexMap, vertexColour);
 
-
-            std::vector<std::array<CGALMesh::Vertex_index, 3>> newFaces;
-            std::vector<int> newTetIds;
-
-            // 3. Collect faces that are affected by splits
+            // Mark immpassable edges
             //
-            for (auto f : this->mesh.faces())
-            {
-                const int tetId = this->tetId[f];
+            std::tie(newMesh.isImpassable, created) = newMesh.mesh.add_property_map<CGALMesh::Edge_index, bool>("f:isImpassable", false);
+            buildImpassableEdges( *this, newMesh, oldToNewVertexMap, edgeVertexMap, constraintEdges, isImpassable);
 
-                std::vector<CGALMesh::Vertex_index> faceVertices;
-                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
-
-                for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
-                {
-                    auto e = mesh.edge(h);
-
-                    faceVertices.push_back(mesh.source(h));
-
-                    if (edgeVertexMap.contains(e))
-                    {
-                        activeHalfEdges.push_back(h);
-                    }
-                }
-
-                if (activeHalfEdges.size() == 0)
-                {
-                    const CGALMesh::Vertex_index a = oldToNewVertexMap[faceVertices[0]];
-                    const CGALMesh::Vertex_index b = oldToNewVertexMap[faceVertices[1]];
-                    const CGALMesh::Vertex_index c = oldToNewVertexMap[faceVertices[2]];
-
-                    newFaces.push_back({a, b, c});
-                    newTetIds.push_back(tetId);
-                }
-
-
-                //
-                //           c
-                //          /|\     /\
-                //         / | \     \  next(h)
-                //        /  |  \     \
-                //       /   |   \     \
-                //      /    |    \
-                //   a /_____|_____\ b
-                //           d
-                //       
-                //       -------->
-                //           h
-                //
-
-                else if (activeHalfEdges.size() == 1)
-                {
-                    const auto h = activeHalfEdges[0];
-
-                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.source(h)];
-                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.target(h)];
-                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(mesh.next(h))];
-
-                    const CGALMesh::Vertex_index d = edgeVertexMap.at(mesh.edge(h));
-
-                    newFaces.push_back({a, d, c});
-                    newTetIds.push_back(tetId);
-
-                    newFaces.push_back({b, c, d});
-                    newTetIds.push_back(tetId);
-
-
-                    if (vertexColour[c] != 0)
-                    {
-                        throw std::runtime_error("Vertec c should be gray.");
-                    }
-
-                    if (vertexColour[a] * vertexColour[b] != -1)
-                    {
-                        throw std::runtime_error("Vertices a and b should have different colours, neither gray.");
-                    }
-                }
-
-
-
-                //
-                //                c
-                //               /|
-                //              / |
-                //             /  |      ^
-                //      /     /   |      |
-                //  h1 /  d1 /----| d0   | h0
-                //    /     /\    |      | 
-                //   \/    /  \   |      
-                //        /    \  |
-                //       /      \ |
-                //      /________\|
-                //     a           b
-                //
-                //
-
-                else if (activeHalfEdges.size() == 2)
-                {
-                    // Find the 3rd vertex
-
-                    auto h0 = activeHalfEdges[0];
-                    auto h1 = activeHalfEdges[1];
-
-                    // Swap to make sure that next(h1) = h2
-                    if (mesh.next(h1) == h0)
-                    {
-                        std::swap(h0, h1);
-                    }
-
-                    const CGALMesh::Vertex_index a = oldToNewVertexMap[mesh.target(h1)];
-                    const CGALMesh::Vertex_index b = oldToNewVertexMap[mesh.source(h0)];
-                    const CGALMesh::Vertex_index c = oldToNewVertexMap[mesh.target(h0)];
-
-                    const CGALMesh::Vertex_index d0 = edgeVertexMap.at(mesh.edge(h0));
-                    const CGALMesh::Vertex_index d1 = edgeVertexMap.at(mesh.edge(h1));
-
-                    newFaces.push_back({d1, a, b});
-                    newTetIds.push_back(tetId);
-
-                    newFaces.push_back({b, d0, d1});
-                    newTetIds.push_back(tetId);
-
-                    newFaces.push_back({d0, c, d1});
-                    newTetIds.push_back(tetId);
-
-                    if (vertexColour[a] * vertexColour[b] * vertexColour[c] == 0)
-                    {
-                        throw std::runtime_error("Neither of a, b, c should be gray.");
-                    }
-
-                    if (vertexColour[a] * vertexColour[c] != -1)
-                    {
-                        throw std::runtime_error("Vertices a and c should have different colours, neither gray.");
-                    }
-
-                    if (vertexColour[a] != vertexColour[b])
-                    {
-                        throw std::runtime_error("Vertices a and b should have the same colour.");
-                    }
-                }
-                else
-                {
-                    throw std::runtime_error("Degenerate remeshing case.");
-                }
-            }
-
-
-            for (int i = 0 ; i < newFaces.size() ; i++)
-            {
-                auto newFace = newMesh.mesh.add_face(newFaces[i]);
-
-                if (newFace == CGALMesh::null_face())
-                {
-                    throw std::runtime_error("Failed to add a new triangle to the msh.");
-                }
-
-                newMesh.tetId[newFace] = newTetIds[i];
-            }
-
-            
-
-            // 4. Retriangulate affected faces
-            //CGAL::Polygon_mesh_processing::triangulate_faces(facesToTriangulate, newMesh.mesh);
-
-            // Some postprocessing
+            // Finish up with some postprocessing
+            //
             mesh.collect_garbage(); // before calling connected_components
             CGAL::Polygon_mesh_processing::orient(newMesh.mesh);
 
+            // Make sure the edge is valid
+            //
             if (false == CGAL::is_valid_polygon_mesh(newMesh.mesh))
             {
                 throw std::runtime_error("New mesh is not valid.");
@@ -855,271 +633,289 @@ class SurfaceMesh
         }
 
 
-        // Interpolate a point along an edge for a given isovalue
-        //std::array<double,3> interpolateEdge(int a, int b, double iso) const
-        //{
-            //const double valA = edgeParam[a];
-            //const double valB = edgeParam[b];
 
-            //// Avoid division by zero (flat edge)
-            //const double alpha = (valB != valA) ? (iso - valA) / (valB - valA) : 0.5;
+            std::vector<std::pair<CGALMesh::Vertex_index, CGALMesh::Vertex_index>> buildNewFaces(
+                    const SurfaceMesh &oldMesh, 
+                    SurfaceMesh &newMesh, 
+                    const std::map<CGALMesh::Vertex_index, CGALMesh::Vertex_index> &oldToNewVertexMap, 
+                    const std::map<CGALMesh::Edge_index, CGALMesh::Vertex_index> &edgeVertexMap, 
+                    const CGALMesh::Property_map<CGALMesh::Vertex_index, int> &vertexColour
+                    )
+            {
 
-            //const auto &posA = vertexCoordinates[a];
-            //const auto &posB = vertexCoordinates[b];
+                // Return value
+                std::vector<std::pair<CGALMesh::Vertex_index, CGALMesh::Vertex_index>> constraintEdges;
 
-            //return {
-                //posA[0] + alpha * (posB[0] - posA[0]),
-                    //posA[1] + alpha * (posB[1] - posA[1]),
-                    //posA[2] + alpha * (posB[2] - posA[2])
-            //};
-        //}
+                std::vector<int> newTetIds;
+                std::vector<std::array<CGALMesh::Vertex_index, 3>> newFaces;
 
+                // 3. Collect faces that are affected by splits
+                //
+                for (auto f : this->mesh.faces())
+                {
+                    const int tetId = this->tetId[f];
 
-        //Mesh to_cgal_mesh()
-        //{
-            //// 1. Build polygon soup
-            //std::vector<CartesianPoint_3> points;
-            //std::vector<std::vector<std::size_t>> polygons;
-            //for (auto& p : vertexCoordinates)
-            //{
-                //points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
-            //}
-            //for (auto& tri : triangles)
-            //{
-                //polygons.push_back({(std::size_t)tri[0], (std::size_t)tri[1], (std::size_t)tri[2]});
-            //}
+                    std::vector<CGALMesh::Vertex_index> faceVertices;
+                    std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
 
-            //// 2. Remove duplicate points / faces
-            //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons);
-            //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons);
-            //CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
+                    for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
+                    {
+                        auto e = mesh.edge(h);
 
-            //// 3. Build Surface_mesh
-            //Mesh mesh;
-            //CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
+                        faceVertices.push_back(mesh.source(h));
 
+                        if (edgeVertexMap.contains(e))
+                        {
+                            activeHalfEdges.push_back(h);
+                        }
+                    }
 
-            //return mesh;
-        //}
+                    if (activeHalfEdges.size() == 0)
+                    {
+                        const CGALMesh::Vertex_index a = oldToNewVertexMap.at(faceVertices[0]);
+                        const CGALMesh::Vertex_index b = oldToNewVertexMap.at(faceVertices[1]);
+                        const CGALMesh::Vertex_index c = oldToNewVertexMap.at(faceVertices[2]);
 
-
-        //void computeConnectedComponents(Mesh mesh)
-        //{
-            //std::vector<std::size_t> component(num_faces(mesh));
-            //std::size_t num = CGAL::Polygon_mesh_processing::connected_components(mesh, CGAL::make_property_map(component));
-
-            //std::cerr << "The number of components is ---------------------" << num << std::endl;
-            //namespace PMP = CGAL::Polygon_mesh_processing;
-
-            //std::cerr << "Vertices: " << num_vertices(mesh) << "\n";
-            //std::cerr << "Faces: " << num_faces(mesh) << "\n";
+                        newFaces.push_back({a, b, c});
+                        newTetIds.push_back(tetId);
+                    }
 
 
-            //std::cerr << "Is valid: "
-                //<< CGAL::is_valid_polygon_mesh(mesh)
-                //<< "\n";
+                    //
+                    //           c
+                    //          /|\     /\
+                    //         / | \     \  next(h)
+                    //        /  |  \     \
+                    //       /   |   \     \
+                    //      /    |    \
+                    //   a /_____|_____\ b
+                    //           d
+                    //       
+                    //       -------->
+                    //           h
+                    //
 
-            //std::vector< boost::graph_traits<Mesh>::halfedge_descriptor > borders;
-            //PMP::border_halfedges(faces(mesh), mesh, std::back_inserter(borders));
+                    else if (activeHalfEdges.size() == 1)
+                    {
+                        const auto h = activeHalfEdges[0];
 
-            //std::size_t boundary_edge_count = borders.size() / 2; // each edge appears twice
-            //std::cerr << "Boundary edges: " << boundary_edge_count << "\n";
+                        const CGALMesh::Vertex_index a = oldToNewVertexMap.at(mesh.source(h));
+                        const CGALMesh::Vertex_index b = oldToNewVertexMap.at(mesh.target(h));
+                        const CGALMesh::Vertex_index c = oldToNewVertexMap.at(mesh.target(mesh.next(h)));
 
-        //}
+                        const CGALMesh::Vertex_index d = edgeVertexMap.at(mesh.edge(h));
 
-        
+                        newFaces.push_back({a, d, c});
+                        newTetIds.push_back(tetId);
 
+                        newFaces.push_back({b, c, d});
+                        newTetIds.push_back(tetId);
 
+                        constraintEdges.push_back({c, d});
 
-        // Marching triangles
-        //SurfaceMesh splitSingularTriangles(const double isovalue)
-        //{
-            //std::map<std::set<int>, std::array<double, 3>> triangleIntersectionPoints;
+                        if (vertexColour[c] != 0)
+                        {
+                            throw std::runtime_error("Vertec c should be gray.");
+                        }
 
-            //// Find the intersected edges as well as the points of intersection
-            ////
-            //for (const auto &triangle : this->triangles)
-            //{
-                //const int v0 = triangle[0];
-                //const int v1 = triangle[1];
-                //const int v2 = triangle[2];
-
-                //const bool v0Inside = this->edgeParam[v0] < isovalue;
-                //const bool v1Inside = this->edgeParam[v1] < isovalue;
-                //const bool v2Inside = this->edgeParam[v2] < isovalue;
-
-                //if (v0Inside != v1Inside)
-                //{
-                    //triangleIntersectionPoints[{v0, v1}] = interpolateEdge(v0, v1, isovalue); 
-                //}
-                //if (v1Inside != v2Inside)
-                //{
-                    //triangleIntersectionPoints[{v1, v2}] = interpolateEdge(v1, v2, isovalue); 
-                //}
-                //if (v2Inside != v0Inside)
-                //{
-                    //triangleIntersectionPoints[{v2, v0}] = interpolateEdge(v2, v0, isovalue); 
-                //}
-            //}
-
-            //// Set up the new vertices
-            ////
-            //std::map<std::set<int>, int> triangleIntersectionIndices;
-
-            //SurfaceMesh newMesh;
-            //newMesh.vertexCoordinates = this->vertexCoordinates;
-            //newMesh.edgeParam = this->edgeParam;
-            //newMesh.isVertexSingular = this->isVertexSingular;
-
-            //for (const auto &[edge, point] : triangleIntersectionPoints)
-            //{
-                //newMesh.vertexCoordinates.push_back(point);
-                //newMesh.edgeParam.push_back(isovalue);
-                //newMesh.isVertexSingular.push_back(true);
-                //triangleIntersectionIndices[edge] = newMesh.vertexCoordinates.size()-1;
-            //}
+                        if (vertexColour[a] * vertexColour[b] != -1)
+                        {
+                            throw std::runtime_error("Vertices a and b should have different colours, neither gray.");
+                        }
+                    }
 
 
-            //// Set up the new triangles
-            //for (int i = 0 ; i < this->triangles.size() ; i++)
-            //{
-                //const auto &triangle = this->triangles[i];
-                //const int &tetId = this->triangleTetId[i];
 
-                //const int v0 = triangle[0];
-                //const int v1 = triangle[1];
-                //const int v2 = triangle[2];
+                    //
+                    //                c
+                    //               /|
+                    //              / |
+                    //             /  |      ^
+                    //      /     /   |      |
+                    //  h1 /  d1 /----| d0   | h0
+                    //    /     /\    |      | 
+                    //   \/    /  \   |      
+                    //        /    \  |
+                    //       /      \ |
+                    //      /________\|
+                    //     a           b
+                    //
+                    //
 
-                //const bool v0v1Intersected = triangleIntersectionIndices.contains({v0, v1});
-                //const bool v1v2Intersected = triangleIntersectionIndices.contains({v1, v2});
-                //const bool v2v0Intersected = triangleIntersectionIndices.contains({v2, v0});
+                    else if (activeHalfEdges.size() == 2)
+                    {
+                        // Find the 3rd vertex
 
+                        auto h0 = activeHalfEdges[0];
+                        auto h1 = activeHalfEdges[1];
 
-                //// No intersected, skip this case
-                //if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 0)
-                //{
-                    //newMesh.triangles.push_back({
-                            //v0, 
-                            //v1, 
-                            //v2, 
-                            //});
+                        // Swap to make sure that next(h1) = h2
+                        if (mesh.next(h1) == h0)
+                        {
+                            std::swap(h0, h1);
+                        }
 
-                    //newMesh.triangleTetId.push_back(tetId);
+                        const CGALMesh::Vertex_index a = oldToNewVertexMap.at(mesh.target(h1));
+                        const CGALMesh::Vertex_index b = oldToNewVertexMap.at(mesh.source(h0));
+                        const CGALMesh::Vertex_index c = oldToNewVertexMap.at(mesh.target(h0));
 
-                //}
-                //else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 1)
-                //{
-                    //// Rotate so that vB is the intersected vertex is vB and intersected edges is vAvC
-                    ////
-                    //int vA, vB, vC;
+                        const CGALMesh::Vertex_index d0 = edgeVertexMap.at(mesh.edge(h0));
+                        const CGALMesh::Vertex_index d1 = edgeVertexMap.at(mesh.edge(h1));
 
-                    //if (triangleIntersectionIndices.contains({v0, v1}))
-                    //{
-                        //vA = v1; vB = v2; vC = v0;
-                    //}
+                        newFaces.push_back({d1, a, b});
+                        newTetIds.push_back(tetId);
 
-                    //else if (triangleIntersectionIndices.contains({v1, v2}))
-                    //{
-                        //vA = v2; vB = v0; vC = v1;
-                    //}
+                        newFaces.push_back({b, d0, d1});
+                        newTetIds.push_back(tetId);
 
-                    //else if (triangleIntersectionIndices.contains({v2, v0}))
-                    //{
-                        //vA = v0; vB = v1; vC = v2;
-                    //}
-                    //else
-                    //{
-                        //throw std::runtime_error("Impossible else case.");
-                    //}
+                        newFaces.push_back({d0, c, d1});
+                        newTetIds.push_back(tetId);
 
-                    //newMesh.triangles.push_back({
-                            //vA, 
-                            //vB, 
-                            //triangleIntersectionIndices.at({vA, vC}), 
-                            //});
+                        constraintEdges.push_back({d0, d1});
 
-                    //newMesh.triangles.push_back({
-                            //vB, 
-                            //vC, 
-                            //triangleIntersectionIndices.at({vA, vC}), 
-                            //});
+                        if (vertexColour[a] * vertexColour[b] * vertexColour[c] == 0)
+                        {
+                            throw std::runtime_error("Neither of a, b, c should be gray.");
+                        }
 
-                    //newMesh.triangleTetId.push_back(tetId);
-                    //newMesh.triangleTetId.push_back(tetId);
-                //}
-                //else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 2)
-                //{
-                    //// Rotate so that vB is the odd one out (between the two intersected edges)
-                    ////
-                    //int vA, vB, vC;
+                        if (vertexColour[a] * vertexColour[c] != -1)
+                        {
+                            throw std::runtime_error("Vertices a and c should have different colours, neither gray.");
+                        }
 
-                    //if (triangleIntersectionIndices.contains({v0, v1}) && triangleIntersectionIndices.contains({v1, v2}))
-                    //{
-                        //vA = v0; vB = v1; vC = v2;
-                    //}
+                        if (vertexColour[a] != vertexColour[b])
+                        {
+                            throw std::runtime_error("Vertices a and b should have the same colour.");
+                        }
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Degenerate remeshing case.");
+                    }
+                }
 
-                    //else if (triangleIntersectionIndices.contains({v1, v2}) && triangleIntersectionIndices.contains({v0, v2}))
-                    //{
-                        //vA = v1; vB = v2; vC = v0;
-                    //}
+                for (int i = 0 ; i < newFaces.size() ; i++)
+                {
+                    auto newFace = newMesh.mesh.add_face(newFaces[i]);
 
-                    //else if (triangleIntersectionIndices.contains({v0, v1}) && triangleIntersectionIndices.contains({v0, v2}))
-                    //{
-                        //vA = v2; vB = v0; vC = v1;
-                    //}
-                    //else
-                    //{
-                        //throw std::runtime_error("Impossible else case.");
-                    //}
+                    if (newFace == CGALMesh::null_face())
+                    {
+                        throw std::runtime_error("Failed to add a new triangle to the msh.");
+                    }
+
+                    newMesh.tetId[newFace] = newTetIds[i];
+                }
+
+                return constraintEdges;
+            }
 
 
-                    ////         vB
-                    ////         /\
-                    ////        /  \
-                    ////       /____\
-                    ////      /      \
-                    ////     /________\
-                    ////    vC        vA
-                    ////
 
-                    //newMesh.triangles.push_back({
-                            //vB, 
-                            //triangleIntersectionIndices.at({vB, vC}), 
-                            //triangleIntersectionIndices.at({vA, vB}), 
-                            //});
+            void buildImpassableEdges(
+                    const SurfaceMesh &oldMesh, 
+                    SurfaceMesh &newMesh, 
+                    const std::map<CGALMesh::Vertex_index, CGALMesh::Vertex_index> &oldToNewVertexMap, 
+                    const std::map<CGALMesh::Edge_index, CGALMesh::Vertex_index> &edgeVertexMap, 
+                    const std::vector<std::pair<CGALMesh::Vertex_index, CGALMesh::Vertex_index>> &impassableEdges,
+                    CGALMesh::Property_map<CGALMesh::Edge_index, bool> &isImpassable)
+            {
+                for (auto e : this->mesh.edges())
+                {
+                    // Is the edge impassable
+                    const bool isEdgeImpassable = this->isImpassable[e];
 
-                    //newMesh.triangles.push_back({
-                            //vA, 
-                            //triangleIntersectionIndices.at({vA, vB}), 
-                            //triangleIntersectionIndices.at({vB, vC}), 
-                            //});
+                    const CGALMesh::Halfedge_index h = mesh.halfedge(e);
+                    const CGALMesh::Vertex_index a = mesh.source(h);
+                    const CGALMesh::Vertex_index b = mesh.target(h);
+
+                    const CGALMesh::Vertex_index aNew = oldToNewVertexMap.at(a);
+                    const CGALMesh::Vertex_index bNew = oldToNewVertexMap.at(b);
+
+                    // If the edge has been subdivided
+                    if (edgeVertexMap.contains(e))
+                    {
+                        // The point of subdivision
+                        const CGALMesh::Vertex_index cNew = edgeVertexMap.at(e);
+
+                        const auto hNew0 = newMesh.mesh.halfedge(aNew, cNew);
+
+                        if (hNew0 == CGALMesh::null_halfedge())
+                        {
+                            throw std::runtime_error("Half-edge not found.");
+                        }
+
+                        const auto hNew1 = newMesh.mesh.halfedge(cNew, bNew);
+
+                        if (hNew1 == CGALMesh::null_halfedge())
+                        {
+                            throw std::runtime_error("Half-edge not found.");
+                        }
+
+                        const auto eNew0 = newMesh.mesh.edge(hNew0);
+                        const auto eNew1 = newMesh.mesh.edge(hNew1);
+
+                        newMesh.isImpassable[eNew0] = isEdgeImpassable;
+                        newMesh.isImpassable[eNew1] = isEdgeImpassable;
+                    }
+
+                    // If the edge has not been subdivided, just copy over the old value
+                    else
+                    {
+                        const auto hNew = newMesh.mesh.halfedge(aNew, bNew);
+
+                        if (hNew == CGALMesh::null_halfedge())
+                        {
+                            throw std::runtime_error("Half-edge not found.");
+                        }
+
+                        const auto eNew = newMesh.mesh.edge(hNew);
+
+                        newMesh.isImpassable[eNew] = isEdgeImpassable;
+                    }
+                }
+
+                // Fill in the new impassable edges
+                //
+                for (const auto &[aNew, bNew] : impassableEdges)
+                {
+                    const auto hNew = newMesh.mesh.halfedge(aNew, bNew);
+                    const auto eNew = newMesh.mesh.edge(hNew);
+                    newMesh.isImpassable[eNew] = true;
+                }
+            }
 
 
-                    //newMesh.triangles.push_back({
-                            //vC,
-                            //vA,
-                            //triangleIntersectionIndices.at({vB, vC}), 
-                            //});
-
-                    //newMesh.triangleTetId.push_back(tetId);
-                    //newMesh.triangleTetId.push_back(tetId);
-                    //newMesh.triangleTetId.push_back(tetId);
-
-                //}
-                //else if (v0v1Intersected + v1v2Intersected + v2v0Intersected == 3)
-                //{
-                    //throw std::runtime_error("Degenerate triangle detected in remeshing.");
-                //}
-                //else
-                //{
-                    //throw std::runtime_error("Impossible else case.");
-
-                //}
-            //}
 
 
-            //return newMesh;
-        //}
+            CGALMesh::Property_map<CGALMesh::Vertex_index, int> getVertexColours(CGALMesh &cgalMesh, const double isovalue)
+            {
+                auto [vertexColour, created] = cgalMesh.add_property_map<CGALMesh::Vertex_index, int>("v:colour", -2);
 
+                if (false == created)
+                {
+                    throw std::runtime_error("Could not make mesh colour array.");
+                }
 
+                for (auto v : cgalMesh.vertices())
+                {
+                    const double e = edgeParam[v];
+
+                    if (CGAL::compare(e, isovalue) == CGAL::SMALLER)
+                    {
+                        vertexColour[v] = -1;
+                    }
+                    else if (CGAL::compare(e, isovalue) == CGAL::EQUAL)
+                    {
+                        std::cerr << "GRAY VERTEX!";
+                        vertexColour[v] = 0;
+                    }
+                    else
+                    {
+                        vertexColour[v] = +1;
+                    }
+                }
+
+                return vertexColour;
+            }
+            
 };

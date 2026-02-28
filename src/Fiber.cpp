@@ -102,15 +102,16 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     {
         if (intersectionType[i] == 2)
         {
-            //surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
-            surfaceMesh.print();
+            std::cout << "----------------------------------- Subdividing mesh...\n\n";
+            surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
+            //surfaceMesh.print();
         }
     }
     Timer::stop("Subdivided mesh                        :");
 
 
     Timer::start();
-    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     Timer::stop("Computing triangle sheets              :");
 
 

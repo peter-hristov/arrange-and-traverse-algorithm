@@ -178,22 +178,23 @@ std::vector<Halfedge_const_handle> getBoundaryComponent(const std::unordered_set
 
 
 
-        int counter = 0;
-        auto test = current;
-        do
-        {
-            if (sheetHalfEdges.contains(test))
-            {
-                counter++;
-            }
+        // Detect pinch points
+        //int counter = 0;
+        //auto test = current;
+        //do
+        //{
+            //if (sheetHalfEdges.contains(test))
+            //{
+                //counter++;
+            //}
 
-            test = test->twin()->next();
-        } while (test != current);
+            //test = test->twin()->next();
+        //} while (test != current);
 
-        if (counter != 2)
-        {
-            std::cout << "------------------------------------- Pinch point detected! " << counter << "\n";
-        }
+        //if (counter != 2)
+        //{
+            ////std::cout << "------------------------------------- Pinch point detected! " << counter << "\n";
+        //}
 
 
 
