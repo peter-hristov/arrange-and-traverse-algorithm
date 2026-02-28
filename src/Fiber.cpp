@@ -110,7 +110,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
 
     Timer::start();
-    surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     Timer::stop("Computing triangle sheets              :");
 
 

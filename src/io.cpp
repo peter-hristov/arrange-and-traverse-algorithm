@@ -56,7 +56,8 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
     // Clean up if it's a triangle soup, merge duplicated triangles
     vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
     cleaner->SetInputData(polyData);
-    cleaner->SetTolerance(1e-6);
+    //cleaner->SetTolerance(1e-6);
+    cleaner->SetTolerance(0);
     cleaner->Update();
 
     vtkSmartPointer<vtkPolyData> cleanedPolyData = cleaner->GetOutput();

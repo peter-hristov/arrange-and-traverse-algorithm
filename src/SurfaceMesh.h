@@ -120,27 +120,27 @@ class SurfaceMesh
 
 
 
-        //std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
-        //{
-            //std::vector<FiberPoint> allFiberPoints;
+        std::vector<FiberPoint> getFiberPoints(const std::vector<int> triangleSheets = {})
+        {
+            std::vector<FiberPoint> allFiberPoints;
 
-            //std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
-            //for (auto f : mesh.faces())
-            //{
-                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                //{
-                    //std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
+            std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+            for (auto f : mesh.faces())
+            {
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
+                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
 
-                    //allFiberPoints.push_back(FiberPoint(
-                                //point,
-                                //triangleColour, 
-                                //1,
-                                //-1
-                                //));
-                //}
-            //}
-            //return allFiberPoints;
-        //}
+                    allFiberPoints.push_back(FiberPoint(
+                                point,
+                                triangleColour, 
+                                1,
+                                -1
+                                ));
+                }
+            }
+            return allFiberPoints;
+        }
 
 
         //std::vector<std::array<double, 3>> vertexCoordinates;
@@ -154,51 +154,51 @@ class SurfaceMesh
 
 
 
-        std::vector<FiberPoint> getFiberPoints()
-        {
-            std::vector<FiberPoint> allFiberPoints;
+        //std::vector<FiberPoint> getFiberPoints()
+        //{
+            //std::vector<FiberPoint> allFiberPoints;
 
-            for (auto f : mesh.faces())
-            {
+            //for (auto f : mesh.faces())
+            //{
 
-                const int sheetId = this->sheetId[f];
+                //const int sheetId = this->sheetId[f];
 
-                // Default triangle colour
-                std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+                //// Default triangle colour
+                //std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
 
-                if (sheetId != -1)
-                {
-                    triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
-                }
+                //if (sheetId != -1)
+                //{
+                    //triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                //}
 
-                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                {
-                    if (this->isSingular[v])
-                    {
-                        triangleColour = {1.0, 0.0, 0.0};
-                        //triangleColour = { static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX };
-                    }
+                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                //{
+                    //if (this->isSingular[v])
+                    //{
+                        //triangleColour = {1.0, 0.0, 0.0};
+                        ////triangleColour = { static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX };
+                    //}
 
-                }
+                //}
 
-                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                {
-                    std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
+                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                //{
+                    //std::array<double, 3> point = { mesh.point(v)[0], mesh.point(v)[1], mesh.point(v)[2] };
 
 
-                    allFiberPoints.push_back(FiberPoint(
-                                point,
-                                triangleColour, 
-                                1,
-                                -1
-                                ));
-                }
+                    //allFiberPoints.push_back(FiberPoint(
+                                //point,
+                                //triangleColour, 
+                                //1,
+                                //-1
+                                //));
+                //}
 
-            }
+            //}
 
-            return allFiberPoints;
+            //return allFiberPoints;
 
-        }
+        //}
 
         //void print()
         //{
