@@ -529,8 +529,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //
         //Start point : 0.033263165761928781 0.14687746720889849 end point 0.21512107934692115 0.10335287336486487
         //Start point : 0.0013081379514506108 0.15420964485311991 end point 0.14955198551200763 -0.0054015285199353466
+        // Start point : 0.0018143038060367939 0.20159421194824584 end point -0.00063704487815769751 -0.19743372148439267
 
-        //controlPointsInternal = {{0.0013081379514506108, 0.15420964485311991}, {0.14955198551200763, -0.0054015285199353466}};
+        controlPointsInternal = {{0.0018143038060367939, 0.20159421194824584}, {-0.00063704487815769751, -0.19743372148439267}};
 
 
         std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
@@ -538,6 +539,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
+        // Time to beat - 7s
         //std::vector<FiberPoint> fibersAll;
         //if (controlPointsTransformed.size() == 2)
         //{

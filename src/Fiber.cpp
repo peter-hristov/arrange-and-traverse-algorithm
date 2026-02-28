@@ -102,7 +102,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     {
         if (intersectionType[i] == 2)
         {
-            std::cout << "----------------------------------- Subdividing mesh...\n\n";
+            //std::cout << "----------------------------------- Subdividing mesh...\n\n";
             surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
             //surfaceMesh.print();
         }
@@ -1617,7 +1617,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
         if (tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex)) == 2)
         {
-            std::cout << "---- Intersected segment with ID " << segmentIndex << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex)) << " and alpha " << alpha << std::endl;
+            //std::cout << "---- Intersected segment with ID " << segmentIndex << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex)) << " and alpha " << alpha << std::endl;
         }
     }
 
@@ -1746,6 +1746,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
     Timer::start();
 
+    std::cout << "Computing " << fiberPoints.size() << " fiber graphs...\n";
+
     // Do the heavy lifting
     //
     #pragma omp parallel for schedule(dynamic)
@@ -1784,7 +1786,6 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     Timer::start();
 
     std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
-    std::cout << "Computing " << fiberPoints.size() << " fibers...\n";
 
     std::set<int> uniqueSheetIds;
 
