@@ -24,9 +24,13 @@
         [x] Why is he CGAL mesh broken? 2 boundary edges for 2 spheres?
 
         [ ] Optimisation
-            [ ] Speed up the remeshing
+            [x] Speed up the remeshing with in-place Euler operations
+            [ ] Speed up remeshing with one pass over all isovalues
             [ ] Optimise the fiber saturation (we don't need the full flexible fiber, just follow a few triangles)
             [ ] Optimise modpoint computation?
+
+        [x] Bugs
+            [x] Mini triangles (with area bellow 1e-14), add an epsilong to colouring the vertices, robustness issues.
 
         [ ] Refactor code to make it more usable 
 

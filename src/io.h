@@ -31,6 +31,7 @@ namespace io
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 
     void saveFiberSurface(SurfaceMesh& mesh, const std::string& filename);
+    void writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::string& filename);
     void saveSheetsFeatures(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
 
 

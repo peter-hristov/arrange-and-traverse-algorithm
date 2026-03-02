@@ -335,7 +335,7 @@ TracerVisualiserWidget::drawScene()
     glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 180.);
 
     // Scrolling
-    glTranslatef(0.0, 0.0, -1 * scale / 2.6);
+    glTranslatef(0.0, 0.0, -1 * scale / 1.2);
 
     // Offset along x, y (with the right mouse button)
     glTranslatef(translateX, translateY, 0.0);

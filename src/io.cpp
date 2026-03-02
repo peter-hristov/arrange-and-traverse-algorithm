@@ -332,54 +332,168 @@ CGALMesh io::readCGALMesh(const std::string& filename)
     return mesh;
 }
 
-void io::saveFiberSurface(SurfaceMesh& mesh, const std::string& filename)
+void io::saveFiberSurface(SurfaceMesh& surfMesh, const std::string& filename)
 {
-    // Create VTK containers
-    //vtkSmartPointer<vtkPoints> points =
-        //vtkSmartPointer<vtkPoints>::New();
+    const CGALMesh& mesh = surfMesh.mesh;
 
-    //vtkSmartPointer<vtkCellArray> triangles =
-        //vtkSmartPointer<vtkCellArray>::New();
+    // -------------------------------------------------------------------------
+    // 1. Points
+    // -------------------------------------------------------------------------
+    auto vtkPts = vtkSmartPointer<vtkPoints>::New();
+    vtkPts->SetNumberOfPoints(mesh.number_of_vertices());
 
-    //// --- Add vertices ---
-    //points->SetNumberOfPoints(mesh.vertexCoordinates.size());
+    // Map CGAL vertex index -> VTK point id
+    std::unordered_map<CGALMesh::Vertex_index, vtkIdType> vertexMap;
+    vertexMap.reserve(mesh.number_of_vertices());
 
-    //for (vtkIdType i = 0;
-         //i < static_cast<vtkIdType>(mesh.vertexCoordinates.size());
-         //++i)
-    //{
-        //const auto& p = mesh.vertexCoordinates[i];
-        //points->SetPoint(i, p[0], p[1], p[2]);
-    //}
+    // edgeParam lives on vertices
+    auto vtkEdgeParam = vtkSmartPointer<vtkDoubleArray>::New();
+    vtkEdgeParam->SetName("edgeParam");
+    vtkEdgeParam->SetNumberOfComponents(1);
+    vtkEdgeParam->SetNumberOfTuples(mesh.number_of_vertices());
 
-    //// --- Add triangles ---
-    //for (const auto& tri : mesh.triangles)
-    //{
-        //vtkSmartPointer<vtkTriangle> triangle =
-            //vtkSmartPointer<vtkTriangle>::New();
+    vtkIdType pid = 0;
+    for (auto v : mesh.vertices())
+    {
+        const auto& pt = mesh.point(v);
+        vtkPts->SetPoint(pid, CGAL::to_double(pt.x()),
+                              CGAL::to_double(pt.y()),
+                              CGAL::to_double(pt.z()));
 
-        //triangle->GetPointIds()->SetId(0, tri[0]);
-        //triangle->GetPointIds()->SetId(1, tri[1]);
-        //triangle->GetPointIds()->SetId(2, tri[2]);
+        double ep = surfMesh.edgeParam[v];
+        vtkEdgeParam->SetValue(pid, ep);
 
-        //triangles->InsertNextCell(triangle);
-    //}
+        vertexMap[v] = pid++;
+    }
 
-    //// --- Build polydata ---
-    //vtkSmartPointer<vtkPolyData> polyData =
-        //vtkSmartPointer<vtkPolyData>::New();
+    // -------------------------------------------------------------------------
+    // 2. Faces (triangles assumed; adapt for polygons if needed)
+    // -------------------------------------------------------------------------
+    auto vtkCells = vtkSmartPointer<vtkCellArray>::New();
 
-    //polyData->SetPoints(points);
-    //polyData->SetPolys(triangles);
+    auto vtkTetId   = vtkSmartPointer<vtkIntArray>::New();
+    vtkTetId->SetName("tetId");
+    vtkTetId->SetNumberOfComponents(1);
 
-    //// --- Write file ---
-    //vtkSmartPointer<vtkXMLPolyDataWriter> writer =
-        //vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    auto vtkSheetId = vtkSmartPointer<vtkIntArray>::New();
+    vtkSheetId->SetName("sheetId");
+    vtkSheetId->SetNumberOfComponents(1);
 
-    //writer->SetFileName(filename.c_str());
-    //writer->SetInputData(polyData);
-    //writer->SetDataModeToBinary();   // smaller file
-    //writer->Write();
+    auto vtkComponentId = vtkSmartPointer<vtkIntArray>::New();
+    vtkComponentId->SetName("componentId");
+    vtkComponentId->SetNumberOfComponents(1);
+
+    auto vtkTriangleId = vtkSmartPointer<vtkIntArray>::New();
+    vtkTriangleId->SetName("triangleId");
+    vtkTriangleId->SetNumberOfComponents(1);
+
+    for (auto f : mesh.faces())
+    {
+        // Collect vertices of this face
+        std::vector<vtkIdType> ids;
+        for (auto v : CGAL::vertices_around_face(mesh.halfedge(f), mesh))
+            ids.push_back(vertexMap.at(v));
+
+        vtkCells->InsertNextCell(static_cast<vtkIdType>(ids.size()), ids.data());
+
+        int tid = surfMesh.tetId[f];
+        int sid = surfMesh.sheetId[f];
+        int cid = surfMesh.componentId[f];
+
+        vtkTetId->InsertNextValue(tid);
+        vtkSheetId->InsertNextValue(sid);
+        vtkComponentId->InsertNextValue(cid);
+        vtkTriangleId->InsertNextValue(f.idx());
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. Edge attribute: isImpassable
+    //    VTK PolyData has no native edge arrays, so we store it as a field-data
+    //    array (one value per edge, ordered by CGAL edge index).
+    //    Alternatively you could split faces into lines; field data is simpler.
+    // -------------------------------------------------------------------------
+    auto vtkImpassable = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    vtkImpassable->SetName("isImpassable");
+    vtkImpassable->SetNumberOfComponents(1);
+    vtkImpassable->SetNumberOfTuples(mesh.number_of_edges());
+
+    vtkIdType eid = 0;
+    for (auto e : mesh.edges())
+    {
+        bool val = surfMesh.isImpassable[e];
+        vtkImpassable->SetValue(eid++, val);
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. Assemble vtkPolyData
+    // -------------------------------------------------------------------------
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(vtkPts);
+    polyData->SetPolys(vtkCells);
+
+    polyData->GetPointData()->AddArray(vtkEdgeParam);   // vertex attribute
+    polyData->GetCellData()->AddArray(vtkTetId);        // face attributes
+    polyData->GetCellData()->AddArray(vtkSheetId);
+    polyData->GetCellData()->AddArray(vtkComponentId);
+    polyData->GetCellData()->AddArray(vtkTriangleId);
+    polyData->GetFieldData()->AddArray(vtkImpassable);  // edge attribute
+
+    // -------------------------------------------------------------------------
+    // 5. Write .vtp (XML PolyData)
+    // -------------------------------------------------------------------------
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(polyData);
+    writer->SetDataModeToBinary();   // or SetDataModeToAscii()
+    writer->Write();
+}
+
+void io::writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::string& filename)
+{
+    const CGALMesh& mesh = surfMesh.mesh;
+
+    // Points
+    auto pts = vtkSmartPointer<vtkPoints>::New();
+    pts->SetNumberOfPoints(mesh.number_of_vertices());
+
+    std::unordered_map<CGALMesh::Vertex_index, vtkIdType> vertexMap;
+    vertexMap.reserve(mesh.number_of_vertices());
+
+    vtkIdType pid = 0;
+    for (auto v : mesh.vertices())
+    {
+        const auto& pt = mesh.point(v);
+        pts->SetPoint(pid, CGAL::to_double(pt.x()),
+                          CGAL::to_double(pt.y()),
+                          CGAL::to_double(pt.z()));
+        vertexMap[v] = pid++;
+    }
+
+    // Impassable edges as line cells
+    auto cells = vtkSmartPointer<vtkCellArray>::New();
+
+    for (auto e : mesh.edges())
+    {
+        if (!surfMesh.isImpassable[e]) continue;
+
+        auto h = mesh.halfedge(e);
+        vtkIdType v0 = vertexMap.at(mesh.source(h));
+        vtkIdType v1 = vertexMap.at(mesh.target(h));
+        vtkIdType line[2] = {v0, v1};
+        cells->InsertNextCell(2, line);
+    }
+
+    // Assemble
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(pts);
+    polyData->SetLines(cells);
+
+    // Write
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(polyData);
+    writer->SetDataModeToBinary();
+    writer->Write();
 }
 
 

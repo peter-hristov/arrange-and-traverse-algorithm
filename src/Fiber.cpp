@@ -116,6 +116,10 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     Timer::stop("Computing triangle sheets              :");
 
 
+    io::saveFiberSurface(surfaceMesh, "fs.vtp");
+    io::writeImpassableEdgesToVTK(surfaceMesh, "fs.impassable.vtp");
+
+
     return surfaceMesh.getFiberPoints();
 
 

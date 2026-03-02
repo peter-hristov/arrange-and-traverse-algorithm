@@ -6,6 +6,7 @@
 #include <CGAL/enum.h>
 #include <iostream>
 #include <stack>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -20,6 +21,9 @@
 #include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 #include <CGAL/Polygon_mesh_processing/orientation.h>
 
+#include <CGAL/Polygon_mesh_processing/repair.h>
+#include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
+
 class SurfaceMesh
 {
     public:
@@ -28,8 +32,11 @@ class SurfaceMesh
 
         CGALMesh::Property_map<CGALMesh::Face_index, int> tetId;
         CGALMesh::Property_map<CGALMesh::Face_index, int> sheetId;
+        CGALMesh::Property_map<CGALMesh::Face_index, int> componentId;
 
         CGALMesh::Property_map<CGALMesh::Edge_index, bool> isImpassable;
+
+        const double epsilon = 1e-10;
 
         SurfaceMesh()
         {
@@ -135,6 +142,13 @@ class SurfaceMesh
             if (false == created)
             {
                 throw std::runtime_error("SheetId property could not be added to the mesh.");
+            }
+
+            std::tie(this->componentId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:componentId", -1);
+
+            if (false == created)
+            {
+                throw std::runtime_error("ComponentId property could not be added to the mesh.");
             }
 
             std::tie(this->isImpassable, created) = this->mesh.add_property_map<CGALMesh::Edge_index, bool>("f:isImpassable", false);
@@ -327,23 +341,76 @@ class SurfaceMesh
         }
 
 
-        void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+
+        // Back for debuggin connected component compututaion, otherwise CGAL's CGAL::Polygon_mesh_processing::connected_components
+        std::size_t computeConnectedComponentsBFS(CGALMesh::Property_map<CGALMesh::Face_index, int>& componentMap)
         {
+            const CGALMesh& mesh = this->mesh;
 
-            // 1. Compute connected components
-            //
-            const auto [faceComponent, created] = mesh.add_property_map<CGALMesh::Face_index, std::size_t>("f:component2", 0);
+            // Initialize all faces as unvisited (-1)
+            for (auto f : mesh.faces())
+                componentMap[f] = -1;
 
-            if (!created)
+            int componentId = 0;
+
+            for (auto startFace : mesh.faces())
             {
-                throw std::runtime_error("Face component property could not be added to the mesh.");
+                if (componentMap[startFace] != -1) continue; // already visited
+
+                printf("----------------------------------------------- At Component %d\n\n", componentId);
+
+                // BFS from startFace
+                std::queue<CGALMesh::Face_index> queue;
+                queue.push(startFace);
+                componentMap[startFace] = componentId;
+
+                while (!queue.empty())
+                {
+                    auto f = queue.front();
+                    queue.pop();
+
+                    printf("------------------------- At Face %d\n", f.idx());
+
+                    // Iterate over the 3 halfedges of this face
+                    auto h = mesh.halfedge(f);
+                    for (int i = 0; i < 3; ++i, h = mesh.next(h))
+                    {
+                        // Skip if this edge is impassable
+                        auto e = mesh.edge(h);
+                        if (this->isImpassable[e]) continue;
+
+                        // Get the opposite face
+                        auto opp = mesh.opposite(h);
+                        if (mesh.is_border(opp)) continue; // no face on the other side
+
+                        auto neighbor = mesh.face(opp);
+                        if (componentMap[neighbor] != -1) continue; // already visited
+
+                        printf("--- Adding neighbour %d\n", neighbor.idx());
+
+                        componentMap[neighbor] = componentId;
+                        queue.push(neighbor);
+                    }
+                }
+
+                componentId++;
             }
 
+            return static_cast<std::size_t>(componentId);
+        }
+
+
+
+
+        void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+        {
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
                     this->mesh,
-                    faceComponent,
+                    this->componentId,
                     CGAL::parameters::edge_is_constrained_map(this->isImpassable)
                     );
+
+            //std::size_t numComponents2 = computeConnectedComponentsBFS(this->componentId);
 
 
             // 2. Get a representative triangle per component
@@ -352,7 +419,7 @@ class SurfaceMesh
             std::vector<std::pair<CGALMesh::Face_index, int>> componentRepresentatives;
             for (auto face : mesh.faces())
             {
-                const int componentId = faceComponent[face];
+                const int componentId = this->componentId[face];
 
                 if (false == usedComponents.contains(componentId))
                 {
@@ -376,8 +443,20 @@ class SurfaceMesh
             //
             for (auto face : mesh.faces())
             {
-                const int componentId = faceComponent[face];
+                const int componentId = this->componentId[face];
                 this->sheetId[face] =  componentSheets[componentId];
+
+
+
+                //this->sheetId[face] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                
+                //this->sheetId[face] =  componentId;
+                //const int realSheetId = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+
+                //if (this->sheetId[face] != realSheetId)
+                //{
+                    //throw std::runtime_error("Triangle sheet Id not the same as its component id.");
+                //}
             }
         }
 
@@ -431,8 +510,6 @@ class SurfaceMesh
                 }
             }
 
-            std::unordered_map<CGALMesh::Face_index, std::vector<CGALMesh::Halfedge_index>> faceActiveHalfedges;
-
             // 3. Split the edges
             for (const auto &e : activeEdges)
             {
@@ -450,20 +527,7 @@ class SurfaceMesh
                 // Copy over the vertex values for the new points
                 mesh.point(vNew) = edgeVertex;
                 edgeParam[vNew] = isovalue;
-
-                // Make the halfedges as active in the face
-                if (false == mesh.is_border(hNew))
-                {
-                    faceActiveHalfedges[mesh.face(hNew)].push_back(hNew);
-                }
-
-                //std::cerr << "FACE is " << mesh.face(hNew) << " with opposite " << mesh.face(mesh.opposite(hNew)) << std::endl;
-
-                const auto hNewOpposite = mesh.opposite(mesh.next(hNew));
-                if (false == mesh.is_border(hNewOpposite))
-                {
-                    faceActiveHalfedges[mesh.face(hNewOpposite)].push_back(hNewOpposite);
-                }
+                vertexColour[vNew] = 0;
 
                 // Make whether this is impassable
                 const auto isEdgeImpassable = this->isImpassable[e];
@@ -474,159 +538,76 @@ class SurfaceMesh
             int counter = 0;
 
 
-            // 4. Split the faces
-            for (const auto &[face, halfEdges] : faceActiveHalfedges)
+
+
+            std::vector<CGALMesh::Face_index> facesToSplit;
+
+            for (auto f : this->mesh.faces())
             {
+                if (mesh.degree(f) > 3)
+                {
+                    facesToSplit.push_back(f);
+                }
+            }
 
 
-                //std::cerr << "\n\n--------------------------------  Face " << face << ": [";
+
+
+
+            for (auto f : facesToSplit)
+            {
+                const int faceTetId = this->tetId[f];
+
+                //std::cerr << "\n\n--------------------------------  Face " << f << ": [";
                 //bool first = true;
-                //for (auto v : vertices_around_face(mesh.halfedge(face), mesh))
+                //for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
                 //{
                     //if (!first) std::cerr << ", ";
                     //std::cerr << v;
                     //first = false;
                 //}
-                //std::cerr << "], tetId = " << tetId[face]
-                    //<< ", sheetId = " << sheetId[face] << "\n";
+                //std::cerr << "], tetId = " << tetId[f]
+                    //<< ", sheetId = " << sheetId[f] << "\n";
 
+                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
 
-                // verify halfedges still belong to the expected face
-                for (const auto &h : halfEdges)
+                for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
                 {
-                    if (mesh.face(h) != face)
+                    if (vertexColour[mesh.target(h)] == 0)
                     {
-                        throw std::runtime_error("Half-edge not in face.");
+                        activeHalfEdges.push_back(h);
                     }
                 }
 
-                const auto faceTetId = this->tetId[face];
-
-                //
-                //           c
-                //          /|\     /\
-                //         / | \     \  next(next(h))
-                //        /  |  \     \
-                //       /   |   \     \
-                //      /    |    \
-                //   a /_____|_____\ b
-                //           d
-                //      ---->
-                //        h
-                //
-                if (halfEdges.size() == 1)
+                if (activeHalfEdges.size() != 2)
                 {
-                    //std::cerr << "Died in a here 1........\n";
-
-                    const auto h = halfEdges[0];
-                    const auto nnh = mesh.next(mesh.next(h));
-
-
-                    // Some safety sanity checks
-                    const auto a = mesh.source(h);
-                    const auto b = mesh.target(mesh.next(h));
-                    const auto c = mesh.target(nnh);
-                    const auto d = mesh.target(h);
-
-                    //std::cerr << a << ", " << b << ", " << c << " mid is " << d << std::endl;
-
-                    if (vertexColour[c] != 0)
-                    {
-                        throw std::runtime_error("Vertec c should be gray.");
-                    }
-
-                    if (vertexColour[a] * vertexColour[b] != -1)
-                    {
-                        throw std::runtime_error("Vertices a and b should have different colours, neither gray.");
-                    }
-
-                    // Split
-                    const auto newH = CGAL::Euler::split_face(h, nnh, this->mesh);
-
-                    this->tetId[mesh.face(newH)] = faceTetId;
-                    this->tetId[mesh.face(mesh.opposite(newH))] = faceTetId;
-                    this->isImpassable[mesh.edge(newH)] = true;
-
-                    // Do some checks
+                    throw std::runtime_error("There should be 2 active half-edges.");
                 }
 
+                const auto h0 = activeHalfEdges[0];
+                const auto h1 = activeHalfEdges[1];
+                auto newH = CGAL::Euler::split_face(h0, h1, this->mesh);
 
+                this->isImpassable[mesh.edge(newH)] = true;
 
+                this->tetId[mesh.face(newH)] = faceTetId;
+                this->tetId[mesh.face(mesh.opposite(newH))] = faceTetId;
 
-
-
-                //
-                //                c
-                //           /   /|      
-                //       h1 /   / |      
-                //         \/  /  |       
-                //            /   |       
-                //        d1 /----| d0     
-                //          /\ -->|     ^  
-                //         /  \ h3|     |
-                //        /h4\ \  |     | h0
-                //       /   \/ \ |     |
-                //      /________\|
-                //     a           b
-                //
-                //
-                else if (halfEdges.size() == 2)
+                // If one of the new faces is a quad
+                if (mesh.degree(mesh.face(newH)) == 4 || mesh.degree(mesh.face(mesh.opposite(newH))) == 4)
                 {
-                    //std::cerr << "Died in a here 2........\n";
-
-                    auto h0 = halfEdges[0];
-                    auto h1 = halfEdges[1];
-
-                    if (mesh.next(mesh.next(h0)) != h1)
+                    // Switch to the quad a half-edge in the quad
+                    if (mesh.degree(mesh.face(mesh.opposite(newH))) == 4)
                     {
-                        std::swap(h0, h1);
+                        newH = mesh.opposite(newH);
                     }
 
-                    if (mesh.next(mesh.next(h0)) != h1)
-                    {
-                        throw std::runtime_error("Half edge ordering is not correct.");
-                    }
+                    // Split the quad
+                    auto newNewH = CGAL::Euler::split_face(mesh.prev(newH), mesh.next(newH), this->mesh);
 
-                    //std::cerr << "OG face degree : " << mesh.degree(mesh.face(h0)) << std::endl;
-
-                    const auto h3 = CGAL::Euler::split_face(h0, h1, this->mesh);
-
-                    //std::cerr << "A face degree : " << mesh.degree(mesh.face(h3)) << std::endl;
-                    //std::cerr << "B face degree : " << mesh.degree(mesh.face(mesh.opposite(h3))) << std::endl;
-
-
-                    // Sanity checks
-                    if (mesh.degree(mesh.face(h3)) != 4)
-                    {
-                        throw std::runtime_error("Bottom face degree should be 4.");
-                    }
-
-                    if (mesh.degree(mesh.face(mesh.opposite(h3))) != 3)
-                    {
-                        throw std::runtime_error("Top face degree should be 3.");
-                    }
-
-
-
-
-                    // Set values for the triangle
-                    this->tetId[mesh.face(mesh.opposite(h3))] = faceTetId;
-                    this->isImpassable[mesh.edge(h3)] = true;
-
-
-
-
-                    const auto h4 = CGAL::Euler::split_face(mesh.prev(h3), mesh.next(h3), this->mesh);
-                    this->tetId[mesh.face(h4)] = faceTetId;
-                    this->tetId[mesh.face(mesh.opposite(h4))] = faceTetId;
-                    this->isImpassable[mesh.edge(h4)] = true;
-
+                    this->tetId[mesh.face(newNewH)] = faceTetId;
+                    this->tetId[mesh.face(mesh.opposite(newNewH))] = faceTetId;
                 }
-                else
-                {
-                    throw std::runtime_error("Too many active half edges in a face.");
-                }
-
             }
 
             this->mesh.remove_property_map(vertexColour);
@@ -635,13 +616,50 @@ class SurfaceMesh
             mesh.collect_garbage(); // before calling connected_components
             CGAL::Polygon_mesh_processing::orient(this->mesh);
 
+            // 1. Remove degenerate faces (zero or near-zero area)
+            CGAL::Polygon_mesh_processing::remove_degenerate_faces(mesh);
+
+            // 2. Remove degenerate edges (edges shorter than a threshold)
+            CGAL::Polygon_mesh_processing::remove_degenerate_edges(mesh);
+
+
+
             // Make sure the edge is valid
             if (false == CGAL::is_valid_polygon_mesh(this->mesh))
             {
                 throw std::runtime_error("New mesh is not valid.");
             }
 
+            for (auto f : this->mesh.faces())
+            {
+                if (mesh.degree(f) != 3)
+                {
+                    std::cerr << "A face of the mesh is not a triangle, it has degree " + std::to_string(mesh.degree(f)) + ".";
 
+                    //throw std::runtime_error("A face of the mesh is not a triangle, it has degree " + std::to_string(mesh.degree(f)) + ".");
+                }
+
+                // check if face area is zero (or near zero)
+                const auto area = CGAL::Polygon_mesh_processing::face_area(f, mesh);
+
+                if (area < 1e-12)
+                {
+                    std::cerr << "\n\nFace " << f.idx() << " of the mesh has a tiny area:" << std::setprecision(17) << area << " \n";
+
+                    // Print edge lengths
+                    auto h = mesh.halfedge(f);
+                    for (int i = 0; i < 3; ++i, h = mesh.next(h))
+                    {
+                        const auto p0 = mesh.point(mesh.source(h));
+                        const auto p1 = mesh.point(mesh.target(h));
+                        const double lenSq = CGAL::to_double(CGAL::squared_distance(p0, p1));
+                        std::cerr << "Face " << f.idx() << " edge " << i << " length: " << std::setprecision(17) << lenSq << "\n";
+                    }
+
+
+                    //throw std::runtime_error("A face of the mesh has a tiny area:" + std::to_string(area) + ".");
+                }
+            }
             //std::cerr << "We made it!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
         }
 
@@ -1017,32 +1035,54 @@ class SurfaceMesh
             CGALMesh::Property_map<CGALMesh::Vertex_index, int> getVertexColours(CGALMesh &cgalMesh, const double isovalue)
             {
                 auto [vertexColour, created] = cgalMesh.add_property_map<CGALMesh::Vertex_index, int>("v:colour", -2);
-
-                if (false == created)
-                {
+                if (!created)
                     throw std::runtime_error("Could not make mesh colour array.");
-                }
 
                 for (auto v : cgalMesh.vertices())
                 {
                     const double e = edgeParam[v];
+                    const double diff = e - isovalue;
 
-                    if (CGAL::compare(e, isovalue) == CGAL::SMALLER)
-                    {
-                        vertexColour[v] = -1;
-                    }
-                    else if (CGAL::compare(e, isovalue) == CGAL::EQUAL)
-                    {
-                        //std::cerr << "GRAY VERTEX!";
-                        vertexColour[v] = 0;
-                    }
+                    if (std::abs(diff) <= this->epsilon)
+                        vertexColour[v] = 0;       // on the isovalue
+                    else if (diff < 0.0)
+                        vertexColour[v] = -1;      // below
                     else
-                    {
-                        vertexColour[v] = +1;
-                    }
+                        vertexColour[v] = +1;      // above
                 }
 
                 return vertexColour;
             }
+
+            //CGALMesh::Property_map<CGALMesh::Vertex_index, int> getVertexColours(CGALMesh &cgalMesh, const double isovalue)
+            //{
+                //auto [vertexColour, created] = cgalMesh.add_property_map<CGALMesh::Vertex_index, int>("v:colour", -2);
+
+                //if (false == created)
+                //{
+                    //throw std::runtime_error("Could not make mesh colour array.");
+                //}
+
+                //for (auto v : cgalMesh.vertices())
+                //{
+                    //const double e = edgeParam[v];
+
+                    //if (CGAL::compare(e, isovalue) == CGAL::SMALLER)
+                    //{
+                        //vertexColour[v] = -1;
+                    //}
+                    //else if (CGAL::compare(e, isovalue) == CGAL::EQUAL)
+                    //{
+                        ////std::cerr << "GRAY VERTEX!";
+                        //vertexColour[v] = 0;
+                    //}
+                    //else
+                    //{
+                        //vertexColour[v] = +1;
+                    //}
+                //}
+
+                //return vertexColour;
+            //}
             
 };
