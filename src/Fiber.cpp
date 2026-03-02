@@ -88,7 +88,8 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     Timer::start();
     //SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
-    SurfaceMesh surfaceMesh = io::readDataVtuTTK("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_4.vtu", controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
+    //SurfaceMesh surfaceMesh = io::readDataVtuTTK("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_4.vtu", controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
+    SurfaceMesh surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
     Timer::stop("Read surface mesh                      :");
 
     //surfaceMesh.print();

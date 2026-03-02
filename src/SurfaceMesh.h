@@ -644,17 +644,17 @@ class SurfaceMesh
 
                 if (area < 1e-12)
                 {
-                    std::cerr << "\n\nFace " << f.idx() << " of the mesh has a tiny area:" << std::setprecision(17) << area << " \n";
+                    //std::cerr << "\n\nFace " << f.idx() << " of the mesh has a tiny area:" << std::setprecision(17) << area << " \n";
 
-                    // Print edge lengths
-                    auto h = mesh.halfedge(f);
-                    for (int i = 0; i < 3; ++i, h = mesh.next(h))
-                    {
-                        const auto p0 = mesh.point(mesh.source(h));
-                        const auto p1 = mesh.point(mesh.target(h));
-                        const double lenSq = CGAL::to_double(CGAL::squared_distance(p0, p1));
-                        std::cerr << "Face " << f.idx() << " edge " << i << " length: " << std::setprecision(17) << lenSq << "\n";
-                    }
+                    //// Print edge lengths
+                    //auto h = mesh.halfedge(f);
+                    //for (int i = 0; i < 3; ++i, h = mesh.next(h))
+                    //{
+                        //const auto p0 = mesh.point(mesh.source(h));
+                        //const auto p1 = mesh.point(mesh.target(h));
+                        //const double lenSq = CGAL::to_double(CGAL::squared_distance(p0, p1));
+                        //std::cerr << "Face " << f.idx() << " edge " << i << " length: " << std::setprecision(17) << lenSq << "\n";
+                    //}
 
 
                     //throw std::runtime_error("A face of the mesh has a tiny area:" + std::to_string(area) + ".");

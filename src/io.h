@@ -20,6 +20,7 @@ namespace io
     //SurfaceMesh readDataVtuTTK(const std::string &filename);
     
     SurfaceMesh readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2);
+    SurfaceMesh computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2);
 
     SurfaceMesh readDataVtp(const std::string&);
     CGALMesh readCGALMesh(const std::string& filename);

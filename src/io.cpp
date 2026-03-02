@@ -532,24 +532,11 @@ TetMesh io::readData(const std::string &filename)
     throw std::runtime_error("Unsupported file type: " + extension);
 }
 
-SurfaceMesh io::readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2)
+SurfaceMesh io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2)
 {
-    // Read the VTU file
-    vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    reader->SetFileName(filename.c_str());
-
-    reader->Update();
-
-    vtkSmartPointer<vtkUnstructuredGrid> mesh = reader->GetOutput();
-    if (!mesh)
-    {
-        throw std::runtime_error("Failed to get mesh output from the file: " + filename);
-    }
-
     // This is correct I tested now
     std::string field1Name = mesh->GetPointData()->GetArrayName(0);
     std::string field2Name = mesh->GetPointData()->GetArrayName(1);
-
 
     // Create a polyline for the range polygon
     //
@@ -618,8 +605,24 @@ SurfaceMesh io::readDataVtuTTK(const std::string &filename, double u1, double v1
     std::cout << "The fiber surface has " << fiberSurfMesh->GetNumberOfCells() << " cells.\n";
 
 
-
     return getSurfaceMesh(fiberSurfMesh);
+}
+
+SurfaceMesh io::readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2)
+{
+    // Read the VTU file
+    vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    reader->SetFileName(filename.c_str());
+
+    reader->Update();
+
+    vtkSmartPointer<vtkUnstructuredGrid> mesh = reader->GetOutput();
+    if (!mesh)
+    {
+        throw std::runtime_error("Failed to get mesh output from the file: " + filename);
+    }
+
+    return io::computeFiberSurface(mesh, u1, v1, u2, v2);
 }
 
 
@@ -713,6 +716,8 @@ TetMesh io::readDataVtu(const std::string &filename)
     {
         tetMesh.vertexCoordinatesG[i] = gDataArray->GetTuple1(i);
     }
+
+    tetMesh.originalMesh = mesh;
 
     return tetMesh;
 }

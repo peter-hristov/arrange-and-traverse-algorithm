@@ -10,10 +10,15 @@
 #include "./DisjointSet.h"
 #include "./Hashing.h"
 
+#include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
+
 class TetMesh
 {
   public:
     TetMesh() {}
+
+    vtkSmartPointer<vtkUnstructuredGrid> originalMesh;
 
     // Domain and range coordinates
     std::vector<double> vertexCoordinatesF;
