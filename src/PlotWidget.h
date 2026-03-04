@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./CGALTypedefs.h"
+
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QLabel>

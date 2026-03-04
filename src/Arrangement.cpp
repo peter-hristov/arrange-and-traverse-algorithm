@@ -1,6 +1,8 @@
 #include "./Timer.h"
 #include "./Arrangement.h"
 
+
+
 void Arrangement::buildAABBtree(const TetMesh &tetMesh)
 {
 

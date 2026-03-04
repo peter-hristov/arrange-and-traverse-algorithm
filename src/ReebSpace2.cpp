@@ -1848,66 +1848,11 @@ bool ReebSpace2::unitTestCompareFiberGraphs(const TetMesh &tetMesh, Arrangement 
 
 
 
-FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint)
+
+std::vector<std::pair<K::FT, int>> getIntersectedSegments(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const bool shouldSort)
 {
-    // Segfautl for ~/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_4.vtu
-    //controlPoint = {-0.0566964, 0.107433};
-
-    //controlPoint = {-0.0326639, 0.114234}; // pinch point!
-
-    const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
-
-    //Timer::start();
-
-
-    // Get the active face
-    //
-    //Timer::start();
-    Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
-
-    if (activeFace->is_unbounded())
-    {
-        return {};
-    }
-
-    //printf("---------------------------------------------------------------------------\n");
-    //std::cout << "The active face ID is " << activeFace->data() << std::endl;
-
-    const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];
-    //Timer::stop("Computed active face in                :");
-
-
-    // Get a visible point from within the face
-    //
-    //Timer::start();
-    Point_2 closestHalfEdgeVertexPoint = singularArrangement.findVisibleVertex(activeFace, controlPointEPEC);
-    //Timer::stop("Found visible point  in                :");
-
-    //std::cout << "The fiber   point is " << controlPointEPEC << std::endl;
-    //std::cout << "The visible point is " << closestHalfEdgeVertexPoint << std::endl;
-
-    // Set up the control Segment
-    //
-    const Segment_2 controlSegment(controlPointEPEC, closestHalfEdgeVertexPoint);
-
-    if (controlSegment.squared_length() == 0.0)
-    {
-        std::cerr << "The segment has zero lenght!" << std::endl;
-
-    }
-
-
-    // Compute intersectinos with the AABB tree
-    //
-    //Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
     singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
-    //Timer::stop("Computed AABB intersections in         :");
-
-
-    // Compute the alpha for the intersected segments
-    // 
-    //Timer::start();
 
     std::vector<std::pair<K::FT, int>> intersectedSegments;
     intersectedSegments.reserve(intersectedSegmentsAABB.size());
@@ -1919,42 +1864,6 @@ FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singular
         // Get the ID of the original segment.
         const int segmentIndex = id - singularArrangement.allSegments.begin();
 
-
-        const int indexSource = singularArrangement.arrangementPointIndices[s.source()];
-        const int indexTarget = singularArrangement.arrangementPointIndices[s.target()];
-
-        const int edgeId = tetMesh.edgeIndices.at({indexSource, indexTarget});
-
-        if (segmentIndex != edgeId)
-        {
-            throw std::runtime_error("Issue in AABB tree segments indices.");
-        }
-
-
-        // Double check we get the same segment back.
-        Point_2 a = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][0]];
-        Point_2 b = singularArrangement.arrangementPoints[tetMesh.edges[segmentIndex][1]];
-
-        const bool match =
-            (s.source() == a && s.target() == b) ||
-            (s.source() == b && s.target() == a);
-
-        if (match == false)
-        {
-            throw std::runtime_error("Issue in AABB tree segments interation.");
-        }
-
-        // ---- Collinear check with your controlSegment ----
-        if (CGAL::collinear(controlSegment.source(), controlSegment.target(), s.source()) &&
-                CGAL::collinear(controlSegment.source(), controlSegment.target(), s.target()))
-        {
-            // The intersection segment is collinear with the control segment
-            std::cerr << "------------------------------------------ Collinear overlap detected for segment " << segmentIndex << std::endl;
-            continue;
-        }
-
-
-        //
         //
         //
         //                          s.source()
@@ -1980,28 +1889,293 @@ FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singular
     //Timer::stop("Computed Alpha intersections           :");
     //Timer::stop("Computed AABB intersections in         :");
 
-
-    //Timer::start();
-    std::sort(intersectedSegments.begin(), intersectedSegments.end());
-    //Timer::stop("Sorting alpha intersections            :");
-
-
-    for (const auto &[alpha, edgeId] : intersectedSegments)
+    if (shouldSort)
     {
-        const int singularType = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId));
+        //Timer::start();
+        std::sort(intersectedSegments.begin(), intersectedSegments.end());
+        //Timer::stop("Sorting alpha intersections            :");
+
+    }
 
 
-        if (alpha < 1 && singularType != 1)
-        {
-            throw std::runtime_error("Control point segment intersects other singular segments.");
-        }
+    //for (const auto &[alpha, edgeId] : intersectedSegments)
+    //{
+        //const int singularType = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId));
 
-        //std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
+        //if (alpha < 1 && singularType != 1)
+        //{
+            //throw std::runtime_error("Control point segment intersects other singular segments.");
+        //}
+
+        ////std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
+    //}
+
+
+    return intersectedSegments;
+}
+
+
+
+
+
+
+int ReebSpace2::computeFiberGraphReverse(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, std::set<int> initialTriangles)
+{
+    std::cout << "\n\n----------------------------------------------------------------------\n\n";
+    Timer::start();
+    const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
+
+    // 1. Compute the active face
+    //
+    Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
+
+    if (activeFace->is_unbounded())
+    {
+        return {};
+    }
+
+    const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];
+
+    // 2. Compute the visibel vertex
+    //
+    //Timer::start();
+    Point_2 closestHalfEdgeVertexPoint = singularArrangement.findVisibleVertex(activeFace, controlPointEPEC);
+    //Timer::stop("Found visible point  in                :");
+
+
+    // Set up the control Segment
+    //
+    const Segment_2 controlSegment(controlPointEPEC, closestHalfEdgeVertexPoint);
+
+    if (controlSegment.squared_length() == 0.0)
+    {
+        std::cerr << "The segment has zero lenght!" << std::endl;
+
     }
 
 
 
+    std::set<int> currentTriangles = initialTriangles;
 
+
+    //
+    // Go through the NEW segment
+    //
+    std::vector<std::pair<K::FT, int>> intersectedSegments = getIntersectedSegments(tetMesh, singularArrangement, controlSegment, true);
+
+
+    Timer::stop("Computing the geometry in              :");
+
+
+
+
+
+
+
+
+
+
+    Timer::start();
+
+    for (int i = 0 ; i < intersectedSegments.size() ; i++)
+    {
+        if (intersectedSegments[i].first == 1.0)
+        {
+            continue;
+        }
+
+
+        const int segmentId = intersectedSegments[i].second;
+        bool typicalOrientation = false;
+
+        //std::cout << "Intersected segment with ID " << segmentId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentId)) << " and alpha " << intersectedSegments[i].first << std::endl;
+
+        // Change orientation in case we need to
+        const std::array<int, 2> edge = tetMesh.edges.at(segmentId);
+        const int segmentSourceId = edge[0];
+        const int segmentTargetId = edge[1];
+        const Point_2 &c = singularArrangement.arrangementPoints[segmentSourceId];
+        const Point_2 &d = singularArrangement.arrangementPoints[segmentTargetId];
+
+        //std::cout << c << " - " << d << std::endl;
+
+        const Point_2 &a = closestHalfEdgeVertexPoint;
+        const Point_2 &b = controlPointEPEC;
+        //
+        // If the orientation this way around, reverse it
+        //   (regular segment)
+        //          d 
+        //           \
+        //            \
+        // a ----------\--------- b (singular segment)
+        //              \
+        //               \
+        //                c
+        //
+        if (CGAL::orientation(a, b, c) == CGAL::RIGHT_TURN)
+        {
+            typicalOrientation = true;
+        }
+
+        const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(segmentId, typicalOrientation);
+        const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(segmentId, typicalOrientation);
+
+        for (const auto &t : minusTriangles)
+        {
+            if (currentTriangles.contains(t))
+            {
+                currentTriangles.erase(t);
+                currentTriangles.insert(*plusTriangles.begin());
+
+                break;
+            }
+        }
+    }
+
+    Timer::stop("Walking along new segment              :");
+
+
+
+
+    Timer::start();
+
+    // Go up to closestHalfEdgeVertexPoint
+    auto currentHalfEdge = activeFace->outer_ccb();
+
+
+    std::vector<std::vector<std::pair<int, bool>>> intersectingEdges;
+    intersectingEdges.push_back(this->edgeRegionSegments[currentHalfEdge->data().id]);
+
+    ++currentHalfEdge;
+    do
+    {
+        intersectingEdges.push_back(this->vertexRegionSegments[currentHalfEdge->prev()->data().id]);
+        intersectingEdges.push_back(this->edgeRegionSegments[currentHalfEdge->data().id]);
+
+        // If we have reached the visible vertex AND the control segment is in its region (not always the case with poinch points)
+        if (currentHalfEdge->target()->point() == closestHalfEdgeVertexPoint && this->ifSegmentInHalfEdgeRegion(currentHalfEdge, controlSegment))
+        {
+            break;
+        }
+        else
+        {
+            ++currentHalfEdge;
+        }
+
+
+    } while (true);
+
+
+
+    // 
+    // Go through the vertex region
+    //
+    const auto &vertexRegion = this->vertexRegionSegments[currentHalfEdge->data().id];
+
+    const int vertexMeshId = singularArrangement.arrangementPointIndices[closestHalfEdgeVertexPoint];
+
+    for (int i = 0 ; i < vertexRegion.size() ; i++)
+    {
+        const std::pair<int, int> &intersectingSegment = vertexRegion[i];
+
+        const int segmentId = intersectingSegment.first;
+
+        const std::array<int, 2> edge = tetMesh.edges[segmentId];
+
+        Point_2 b;
+        if (edge[0] == vertexMeshId)
+        {
+            b = singularArrangement.arrangementPoints[edge[1]];
+        }
+        else
+        {
+            b = singularArrangement.arrangementPoints[edge[0]];
+        }
+
+        if (this->compareRegularSegments(currentHalfEdge, b, controlPointEPEC))
+        {
+            intersectingEdges.push_back({intersectingSegment});
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    Timer::stop("Collecting loop intersections          :");
+
+
+    Timer::start();
+    for (int i = intersectingEdges.size() - 1 ; i >= 0 ; i--)
+    {
+        auto &intersectingEdgesInner = intersectingEdges[i];
+        for (int j = intersectingEdgesInner.size() - 1 ; j >= 0 ; j--)
+        {
+            const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingEdgesInner[j].first, !intersectingEdgesInner[j].second);
+            const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(intersectingEdgesInner[j].first, !intersectingEdgesInner[j].second);
+
+            for (const auto &t : minusTriangles)
+            {
+                if (currentTriangles.contains(t))
+                {
+                    currentTriangles.erase(t);
+                    currentTriangles.insert(*plusTriangles.begin());
+
+                    break;
+                }
+            }
+        }
+    }
+    Timer::stop("Collecting loop intersections          :");
+
+
+
+    FiberGraph pg = this->representativeFiberGraphs[activeFace->data()];
+
+    for (const auto &t : currentTriangles)
+    {
+        if (pg.componentRoot.contains(t))
+        {
+            return this->correspondenceGraphDS.find(pg.componentRoot.at(t));
+        }
+    }
+
+    return -1;
+}
+
+
+
+FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint)
+{
+    const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
+
+    // 1. Compute the active face
+    //
+    Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
+
+    if (activeFace->is_unbounded())
+    {
+        return {};
+    }
+
+    const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];
+
+    // 2. Compute the visibel vertex
+    //
+    //Timer::start();
+    Point_2 closestHalfEdgeVertexPoint = singularArrangement.findVisibleVertex(activeFace, controlPointEPEC);
+    //Timer::stop("Found visible point  in                :");
+
+
+    // Set up the control Segment
+    //
+    const Segment_2 controlSegment(controlPointEPEC, closestHalfEdgeVertexPoint);
+
+    if (controlSegment.squared_length() == 0.0)
+    {
+        std::cerr << "The segment has zero lenght!" << std::endl;
+
+    }
 
 
     //Timer::start();
@@ -2087,6 +2261,12 @@ FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singular
 
     //std::cout << std::endl;
     //std::cout << std::endl;
+
+
+
+
+
+    std::vector<std::pair<K::FT, int>> intersectedSegments = getIntersectedSegments(tetMesh, singularArrangement, controlSegment, true);
 
     for (int i = intersectedSegments.size() - 1 ; i >= 0 ; i--)
     {

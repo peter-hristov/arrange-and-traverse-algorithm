@@ -94,3 +94,15 @@ on ds2
 
 # Automatic non-triangle triangulation (simillar time to the FS)
 0.06
+
+
+
+Vertical line, ds2, nana
+# Initial Time
+
+# Less overhead in looups
+0.49
+
+# Optimised lookup
+0.48
+

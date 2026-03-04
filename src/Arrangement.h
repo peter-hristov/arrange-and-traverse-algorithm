@@ -69,5 +69,6 @@ class Arrangement
 
     void buildAABBtree(const TetMesh &tetMesh);
 
+    std::vector<std::pair<K::FT, int>> getIntersectedSegments();
 
 };
