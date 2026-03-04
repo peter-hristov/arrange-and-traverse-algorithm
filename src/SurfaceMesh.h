@@ -512,7 +512,18 @@ class SurfaceMesh
             return vertexColour;
         }
 
-        void splitSingularTriangles(const double isovalue)
+
+        void subdivideMesh(const std::vector<double> &isovalues)
+        {
+            for (int i = 0 ; i < isovalues.size() ; i++)
+            {
+                this->subdivideMeshOnce(isovalues[i]);
+            }
+
+            this->triangulateMesh();
+        }
+
+        void subdivideMeshOnce(const double isovalue)
         {
             // 1. Compute the colours of all the vertices
             //

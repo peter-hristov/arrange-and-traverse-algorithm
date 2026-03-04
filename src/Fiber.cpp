@@ -32,6 +32,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     const Segment_2 controlSegment(startPoint, endPoint);
 
+    std::cout << "\n\n----------------------------------------------------------------------\n\n";
     std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
 
 
@@ -49,21 +50,14 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     Timer::start();
 
-    std::vector<K::FT> intersectionAlpha;
-    intersectionAlpha.reserve(intersectedSegmentsAABB.size());
-
-    std::vector<int> intersectionType;
-    intersectionType.reserve(intersectedSegmentsAABB.size());
-
+    std::vector<double> intersectionAlpha;
     for (auto id : intersectedSegmentsAABB)
     {
         const Segment_2& s = *id;   // dereference iterator to get the original segment
 
         // Get the ID of the original segment.
         const int segmentIndex = id - singularArrangement.allSegments.begin();
-
         const int type = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex));
-        intersectionType.emplace_back(type);
 
         const K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
                 controlSegment.target().x(), controlSegment.target().y(),
@@ -72,50 +66,21 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
                 s.target().x(), s.target().y()
                 );
 
-        intersectionAlpha.emplace_back(alpha);
-
-        //std::cout << "---- Intersected segment with ID " << segmentIndex << " and type " << type << " and alpha " << alpha << std::endl;
+        if (type == 2)
+        {
+            intersectionAlpha.push_back(CGAL::to_double(alpha));
+        }
     }
     Timer::stop("Computed Alpha intersections           :");
 
 
-
-    // Subdivide fiber surfaces along the singular fibers
-    //
-
     Timer::start();
-    //SurfaceMesh surfaceMesh = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample2.vtp");
-    //SurfaceMesh surfaceMesh = io::readDataVtuTTK("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/step_00720_d_4.vtu", controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
     SurfaceMesh surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
-    Timer::stop("Read surface mesh                      :");
-
-    //surfaceMesh.print();
-
-
-
-
-    int singularCounter = 0;
+    Timer::stop("Computing fiber surfaces with TTK      :");
 
     Timer::start();
-    for (int i = 0 ; i < intersectionAlpha.size() ; i++)
-    {
-        if (intersectionType[i] == 2)
-        {
-            singularCounter++;
-            //std::cout << "----------------------------------- Subdividing mesh...\n\n";
-            //surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
-            surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
-            //surfaceMesh.print();
-        }
-    }
-
-    surfaceMesh.triangulateMesh();
-
+    surfaceMesh.subdivideMesh(intersectionAlpha);
     Timer::stop("Subdivided mesh                        :");
-
-
-    std::cout << "We have subdivided the mesh this many times : " << singularCounter << std::endl;
-
 
     Timer::start();
     surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
