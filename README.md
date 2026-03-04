@@ -1,6 +1,10 @@
+# Dependencies
+
+See the ./build.sh script for instructions on how to build and install the dependencies locally.
+
 # Compile
 
-Here's how to compile the code with cmake, using CGAL version 6.0.1 and VTK 9.4.1
+## Without TTK
 
 Build version
 ```
@@ -15,16 +19,18 @@ cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/ho
 
 
 
-# With TTK
+## With TTK
 cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/home/peter/Projects/libraries/ttk-dev/install;/home/peter/Projects/libraries/VTK-9.4.1/install" -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DCMAKE_BUILD_TYPE=Release ..
 
-# Build TTK
 
-cmake -DTTK_BUILD_VTK_PYTHON_MODULE=ON -DCMAKE_INSTALL_PREFIX="/home/peter/Projects/libraries/ttk-dev/install" -DTTK_BUILD_PARAVIEW_PLUGINS=OFF -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/VTK-9.4.1/install" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+# Run
+
+cd ./build
+
+./fv99 -f ../data/three-sheet-toy.txt
 
 
-
-make
+# Testing
 
 # Data Sets with disconnected Singular sets in the range
 ~/Projects/data/reeb-space-test-data/ttk/downsample-2-384800.vtu
