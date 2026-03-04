@@ -45,9 +45,6 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     Timer::stop("Computed AABB intersections in         :");
 
 
-
-
-
     // Compute the intersectiong alpha and the types
 
     Timer::start();
@@ -97,19 +94,23 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
 
 
+    int singularCounter;
 
     Timer::start();
     for (int i = 0 ; i < intersectionAlpha.size() ; i++)
     {
         if (intersectionType[i] == 2)
         {
+            singularCounter++;
             //std::cout << "----------------------------------- Subdividing mesh...\n\n";
             //surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
-            //surfaceMesh.splitSingularTriangles2(CGAL::to_double(intersectionAlpha[i]));
+            surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
             //surfaceMesh.print();
         }
     }
     Timer::stop("Subdivided mesh                        :");
+
+    std::cout << "We have subdivided the mesh this many times : " << singularCounter << std::endl;
 
 
     Timer::start();

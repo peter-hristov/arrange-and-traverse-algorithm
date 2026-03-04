@@ -79,3 +79,14 @@ Top Right
 
 x \in [-0.007111, 0.037295]
 y \in [0.10477, 0.125989]
+
+
+
+# Initial time
+5.06785305
+
+# Without the postprocessing mesh operations
+2.01741007
+
+# Without validity checks
+0.29354516
