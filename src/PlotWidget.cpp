@@ -434,15 +434,15 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
     // Draw fiber point
     auto penGrey = QPen(QColor(0, 0, 0, 250));
-    //penGrey.setWidthF(8.0);
-    //p.setPen(penGrey);
-    //p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
+    penGrey.setWidthF(8.0);
+    p.setPen(penGrey);
+    p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
 
     // Crosshair around fiber point
-    //penGrey.setWidthF(1.0);
-    //p.setPen(penGrey);
-    //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
-    //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
+    penGrey.setWidthF(1.0);
+    p.setPen(penGrey);
+    p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
+    p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
 
 
@@ -450,21 +450,22 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // Fiber Drawing
     // ----------------------------------------------------------------
 
-    //if (this->recomputeFiber == true)
-    //{
-        //this->recomputeFiber = false;
+    if (this->recomputeFiber == true)
+    {
+        this->recomputeFiber = false;
 
-        //const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
-        //const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+        const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
+        const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
 
-        ////qDebug() << "Computing fiber (" << u << ", " << v << ")";
+        qDebug() << "Computing fiber (" << u << ", " << v << ")";
 
-        ////const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
-        ////const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
-        //const std::vector<FiberPoint> fiber = fiber::computeFiberSAT(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+        //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
+        //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+        
+        const std::vector<FiberPoint> fiber = fiber::computeFiberSAT(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
 
-        //sibling->updateFiber(fiber);
-    //}
+        sibling->updateFiber(fiber);
+    }
     
 
 
@@ -473,7 +474,17 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
+
+
+
+
+    // ----------------------------------------------------------------
+    // Fiber Surface Drawing
+    // ----------------------------------------------------------------
+
+
     // Draw the control points and control polygon
+    //
     QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
 
     penGrey.setWidthF(8.0);
@@ -484,10 +495,10 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
         controlPointsTransformed[i] = controlPointTransformed;
 
-        p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
+        //p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
     }
 
-    p.drawPolygon(QPolygonF(controlPointsTransformed));
+    //p.drawPolygon(QPolygonF(controlPointsTransformed));
 
 
 
@@ -516,7 +527,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // ----------------------------------------------------------------
 
 
-    if (this->recomputeFiber == true && controlPoints.size() >= 2)
+    if (false && this->recomputeFiber == true && controlPoints.size() >= 2)
     {
 
 
