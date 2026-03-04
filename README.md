@@ -81,6 +81,7 @@ x \in [-0.007111, 0.037295]
 y \in [0.10477, 0.125989]
 
 
+on ds2
 
 # Initial time
 5.06785305
@@ -90,3 +91,6 @@ y \in [0.10477, 0.125989]
 
 # Without validity checks
 0.29354516
+
+# Automatic non-triangle triangulation (simillar time to the FS)
+0.06

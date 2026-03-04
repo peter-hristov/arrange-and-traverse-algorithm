@@ -404,6 +404,7 @@ class SurfaceMesh
 
         void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
         {
+
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
                     this->mesh,
                     this->componentId,
@@ -518,6 +519,7 @@ class SurfaceMesh
             CGALMesh::Property_map<CGALMesh::Vertex_index, int> vertexColour = getVertexColours(this->mesh, isovalue);
 
             // 2. Collect crossing edges first (don't modify while iterating!)
+            //
             std::unordered_set<CGALMesh::Edge_index> activeEdges;
 
             for (const auto &e : this->mesh.edges())
@@ -531,7 +533,10 @@ class SurfaceMesh
                 }
             }
 
+            std::unordered_set<CGALMesh::Face_index> facesToSplit;
+
             // 3. Split the edges
+            //
             for (const auto &e : activeEdges)
             {
                 auto h = this->mesh.halfedge(e);
@@ -554,19 +559,33 @@ class SurfaceMesh
                 const auto isEdgeImpassable = this->isImpassable[e];
                 this->isImpassable[mesh.edge(hNew)] = isEdgeImpassable;
                 this->isImpassable[mesh.edge(mesh.next(hNew))] = isEdgeImpassable;
+
+                // Save the adjacent faces that now need splitting
+                if (mesh.face(hNew) != CGALMesh::null_face())
+                {
+                    facesToSplit.insert(mesh.face(hNew));
+                }
+                if (mesh.face(mesh.opposite(hNew)) != CGALMesh::null_face())
+                {
+                    facesToSplit.insert(mesh.face(mesh.opposite(hNew)));
+                }
             }
 
-            for (auto f : this->mesh.faces())
-            {
-                if (mesh.degree(f) == 3)
-                {
-                    continue;
-                }
+            // 4. Split faces and save theones that need to be triangulated later
+            //
+            std::unordered_set<CGALMesh::Face_index> facesToTriangulate;
 
+            for (const auto f : facesToSplit)
+            {
                 const int faceTetId = this->tetId[f];
 
-                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
+                if (mesh.degree(f) == 3)
+                {
+                    throw std::runtime_error("Face to split has no new edge points and has degree " + std::to_string(mesh.degree(f)));
+                }
 
+                // Collect the two half-edge where we want to split
+                std::vector<CGALMesh::Halfedge_index> activeHalfEdges;
                 for (auto h : halfedges_around_face(mesh.halfedge(f), mesh))
                 {
                     if (vertexColour[mesh.target(h)] == 0)
@@ -580,33 +599,64 @@ class SurfaceMesh
                     throw std::runtime_error("There should be 2 active half-edges.");
                 }
 
+                // Split
                 const auto h0 = activeHalfEdges[0];
                 const auto h1 = activeHalfEdges[1];
-                auto newH = CGAL::Euler::split_face(h0, h1, this->mesh);
+                const auto newH = CGAL::Euler::split_face(h0, h1, this->mesh);
 
+                // Make the new edge impassable
                 this->isImpassable[mesh.edge(newH)] = true;
 
-                this->tetId[mesh.face(newH)] = faceTetId;
-                this->tetId[mesh.face(mesh.opposite(newH))] = faceTetId;
+                // Write tet array
+                const auto newF0 = mesh.face(newH);
+                const auto newF1 = mesh.face(mesh.opposite(newH));
 
-                // If one of the new faces is a quad
-                if (mesh.degree(mesh.face(newH)) == 4 || mesh.degree(mesh.face(mesh.opposite(newH))) == 4)
+                this->tetId[newF0] = faceTetId;
+                this->tetId[newF1] = faceTetId;
+
+                // Save non-triangle faces to later triangulation
+                if (mesh.degree(newF0) > 3)
                 {
-                    // Switch to the quad a half-edge in the quad
-                    if (mesh.degree(mesh.face(mesh.opposite(newH))) == 4)
-                    {
-                        newH = mesh.opposite(newH);
-                    }
+                    facesToTriangulate.insert(newF0);
 
-                    // Split the quad
-                    auto newNewH = CGAL::Euler::split_face(mesh.prev(newH), mesh.next(newH), this->mesh);
-
-                    this->tetId[mesh.face(newNewH)] = faceTetId;
-                    this->tetId[mesh.face(mesh.opposite(newNewH))] = faceTetId;
                 }
+                if (mesh.degree(newF1) > 3)
+                {
+                    facesToTriangulate.insert(newF1);
+                }
+
             }
 
+
+            // 6. Cleanup
+            //
             this->mesh.remove_property_map(vertexColour);
+        }
+
+        void triangulateMesh()
+        {
+            struct Visitor : CGAL::Polygon_mesh_processing::Triangulate_faces::Default_visitor<CGALMesh>
+            {
+                int tetId_val;
+                CGALMesh::Property_map<CGALMesh::Face_index, int>& tetId;
+                Visitor(int tetId, CGALMesh::Property_map<CGALMesh::Face_index, int>& t) : tetId_val(tetId), tetId(t) {}
+                void after_subface_created(CGALMesh::Face_index f) { tetId[f] = tetId_val; }
+            }; 
+
+            for (const auto f : mesh.faces())
+            {
+                const int faceTetId = this->tetId[f];
+
+                if (mesh.degree(f) == 3)
+                {
+                    continue;
+                }
+
+                Visitor visitor(faceTetId, this->tetId);
+                // Vistor that sets the tetId of the newly created faces
+
+                CGAL::Polygon_mesh_processing::triangulate_face(f, mesh, CGAL::parameters::visitor(visitor));
+            }
         }
 
         void repairMesh()

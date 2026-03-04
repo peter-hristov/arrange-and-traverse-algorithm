@@ -94,7 +94,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
 
 
-    int singularCounter;
+    int singularCounter = 0;
 
     Timer::start();
     for (int i = 0 ; i < intersectionAlpha.size() ; i++)
@@ -108,7 +108,11 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
             //surfaceMesh.print();
         }
     }
+
+    surfaceMesh.triangulateMesh();
+
     Timer::stop("Subdivided mesh                        :");
+
 
     std::cout << "We have subdivided the mesh this many times : " << singularCounter << std::endl;
 
