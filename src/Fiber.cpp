@@ -32,8 +32,10 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     const Segment_2 controlSegment(startPoint, endPoint);
 
-    std::cout << "\n\n----------------------------------------------------------------------\n\n";
+    std::cout << "\n\n----------------------------------------------------------------------\n";
+    std::cout << "Comtputing fiber surface...\n";
     std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
+    std::cout << "----------------------------------------------------------------------\n\n";
 
 
     Timer::start();
@@ -87,11 +89,17 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     Timer::stop("Computing triangle sheets              :");
 
 
+    Timer::start();
     io::saveFiberSurface(surfaceMesh, "fs.vtp");
-    io::writeImpassableEdgesToVTK(surfaceMesh, "fs.impassable.vtp");
+    //io::writeImpassableEdgesToVTK(surfaceMesh, "fs.impassable.vtp");
+    Timer::stop("Saving fiber surface                   :");
 
 
-    return surfaceMesh.getFiberPoints();
+    Timer::start();
+    const auto fiberPoints = surfaceMesh.getFiberPoints();
+    Timer::stop("Computing fiber points                 :");
+
+    return fiberPoints;
 
 
 

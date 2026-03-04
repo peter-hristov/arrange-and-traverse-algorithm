@@ -56,7 +56,6 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
         dragging = false;
-        recomputeFiber = true;
         update();
 
         this->controlPoints.push_back(mousePoint);
@@ -64,12 +63,11 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
 
     if (event->button() == Qt::RightButton) 
     {
-        if (this->controlPoints.size() > 0)
+        if (this->controlPoints.size() >= 0)
         {
-            //this->controlPoints.pop_back();
-            this->controlPoints.clear();
-            this->controlPoints.shrink_to_fit();
-            recomputeFiber = true;
+            this->controlPoints.pop_back();
+            //this->controlPoints.clear();
+            //this->controlPoints.shrink_to_fit();
             update();
         }
 
@@ -93,7 +91,6 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
         if (dragging)
         {
             mousePoint = currentPos;
-            recomputeFiber = true;
             update();
         }
     }
@@ -437,15 +434,15 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
     // Draw fiber point
     auto penGrey = QPen(QColor(0, 0, 0, 250));
-    penGrey.setWidthF(8.0);
-    p.setPen(penGrey);
-    p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
+    //penGrey.setWidthF(8.0);
+    //p.setPen(penGrey);
+    //p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
 
     // Crosshair around fiber point
-    penGrey.setWidthF(1.0);
-    p.setPen(penGrey);
-    p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
-    p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
+    //penGrey.setWidthF(1.0);
+    //p.setPen(penGrey);
+    //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
+    //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
 
 
@@ -476,6 +473,36 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
+    // Draw the control points and control polygon
+    QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
+
+    penGrey.setWidthF(8.0);
+    p.setPen(penGrey);
+    for (int i = 0 ; i < this->controlPoints.size() ; i++)
+    {
+        const QPointF &controlPoint = this->controlPoints[i];
+        const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
+        controlPointsTransformed[i] = controlPointTransformed;
+
+        p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
+    }
+
+    p.drawPolygon(QPolygonF(controlPointsTransformed));
+
+
+
+
+    std::vector<std::array<double, 2>> controlPointsInternal;
+    controlPointsInternal.reserve(controlPointsTransformed.size());
+
+
+    for (const QPointF &controlPoint : controlPointsTransformed)
+    {
+        const double u = this->paddedMinF + (controlPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
+        const double v = this->paddedMinG + (controlPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+
+        controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
+    }
 
 
 
@@ -492,37 +519,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
     if (this->recomputeFiber == true && controlPoints.size() >= 2)
     {
 
-        // Draw the control points and control polygon
-        QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
-
-        penGrey.setWidthF(8.0);
-        p.setPen(penGrey);
-        for (int i = 0 ; i < this->controlPoints.size() ; i++)
-        {
-            const QPointF &controlPoint = this->controlPoints[i];
-            const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
-            controlPointsTransformed[i] = controlPointTransformed;
-
-            p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
-        }
-
-        p.drawPolygon(QPolygonF(controlPointsTransformed));
-
-
-        this->recomputeFiber = false;
-
-
-        std::vector<std::array<double, 2>> controlPointsInternal;
-        controlPointsInternal.reserve(controlPointsTransformed.size());
-
-
-        for (const QPointF &controlPoint : controlPointsTransformed)
-        {
-            const double u = this->paddedMinF + (controlPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
-            const double v = this->paddedMinG + (controlPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
-
-            controlPointsInternal.emplace_back(std::array<double, 2>{u, v});
-        }
 
 
         // TTK FS
@@ -604,6 +600,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //std::vector<FiberPoint> fibersAll = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp").getFiberPoints();
 
 
+        this->recomputeFiber = false;
         sibling->updateFiber(fibersAll);
     }
 
