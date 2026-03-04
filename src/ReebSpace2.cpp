@@ -1851,12 +1851,20 @@ bool ReebSpace2::unitTestCompareFiberGraphs(const TetMesh &tetMesh, Arrangement 
 
 std::vector<std::pair<K::FT, int>> getIntersectedSegments(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const bool shouldSort)
 {
+    Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
     singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
+    Timer::stop("Computing AABB                         :");
 
     std::vector<std::pair<K::FT, int>> intersectedSegments;
     intersectedSegments.reserve(intersectedSegmentsAABB.size());
 
+    const double cx1 = CGAL::to_double(controlSegment.target().x());
+    const double cy1 = CGAL::to_double(controlSegment.target().y());
+    const double cx2 = CGAL::to_double(controlSegment.source().x());
+    const double cy2 = CGAL::to_double(controlSegment.source().y());
+
+    Timer::start();
     for (auto id : intersectedSegmentsAABB)
     {
         const Segment_2& s = *id;   // dereference iterator to get the original segment
@@ -1883,18 +1891,26 @@ std::vector<std::pair<K::FT, int>> getIntersectedSegments(TetMesh &tetMesh, Arra
                 s.source().x(), s.source().y(),
                 s.target().x(), s.target().y());
 
+        //double alpha = CGAL::Intersections::internal::s2s2_alpha(
+                //cx1, cy1, cx2, cy2,
+                //CGAL::to_double(s.source().x()), 
+                //CGAL::to_double(s.source().y()),
+                //CGAL::to_double(s.target().x()), 
+                //CGAL::to_double(s.target().y())
+                //);
+
         intersectedSegments.emplace_back(alpha, segmentIndex);
     }
+    Timer::stop("Intersections Alphas                   :");
 
     //Timer::stop("Computed Alpha intersections           :");
     //Timer::stop("Computed AABB intersections in         :");
 
     if (shouldSort)
     {
-        //Timer::start();
+        Timer::start();
         std::sort(intersectedSegments.begin(), intersectedSegments.end());
-        //Timer::stop("Sorting alpha intersections            :");
-
+        Timer::stop("Sorting alpha intersections            :");
     }
 
 
@@ -1922,7 +1938,6 @@ std::vector<std::pair<K::FT, int>> getIntersectedSegments(TetMesh &tetMesh, Arra
 int ReebSpace2::computeFiberGraphReverse(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, std::set<int> initialTriangles)
 {
     std::cout << "\n\n----------------------------------------------------------------------\n\n";
-    Timer::start();
     const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
 
     // 1. Compute the active face
@@ -1964,7 +1979,6 @@ int ReebSpace2::computeFiberGraphReverse(TetMesh &tetMesh, Arrangement &singular
     std::vector<std::pair<K::FT, int>> intersectedSegments = getIntersectedSegments(tetMesh, singularArrangement, controlSegment, true);
 
 
-    Timer::stop("Computing the geometry in              :");
 
 
 
