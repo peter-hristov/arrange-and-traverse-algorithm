@@ -2,7 +2,8 @@
 .cache
 compile_commands.json
 
-./libraries/*
+libraries/*
+!libraries/ttk/.gitkeep
 
 # C++ objects and libs
 *.slo
