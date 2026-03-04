@@ -20,7 +20,9 @@ cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/ho
 
 
 ## With TTK
+```
 cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/home/peter/Projects/libraries/ttk-dev/install;/home/peter/Projects/libraries/VTK-9.4.1/install" -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DCMAKE_BUILD_TYPE=Release ..
+```
 
 
 # Run
