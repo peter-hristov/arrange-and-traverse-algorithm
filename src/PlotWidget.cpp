@@ -540,7 +540,34 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
-        std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+        //std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+
+        std::vector<FiberPoint> fibersAll;
+        if (controlPointsTransformed.size() == 2)
+        {
+            const std::vector<FiberPoint> fibers = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+
+            fibersAll.insert(
+                    fibersAll.end(), 
+                    std::make_move_iterator(fibers.begin()), 
+                    std::make_move_iterator(fibers.end())
+                    );
+        }
+        else
+        {
+            for (int i = 0 ; i < controlPointsInternal.size() ; i++)
+            {
+                const std::vector<FiberPoint> fibers = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
+
+                fibersAll.insert(
+                        fibersAll.end(), 
+                        std::make_move_iterator(fibers.begin()), 
+                        std::make_move_iterator(fibers.end())
+                        );
+
+            }
+        }
+
         
 
 
