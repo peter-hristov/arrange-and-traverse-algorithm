@@ -105,7 +105,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
         {
             //std::cout << "----------------------------------- Subdividing mesh...\n\n";
             //surfaceMesh = surfaceMesh.splitSingularTriangles(CGAL::to_double(intersectionAlpha[i]));
-            surfaceMesh.splitSingularTriangles2(CGAL::to_double(intersectionAlpha[i]));
+            //surfaceMesh.splitSingularTriangles2(CGAL::to_double(intersectionAlpha[i]));
             //surfaceMesh.print();
         }
     }
