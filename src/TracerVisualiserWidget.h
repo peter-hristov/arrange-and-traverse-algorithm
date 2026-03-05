@@ -34,7 +34,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     bool drawFaces = 0;
     bool drawVertices = 0;
 
-    bool enableLighting = 0;
+    bool enableLighting = 1;
 
     // Depricated
     bool showUIsosurface = false;

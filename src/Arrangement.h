@@ -29,6 +29,7 @@ class Arrangement
     std::vector<Point_2> arrangementPoints;
 
     Face_const_handle getActiveFace(const std::array<double, 2>);
+    Face_const_handle getActiveFace(const Point_2&);
 
     // The inverse map of arrangementPoints, returns the index of a point
     std::map<Point_2, int> arrangementPointIndices;
@@ -70,5 +71,8 @@ class Arrangement
     void buildAABBtree(const TetMesh &tetMesh);
 
     std::vector<std::pair<K::FT, int>> getIntersectedSegments();
+
+    // Alpha, edgeId, edgeType
+    std::vector<std::tuple<K::FT, int, int>> getIntersectedSegments2(TetMesh &tetMesh,  const Segment_2 &controlSegment, const bool shouldSort);
 
 };

@@ -89,61 +89,61 @@ TracerVisualiserWidget::generateDisplayList()
     //setMaterial(1, 0, 0, 1.0, 0.0);
 
     // Draw Fiber
-    glBegin(GL_LINES);
-    {
-        for(const auto &faceFiber : this->faceFibers)
-        {
-            glColor3fv(faceFiber.colour.data());
-            glVertex3fv(faceFiber.point.data());
-        }
-    }
-    glEnd();
-
-
-
-
-
-    //glBegin(GL_TRIANGLES);
+    //glBegin(GL_LINES);
     //{
-        ////for(const auto &faceFiber : this->faceFibers)
-        //for(int i = 0 ; i < this->faceFibers.size() ; i+=3)
+        //for(const auto &faceFiber : this->faceFibers)
         //{
-            //const auto &faceFiber = this->faceFibers[i];
-            //const auto &faceFiber2 = this->faceFibers[i+1];
-            //const auto &faceFiber3 = this->faceFibers[i+2];
-
-
-
-            //if (this->enableLighting)
-            //{
-                //setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
-
-                //GLfloat vertices[3][3] = {
-                    //{faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
-                    //{faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
-                    //{faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
-
-                //};
-
-                //std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
-
-
-                //// Set normal for OpenGL
-                //glNormal3fv(normal.data());
-            //}
-            //else
-            //{
-                //glColor3fv(faceFiber.colour.data());
-
-            //}
-
+            //glColor3fv(faceFiber.colour.data());
             //glVertex3fv(faceFiber.point.data());
-            //glVertex3fv(faceFiber2.point.data());
-            //glVertex3fv(faceFiber3.point.data());
-
         //}
     //}
     //glEnd();
+
+
+
+
+
+    glBegin(GL_TRIANGLES);
+    {
+        //for(const auto &faceFiber : this->faceFibers)
+        for(int i = 0 ; i < this->faceFibers.size() ; i+=3)
+        {
+            const auto &faceFiber = this->faceFibers[i];
+            const auto &faceFiber2 = this->faceFibers[i+1];
+            const auto &faceFiber3 = this->faceFibers[i+2];
+
+
+
+            if (this->enableLighting)
+            {
+                setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+
+                GLfloat vertices[3][3] = {
+                    {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
+                    {faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
+                    {faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
+
+                };
+
+                std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
+
+
+                // Set normal for OpenGL
+                glNormal3fv(normal.data());
+            }
+            else
+            {
+                glColor3fv(faceFiber.colour.data());
+
+            }
+
+            glVertex3fv(faceFiber.point.data());
+            glVertex3fv(faceFiber2.point.data());
+            glVertex3fv(faceFiber3.point.data());
+
+        }
+    }
+    glEnd();
 
 
 

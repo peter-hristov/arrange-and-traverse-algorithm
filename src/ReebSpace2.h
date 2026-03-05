@@ -132,6 +132,7 @@ class ReebSpace2
         int computeFiberGraphReverse(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, std::set<int> initialTriangles);
 
         FiberGraph computeFiberGraph2(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
+        FiberGraph computeFiberGraph3(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
 
         // Unit Tests, mostly depricated
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);

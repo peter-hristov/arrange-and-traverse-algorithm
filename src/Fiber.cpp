@@ -41,38 +41,8 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     Timer::start();
 
     // Compute intersectinos with the AABB tree
-    //
     Timer::start();
-    std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
-    singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
-    Timer::stop("Computed AABB intersections in         :");
-
-
-    // Compute the intersectiong alpha and the types
-
-    Timer::start();
-
-    std::vector<double> intersectionAlpha;
-    for (auto id : intersectedSegmentsAABB)
-    {
-        const Segment_2& s = *id;   // dereference iterator to get the original segment
-
-        // Get the ID of the original segment.
-        const int segmentIndex = id - singularArrangement.allSegments.begin();
-        const int type = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex));
-
-        const K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
-                controlSegment.target().x(), controlSegment.target().y(),
-                controlSegment.source().x(), controlSegment.source().y(),
-                s.source().x(), s.source().y(),
-                s.target().x(), s.target().y()
-                );
-
-        if (type == 2)
-        {
-            intersectionAlpha.push_back(CGAL::to_double(alpha));
-        }
-    }
+    const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, false);
     Timer::stop("Computed Alpha intersections           :");
 
 
@@ -81,6 +51,15 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     Timer::stop("Computing fiber surfaces with TTK      :");
 
     Timer::start();
+
+    std::vector<double> intersectionAlpha;
+    intersectionAlpha.reserve(intersectedSegments.size());
+
+    for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
+    {
+        intersectionAlpha.emplace_back(CGAL::to_double(alpha));
+    }
+
     surfaceMesh.subdivideMesh(intersectionAlpha);
     Timer::stop("Subdivided mesh                        :");
 

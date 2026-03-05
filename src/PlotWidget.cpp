@@ -460,7 +460,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
-    p.drawLine(fiberPoint.x(), fiberPoint.y(), fiberPoint.x(), fiberPoint.y() + 1000);
+    //p.drawLine(fiberPoint.x(), fiberPoint.y(), fiberPoint.x(), fiberPoint.y() + 1000);
 
     //const Point_2 endPoint(controlPoint[0], controlPoint[1] + tetMesh.maxG + 10.0);
 
@@ -470,7 +470,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // Fiber Drawing
     // ----------------------------------------------------------------
 
-    if (this->recomputeFiber == true)
+    if (false && this->recomputeFiber == true)
     {
         this->recomputeFiber = false;
 
@@ -501,9 +501,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
-    // ----------------------------------------------------------------
-    // Fiber Surface Drawing
-    // ----------------------------------------------------------------
 
 
     // Draw the control points and control polygon
@@ -518,10 +515,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
         controlPointsTransformed[i] = controlPointTransformed;
 
-        //p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
+        p.drawEllipse(controlPointTransformed, controlPointRadious, controlPointRadious);
     }
-
-    //p.drawPolygon(QPolygonF(controlPointsTransformed));
+    p.drawPolygon(QPolygonF(controlPointsTransformed));
 
 
 
@@ -543,17 +539,13 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
 
-
-
     // ----------------------------------------------------------------
-    // Custom Control Polygon Drawing
+    // Fiber Surface drawing
     // ----------------------------------------------------------------
 
 
-    if (false && this->recomputeFiber == true && controlPoints.size() >= 2)
+    if (this->recomputeFiber == true && controlPoints.size() >= 2)
     {
-
-
 
         // TTK FS
         //
@@ -562,7 +554,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         // Long vertical
         // Start point : 0.0018143038060367939, 0.20159421194824584 end point -0.00063704487815769751, -0.19743372148439267
-        controlPointsInternal = {{0.0018143038060367939, 0.20159421194824584}, {-0.00063704487815769751, -0.19743372148439267}};
+        //controlPointsInternal = {{0.0018143038060367939, 0.20159421194824584}, {-0.00063704487815769751, -0.19743372148439267}};
 
         // Debugging components for the singualr fiber segmentation
         // Start point : 0.083315372772184301, 0.19785332507231485 end point 0.25679221566219784, 0.093108492546247215

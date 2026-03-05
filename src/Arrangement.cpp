@@ -32,11 +32,8 @@ void Arrangement::buildAABBtree(const TetMesh &tetMesh)
 
 }
 
-Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPoint)
+Face_const_handle Arrangement::getActiveFace(const Point_2 &query_point)
 {
-    // The query point (u, v)
-    Point_2 query_point(fiberPoint[0], fiberPoint[1]);
-
     // Locate the point in the arrangement
     CGAL::Object result = pl->locate(query_point);
 
@@ -64,6 +61,14 @@ Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPo
     }
 
     return face;
+}
+
+Face_const_handle Arrangement::getActiveFace(const std::array<double, 2> fiberPoint)
+{
+    // The query point (u, v)
+    Point_2 query_point(fiberPoint[0], fiberPoint[1]);
+
+    return this->getActiveFace(query_point);
 }
 
 void Arrangement::computeArrangement(const TetMesh &tetMesh, const SegmentMode &segmentMode) 
@@ -346,4 +351,110 @@ Point_2 Arrangement::findVisibleVertex(const Face_const_handle activeFace, const
     } while (circ != start);
 
     throw std::runtime_error("No arrangement vertices are visible from the control point.");
+}
+
+
+
+
+std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(TetMesh &tetMesh, const Segment_2 &controlSegment, const bool shouldSort)
+{
+    //Timer::start();
+    std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
+    this->tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
+    //Timer::stop("Computing AABB                         :");
+
+    std::vector<std::tuple<K::FT, int, int>> intersectedSegments;
+    intersectedSegments.reserve(intersectedSegmentsAABB.size());
+
+    const double cx1 = CGAL::to_double(controlSegment.target().x());
+    const double cy1 = CGAL::to_double(controlSegment.target().y());
+    const double cx2 = CGAL::to_double(controlSegment.source().x());
+    const double cy2 = CGAL::to_double(controlSegment.source().y());
+
+    //Timer::start();
+    for (auto id : intersectedSegmentsAABB)
+    {
+        const Segment_2& s = *id;   // dereference iterator to get the original segment
+
+        // Get the ID of the original segment.
+        const int segmentIndex = id - this->allSegments.begin();
+
+        const int type = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentIndex));
+
+        //
+        //
+        //                          s.source()
+        //                              |
+        //                              |
+        //                              |
+        // searchSegment.source() ------x---------- searchSegment.target()
+        //                              |
+        //                              |
+        //                              |
+        //                              |
+        //                          s.target()
+        //
+        K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                controlSegment.target().x(), controlSegment.target().y(),
+                controlSegment.source().x(), controlSegment.source().y(),
+                s.source().x(), s.source().y(),
+                s.target().x(), s.target().y());
+
+
+
+
+
+
+        //double alpha = CGAL::Intersections::internal::s2s2_alpha(
+                //cx1, cy1, cx2, cy2,
+                //CGAL::to_double(s.source().x()), 
+                //CGAL::to_double(s.source().y()),
+                //CGAL::to_double(s.target().x()), 
+                //CGAL::to_double(s.target().y())
+                //);
+
+        intersectedSegments.emplace_back(alpha, segmentIndex, type);
+    }
+    //Timer::stop("Intersections Alphas                   :");
+
+    //Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed AABB intersections in         :");
+
+    if (shouldSort)
+    {
+        //Timer::start();
+        std::sort(intersectedSegments.begin(), intersectedSegments.end());
+        //Timer::stop("Sorting alpha intersections            :");
+    }
+
+
+    // Only keep the part until a singular segment
+    //
+    int counter = 0;
+
+    for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
+    {
+        if (edgeType == 2 || edgeType == 0)
+        {
+            break;
+        }
+        counter++;
+    }
+
+    intersectedSegments.erase(intersectedSegments.begin() + counter + 1, intersectedSegments.end());
+
+    //for (const auto &[alpha, edgeId] : intersectedSegments)
+    //{
+        //const int singularType = tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId));
+
+        //if (alpha < 1 && singularType != 1)
+        //{
+            //throw std::runtime_error("Control point segment intersects other singular segments.");
+        //}
+
+        ////std::cout << "Intersected segment with ID " << edgeId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(edgeId)) << " and alpha " << alpha << std::endl;
+    //}
+
+
+    return intersectedSegments;
 }
