@@ -47,7 +47,19 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
     paddedMaxF = data.tetMesh.maxF + paddingScalingFactor * (data.tetMesh.maxF - data.tetMesh.minF);
     paddedMinG = data.tetMesh.minG - paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
     paddedMaxG = data.tetMesh.maxG + paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
+
+    // min -0.0140185 ,  0.106133 
+    // max 0.0405787 ,  0.125916
+
+    //paddedMinF = -0.0180185;
+    //paddedMinG = 0.106133;
+
+    //paddedMaxF = 0.0405787;
+    //paddedMaxG = 0.125916;
 }
+
+
+
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
 {
@@ -56,6 +68,7 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
         dragging = false;
+        recomputeFiber = true;
         update();
 
         this->controlPoints.push_back(mousePoint);
@@ -91,6 +104,7 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
         if (dragging)
         {
             mousePoint = currentPos;
+        recomputeFiber = true;
             update();
         }
     }
@@ -441,8 +455,14 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // Crosshair around fiber point
     penGrey.setWidthF(1.0);
     p.setPen(penGrey);
-    p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
-    p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
+    //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
+    //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
+
+
+
+    p.drawLine(fiberPoint.x(), fiberPoint.y(), fiberPoint.x(), fiberPoint.y() + 1000);
+
+    //const Point_2 endPoint(controlPoint[0], controlPoint[1] + tetMesh.maxG + 10.0);
 
 
 
@@ -456,6 +476,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+
+        //const double u = -0.0734849;
+        //const double v = -0.0625043;
 
         qDebug() << "Computing fiber (" << u << ", " << v << ")";
 

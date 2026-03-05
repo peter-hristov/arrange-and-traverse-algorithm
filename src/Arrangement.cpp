@@ -5,7 +5,6 @@
 
 void Arrangement::buildAABBtree(const TetMesh &tetMesh)
 {
-
     for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
     {
         const std::array<int, 2> &edge = tetMesh.edges[edgeId];

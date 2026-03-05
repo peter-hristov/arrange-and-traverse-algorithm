@@ -2547,8 +2547,19 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint)
 {
     //Timer::start();
-    FiberGraph fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, controlPoint);
+    //FiberGraph fg1 = reebSpace.computeFiberGraph(tetMesh, singularArrangement, controlPoint);
     //Timer::stop("Computing fiber graph                  :");
+
+    std::cout << std::endl;
+
+    //Timer::start();
+    FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, controlPoint);
+    //Timer::stop("Computing fiber graph 2                :");
+
+    //if (false == fg1.areEqual(fg))
+    //{
+        //throw std::runtime_error("Fiber graphs are not equal!.");
+    //}
 
     //Timer::start();
     //const std::vector<FiberPoint> fiber = fiber::processFiberGraph(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
