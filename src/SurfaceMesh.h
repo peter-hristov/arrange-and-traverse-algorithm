@@ -15,6 +15,7 @@
 #include "./ReebSpace2.h"
 #include "./Arrangement.h"
 #include "./Fiber.h"
+#include "src/FiberGraph.h"
 
 #include <CGAL/Polygon_mesh_processing/connected_components.h>
 #include <CGAL/Polygon_mesh_processing/border.h>
@@ -356,6 +357,7 @@ class SurfaceMesh
 
 
 
+
         // Back for debuggin connected component compututaion, otherwise CGAL's CGAL::Polygon_mesh_processing::connected_components
         std::size_t computeConnectedComponentsBFS(CGALMesh::Property_map<CGALMesh::Face_index, int>& componentMap)
         {
@@ -452,6 +454,111 @@ class SurfaceMesh
             for (auto &[face, componentId] : componentRepresentatives)
             {
                 componentSheets[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+            }
+
+            // 4. Set up the sheetIds of each triangle based on the connected component
+            //
+            for (auto face : mesh.faces())
+            {
+                const int componentId = this->componentId[face];
+                this->sheetId[face] =  componentSheets[componentId];
+
+
+
+                //this->sheetId[face] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+                
+                //this->sheetId[face] =  componentId;
+                //const int realSheetId = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
+
+                //if (this->sheetId[face] != realSheetId)
+                //{
+                    //throw std::runtime_error("Triangle sheet Id not the same as its component id.");
+                //}
+            }
+        }
+
+
+
+        int computeTriangleSheetId2(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+        {
+            // 1. Compute the edgePara at the center of the triangle
+            double midPointAlpha = 0.0;
+            for (const auto v : mesh.vertices_around_face(mesh.halfedge(triangle))) 
+            {
+                midPointAlpha += this->edgeParam[v];
+            }
+            midPointAlpha /= 3.0;
+
+            // 2. Compute the fiber graph at the alpha in the range
+            const FiberGraph fg = reebSpace.computeFiberGraph3(tetMesh, singularArrangement, controlSegment, midPointAlpha, intersectedSegments);
+
+            // 3. Determine which fiber component contains a triangle from the tet
+            const int tetId = this->tetId[triangle];
+
+            const int a = tetMesh.tetrahedra[tetId][0];
+            const int b = tetMesh.tetrahedra[tetId][1];
+            const int c = tetMesh.tetrahedra[tetId][2];
+            const int d = tetMesh.tetrahedra[tetId][3];
+
+            const std::vector<int> tetTriangleIds = {
+                tetMesh.triangleIndices.at({a, b, c}),
+                tetMesh.triangleIndices.at({a, b, d}),
+                tetMesh.triangleIndices.at({a, c, d}),
+                tetMesh.triangleIndices.at({b, c, d}),
+            };
+
+            for (const int triangleId : tetTriangleIds)
+            {
+                if (fg.componentRoot.contains(triangleId))
+                {
+                    return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
+                }
+
+                //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
+            }
+
+            return -1;
+        }
+
+
+
+
+        void computeTriangleSheets2(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+        {
+
+            std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
+                    this->mesh,
+                    this->componentId,
+                    CGAL::parameters::edge_is_constrained_map(this->isImpassable)
+                    );
+
+            //std::size_t numComponents2 = computeConnectedComponentsBFS(this->componentId);
+
+
+            // 2. Get a representative triangle per component
+            //
+            std::set<int> usedComponents;
+            std::vector<std::pair<CGALMesh::Face_index, int>> componentRepresentatives;
+            for (auto face : mesh.faces())
+            {
+                const int componentId = this->componentId[face];
+
+                if (false == usedComponents.contains(componentId))
+                {
+                    usedComponents.insert(componentId);
+                    componentRepresentatives.push_back({face, componentId});
+                }
+            }
+
+            std::cout << "Computing " << componentRepresentatives.size() << " fiber graphs...\n";
+
+            // 3. Compute one flexible fiber per representative triangle
+            //
+            std::vector<int> componentSheets(componentRepresentatives.size());
+            //#pragma omp parallel for schedule(dynamic)
+            for (auto &[face, componentId] : componentRepresentatives)
+            {
+                componentSheets[componentId] = this->computeTriangleSheetId2(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
             }
 
             // 4. Set up the sheetIds of each triangle based on the connected component

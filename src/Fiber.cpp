@@ -42,7 +42,7 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     // Compute intersectinos with the AABB tree
     Timer::start();
-    const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, false);
+    const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true);
     Timer::stop("Computed Alpha intersections           :");
 
 
@@ -57,21 +57,29 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
 
     for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
     {
-        intersectionAlpha.emplace_back(CGAL::to_double(alpha));
+        if (edgeType == 2 || edgeType == 0)
+        {
+            intersectionAlpha.emplace_back(CGAL::to_double(alpha));
+        }
     }
 
     surfaceMesh.subdivideMesh(intersectionAlpha);
     Timer::stop("Subdivided mesh                        :");
 
-    //Timer::start();
+    Timer::start();
     surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
-    //Timer::stop("Computing triangle sheets              :");
-
+    //surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
+    Timer::stop("Computing triangle sheets              :");
 
     Timer::start();
-    io::saveFiberSurface(surfaceMesh, "fs.vtp");
-    //io::writeImpassableEdgesToVTK(surfaceMesh, "fs.impassable.vtp");
-    Timer::stop("Saving fiber surface                   :");
+    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
+    Timer::stop("Computing triangle sheets 2            :");
+
+    //Timer::start();
+    //io::saveFiberSurface(surfaceMesh, "fs.vtp");
+    ////io::writeImpassableEdgesToVTK(surfaceMesh, "fs.impassable.vtp");
+    //Timer::stop("Saving fiber surface                   :");
 
 
     Timer::start();

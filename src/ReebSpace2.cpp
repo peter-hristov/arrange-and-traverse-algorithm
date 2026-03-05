@@ -2669,8 +2669,25 @@ FiberGraph ReebSpace2::computeFiberGraph2(TetMesh &tetMesh, Arrangement &singula
 
 FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments)
 {
+
     const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - pointAlpha, controlSegment[1], pointAlpha);
     if (controlSegment.squared_length() == 0.0) { std::cerr << "The segment has zero lenght!" << std::endl; }
+
+    //std::cout << std::endl;
+    //std::cout << std::endl;
+    //std::cout << "------------------------------------------------------------------------------------";
+    //std::cout << "Computing new flexible fiber.\n";
+    //std::cout << "------------------------------------------------------------------------------------";
+    //std::cout << std::endl;
+    //std::cout << "The control segment is : " << controlSegment[0] << " -> " << controlSegment[1] << std::endl;
+    //std::cout << "The input alpha   is   : "  << pointAlpha << std::endl;
+    //std::cout << "The control piont is   : "  << controlPoint << std::endl;
+
+
+    if (false == CGAL::do_intersect(controlPoint, controlSegment))
+    {
+        throw std::runtime_error("The control point is not on the control segment.");
+    }
 
     // 1. Compute the active face
     Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
@@ -2688,6 +2705,7 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
         //}
     //}
 
+    //std::cout << "\nThese are all the intersected segments:\n";
     //for (const auto& [alpha, edgeId, edgeType] : intersectedSegments)
     //{
         //Point_2 p = controlSegment.source() + alpha * (controlSegment.target() - controlSegment.source());
@@ -2847,7 +2865,7 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
 
     //printf("Here the final fiber graph after fiding the intersection point :\n");
     //pg.printByRoot();
-    //printf("\n\n\n");
+    //printf("\n\n\n\n\n\n\n");
 
 
     // The last one is the singular one, we don't want to cross it
@@ -2862,14 +2880,14 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
         }
 
         // No need to go futher
-        if (alpha > pointAlpha)
+        if (alpha < pointAlpha)
         {
             break;
         }
 
         bool typicalOrientation = true;
 
-        //std::cerr << "Intersected segment with ID " << segmentId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentId)) << " and alpha " << alpha << std::endl;
+        //std::cerr << "Intersected segment with ID " << segmentId << " and type " << tetMesh.edgeSingularTypes.at(tetMesh.edges.at(segmentId)) << " and alpha " << alpha << " and point alpha " << pointAlpha << std::endl;
 
         // Change orientation in case we need to
         const std::array<int, 2> edge = tetMesh.edges.at(segmentId);
@@ -2900,13 +2918,16 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
         }
 
 
-        //pg.printByRoot();
 
 
         const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(segmentId, typicalOrientation);
         const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(segmentId, typicalOrientation);
 
-        //std::cout << "\n\n\n\nMinus triangles: " << std::endl;
+
+
+        //pg.printByRoot();
+
+        //std::cout << "\n\nMinus triangles: " << std::endl;
 
         //for (const int &triangleId : minusTriangles)
         //{
@@ -2927,7 +2948,7 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
     }
 
 
-    std::cout << "We have performed " << graphUpdates << " graph updates.\n";
+    //std::cout << "We have performed " << graphUpdates << " graph updates.\n";
 
 
 

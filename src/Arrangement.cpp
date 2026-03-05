@@ -430,18 +430,18 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
 
     // Only keep the part until a singular segment
     //
-    int counter = 0;
+    //int counter = 0;
 
-    for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
-    {
-        if (edgeType == 2 || edgeType == 0)
-        {
-            break;
-        }
-        counter++;
-    }
+    //for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
+    //{
+        //if (edgeType == 2 || edgeType == 0)
+        //{
+            //break;
+        //}
+        //counter++;
+    //}
 
-    intersectedSegments.erase(intersectedSegments.begin() + counter + 1, intersectedSegments.end());
+    //intersectedSegments.erase(intersectedSegments.begin() + counter + 1, intersectedSegments.end());
 
     //for (const auto &[alpha, edgeId] : intersectedSegments)
     //{
