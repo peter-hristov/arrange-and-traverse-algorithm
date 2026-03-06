@@ -17,7 +17,43 @@
 
 
 
-std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, int _sheetId)
+std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &surfaceMesh)
+{
+    std::vector<FiberPoint> allFiberPoints;
+
+    for (auto f : surfaceMesh.mesh.faces())
+    {
+
+        const int sheetId = surfaceMesh.sheetId[f];
+
+        // Default triangle colour
+        std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
+
+        if (sheetId != -1)
+        {
+            triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+        }
+
+        for (auto v : vertices_around_face(surfaceMesh.mesh.halfedge(f), surfaceMesh.mesh))
+        {
+            std::array<double, 3> point = { surfaceMesh.mesh.point(v)[0], surfaceMesh.mesh.point(v)[1], surfaceMesh.mesh.point(v)[2] };
+
+
+            allFiberPoints.push_back(FiberPoint(
+                        point,
+                        triangleColour, 
+                        1,
+                        -1
+                        ));
+        }
+
+    }
+
+    return allFiberPoints;
+
+}
+
+SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, int _sheetId)
 {
     //const Point_2 startPoint(0.479988 , 0.215557);
     //const Point_2 endPoint(0.259815, 0.116635);
@@ -72,167 +108,10 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     //Timer::stop("Computing triangle sheets              :");
 
     Timer::start();
-    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
     Timer::stop("Computing triangle sheets 2            :");
 
-    //Timer::start();
-    //io::saveFiberSurface(surfaceMesh, "fs.vtp");
-    ////io::writeImpassableEdgesToVTK(surfaceMesh, "fs.impassable.vtp");
-    //Timer::stop("Saving fiber surface                   :");
-
-
-    Timer::start();
-    const auto fiberPoints = surfaceMesh.getFiberPoints();
-    Timer::stop("Computing fiber points                 :");
-
-    return fiberPoints;
-
-
-
-
-    //return surfaceMesh.getFiberPoints(triangleSheets);
-
-
-
-    //std::vector<FiberPoint> allFiberPoints;
-
-    //for (const std::array<int, 4> tet : tetMesh.tetrahedra)
-    //{
-        //std::vector<int> intersectedEdges;
-        //std::vector<std::array<float, 3>> intersectedEdgesPoint;
-
-        //// All pairs give you all six edges
-        //for (int a = 0 ; a < 4 ; a++)
-        //{
-            //for (int b = a + 1 ; b < 4 ; b++)
-            //{
-                //// Get the indices of the vertices for the edge
-                //int aIndex = tet[a];
-                //int bIndex = tet[b];
-
-                //// Make sure the vertices of the edge are in sorted order to have consistent orientation
-                //if (aIndex > bIndex)
-                //{
-                    //std::swap(aIndex, bIndex);
-                //}
-
-                //const int edgeId = tetMesh.edgeIndices.at({aIndex, bIndex});
-
-                //if (K::FT(-1.0) != edgeIntersectionAlpha[edgeId])
-                //{
-                    //intersectedEdges.push_back(edgeId);
-
-                    //std::array<float, 3> vertexA = tetMesh.vertexDomainCoordinates[aIndex];
-                    //std::array<float, 3> vertexB = tetMesh.vertexDomainCoordinates[bIndex];
-
-                    //Point_3 pointA(vertexA[0], vertexA[1], vertexA[2]);
-                    //Point_3 pointB(vertexB[0], vertexB[1], vertexB[2]);
-
-                    //K::FT alpha = edgeIntersectionAlpha[edgeId];
-
-                    //Point_3 interpolatedPoint(
-                            //(K::FT(1.0) - alpha) * pointA.x() + alpha * pointB.x(),
-                            //(K::FT(1.0) - alpha) * pointA.y() + alpha * pointB.y(),
-                            //(K::FT(1.0) - alpha) * pointA.z() + alpha * pointB.z()
-                            //);
-
-                    //intersectedEdgesPoint.push_back({
-                            //CGAL::to_double(interpolatedPoint.x()),
-                            //CGAL::to_double(interpolatedPoint.y()),
-                            //CGAL::to_double(interpolatedPoint.z())
-                            //});
-                //}
-            //}
-        //}
-
-
-        //if (intersectedEdges.size() == 3)
-        //{
-            //allFiberPoints.push_back(FiberPoint(
-                        //intersectedEdgesPoint[0],
-                        //{1.0, 1.0, 1.0},
-                        //1,
-                        //-1
-                        //));
-
-            //allFiberPoints.push_back(FiberPoint(
-                        //intersectedEdgesPoint[1],
-                        //{1.0, 1.0, 1.0},
-                        //1,
-                        //-1
-                        //));
-
-            //allFiberPoints.push_back(FiberPoint(
-                        //intersectedEdgesPoint[2],
-                        //{1.0, 1.0, 1.0},
-                        //1,
-                        //-1
-                        //));
-        //}
-
-        //else if (intersectedEdges.size() == 4)
-        //{
-
-
-                //allFiberPoints.push_back(FiberPoint(
-                            //intersectedEdgesPoint[0],
-                            //{1.0, 1.0, 1.0},
-                            //1,
-                            //-1
-                            //));
-
-                //allFiberPoints.push_back(FiberPoint(
-                            //intersectedEdgesPoint[1],
-                            //{1.0, 1.0, 1.0},
-                            //1,
-                            //-1
-                            //));
-
-                //allFiberPoints.push_back(FiberPoint(
-                            //intersectedEdgesPoint[2],
-                            //{1.0, 1.0, 1.0},
-                            //1,
-                            //-1
-                            //));
-
-
-
-
-
-
-                //allFiberPoints.push_back(FiberPoint(
-                            //intersectedEdgesPoint[0],
-                            //{1.0, 1.0, 1.0},
-                            //1,
-                            //-1
-                            //));
-
-                //allFiberPoints.push_back(FiberPoint(
-                            //intersectedEdgesPoint[1],
-                            //{1.0, 1.0, 1.0},
-                            //1,
-                            //-1
-                            //));
-
-                //allFiberPoints.push_back(FiberPoint(
-                            //intersectedEdgesPoint[3],
-                            //{1.0, 1.0, 1.0},
-                            //1,
-                            //-1
-                            //));
-
-
-
-        //}
-
-
-
-    //}
-
-
-    //return allFiberPoints;
-
+    return surfaceMesh;
 }
 
 
@@ -3381,3 +3260,6 @@ std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> fibe
 
     return {paths, cycles};
 }
+
+
+

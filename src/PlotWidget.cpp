@@ -30,6 +30,7 @@
 #include "./Fiber.h"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
+#include "src/SurfaceMesh.h"
 
 using namespace std;
 
@@ -557,23 +558,34 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         //std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
 
+        this->data.surfaceMeshes.clear();
+        this->data.surfaceMeshes.shrink_to_fit();
+
         std::vector<FiberPoint> fibersAll;
         if (controlPointsTransformed.size() == 2)
         {
-            const std::vector<FiberPoint> fibers = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
+            this->data.surfaceMeshes.push_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId));
+
+            const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back());
 
             fibersAll.insert(
                     fibersAll.end(), 
                     std::make_move_iterator(fibers.begin()), 
                     std::make_move_iterator(fibers.end())
                     );
+
+            //this->data.surfaceMeshes.push_back(std::move(mesh));
         }
         else
         {
+            
+            this->data.surfaceMeshes.reserve(controlPointsInternal.size() + 1);
+
             for (int i = 0 ; i < controlPointsInternal.size() ; i++)
             {
-                const std::vector<FiberPoint> fibers = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
+                this->data.surfaceMeshes.emplace_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId));
 
+                const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back());
                 fibersAll.insert(
                         fibersAll.end(), 
                         std::make_move_iterator(fibers.begin()), 

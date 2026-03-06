@@ -25,6 +25,7 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
+#include "./SurfaceMesh.h"
 
 class Data
 {
@@ -46,6 +47,8 @@ class Data
         reebSpace(rs),
         reebSpace2(rs2)
     {}
+
+    std::vector<SurfaceMesh> surfaceMeshes;
 
     std::string outputFibersFile = "./fibers.vtp";
 };

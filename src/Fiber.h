@@ -7,6 +7,7 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
+#include "./SurfaceMesh.h"
 
 namespace fiber
 {
@@ -23,8 +24,9 @@ namespace fiber
 
     std::vector<FiberPoint> computeFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
 
-    std::vector<FiberPoint> computeFiberSurfaceOld(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
+    SurfaceMesh computeFiberSurfaceSingularSegment(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
 
+    std::vector<FiberPoint> computeFiberPointsFromSurfaceMesh(SurfaceMesh &);
 
 
     std::vector<int> extractPath(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited);

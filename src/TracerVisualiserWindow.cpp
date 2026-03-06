@@ -1,5 +1,6 @@
 #include <iostream>
 #include <qnamespace.h>
+#include <string>
 #include <utility>
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -87,7 +88,16 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         //this->data.printSheetHistogram();
     }
     if (event->key() == Qt::Key_S) {
+        // Save the fibers
         io::saveFibers(data.outputFibersFile, this->tracerVisualiserWidget->faceFibers);
+
+        // Save the fiber surface
+        for (int i = 0 ; i < this->data.surfaceMeshes.size() ; i++)
+        {
+            std::cout << "Saving mesh " << i << std::endl;
+            io::saveFiberSurface(this->data.surfaceMeshes[i], "fs-pathch-" + std::to_string(i) + ".vtp");
+            io::writeImpassableEdgesToVTK(this->data.surfaceMeshes[i], "fs-pathch-" + std::to_string(i) + ".impassable.vtp");
+        }
     }
 
 }
