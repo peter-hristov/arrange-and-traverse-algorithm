@@ -28,7 +28,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_Backspace) {
-        if (this->plotWidget->controlPoints.size() >= 0)
+        if (this->plotWidget->controlPoints.size() > 0)
         {
             this->plotWidget->controlPoints.pop_back();
         }
