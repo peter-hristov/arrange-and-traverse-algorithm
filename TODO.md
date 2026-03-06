@@ -1,10 +1,12 @@
 # TODO
 
 [ ] Other ideas
+    [x] Save fibers and fiber surfaces.
+    [x] Draw fibers and fiber surfaces at the same time.
+
     [ ] For each FS, histogram of triangles and trea per sheet.
     [ ] List of intersected sheets and their range area.
     [ ] Map each regular vertex of the mesh to a sheet (sheet area estimate).
-    [ ] Draw fibers and fiber surfaces at the same time.
 
 [ ] Faster Interactive Fiber Surfaces
     [^] (Optional) Reimplement cropped marching tets.
