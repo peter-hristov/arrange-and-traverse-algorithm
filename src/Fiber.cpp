@@ -108,6 +108,7 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     //Timer::stop("Computing triangle sheets              :");
 
     Timer::start();
+    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
     Timer::stop("Computing triangle sheets 2            :");
 

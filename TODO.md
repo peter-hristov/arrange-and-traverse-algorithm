@@ -1,17 +1,22 @@
 # TODO
 
-[ ] Other ideas
+[ ] Current
     [x] Save fibers and fiber surfaces.
     [x] Draw fibers and fiber surfaces at the same time.
 
-    [ ] For each FS, histogram of triangles and trea per sheet.
-    [ ] List of intersected sheets and their range area.
+    [ ] Read and visualise .vtp atoms
+    [ ] Histogram of sheet area/volume
+    [ ] Test correctness
+
     [ ] Map each regular vertex of the mesh to a sheet (sheet area estimate).
 
-[ ] Faster Interactive Fiber Surfaces
-    [^] (Optional) Reimplement cropped marching tets.
+    [ ] Fix bug where you click inside a sheet
+    [ ] Why is it taking so much memory for example for ET-3?
+    [ ] Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
 
-    [ ] Using TTK's fiber surface
+[x] Faster Interactive Fiber Surfaces
+
+    [x] Using TTK's fiber surface
         [x] Make sure the coordinates match in the range.
         [x] Read their fiber surface.
         [x] Remesh along singular fibers.
@@ -26,19 +31,21 @@
         [x] Start using CGAL's mesh operations and polygon soup operations.
         [x] Why is he CGAL mesh broken? 2 boundary edges for 2 spheres?
 
-        [ ] Optimisation
+        [x] Optimisation
             [x] Speed up the remeshing with in-place Euler operations
             [x] Speed up remeshing with one pass over all isovalues
             [x] Optimise the fiber saturation (we don't need the full flexible fiber, just follow a few triangles)
---->        [ ] Optimising using one single line lookup
-            [ ] Optimise modpoint computation?
+            [x] Optimising using one single line lookup
+            [x] Optimise modpoint computation
 
         [x] Bugs
             [x] Mini triangles (with area bellow 1e-14), add an epsilong to colouring the vertices, robustness issues.
 
-        [ ] Refactor code to make it more usable 
 
-        [ ] (Optional) Reeb graph of the restriction?
+
+    [ ] (Optional) Reimplement cropped marching tets.
+    [ ] (Optional) Reeb graph of the restriction?
+    [ ] (Optional) Refactor code to make it more usable 
 
 [ ] Stiched Fiber Surfaces
     [x] Implement the unaffected and regular cases
@@ -50,7 +57,7 @@
         [x] Can we look at this per tet/per triangle of the FS?
 
 
-[ ] Flexible fibers
+[x] Flexible fibers
     [x] Implement flexible fibers via a visible vertex
     [x] Implement flexible fibers via a line. 
 

@@ -64,13 +64,13 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) 
+    if (event->button() == Qt::RightButton) 
     {
         this->controlPoints.push_back(event->localPos());
         update();
     }
 
-    if (event->button() == Qt::RightButton) 
+    if (event->button() == Qt::LeftButton) 
     {
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
@@ -82,7 +82,7 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
 
 void PlotWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    if (event->buttons() & Qt::RightButton)
+    if (event->buttons() & Qt::LeftButton)
     {
         QPointF currentPos = event->localPos();
 
