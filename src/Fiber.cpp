@@ -66,10 +66,10 @@ std::vector<FiberPoint> fiber::computeFiberSurfaceOld(TetMesh &tetMesh, Arrangem
     surfaceMesh.subdivideMesh(intersectionAlpha);
     Timer::stop("Subdivided mesh                        :");
 
-    Timer::start();
-    surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
+    //Timer::start();
+    //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     //surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
-    Timer::stop("Computing triangle sheets              :");
+    //Timer::stop("Computing triangle sheets              :");
 
     Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);

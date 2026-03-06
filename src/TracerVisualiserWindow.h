@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QGridLayout>
 #include <QSlider>
+#include <QComboBox>
 
 
 #include "./Data.h"
