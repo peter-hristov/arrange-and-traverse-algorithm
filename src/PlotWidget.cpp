@@ -68,7 +68,7 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
         dragging = false;
-        recomputeFiber = true;
+        recomputeFiberSurface = true;
         update();
 
         this->controlPoints.push_back(mousePoint);
@@ -76,20 +76,26 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
 
     if (event->button() == Qt::RightButton) 
     {
-        if (this->controlPoints.size() >= 0)
-        {
-            this->controlPoints.pop_back();
-            //this->controlPoints.clear();
-            //this->controlPoints.shrink_to_fit();
-            update();
-        }
+        mousePointInitialPos = event->localPos();
+        mousePoint = mousePointInitialPos;
+        dragging = false;
+        recomputeFiber = true;
+        update();
+
+        //if (this->controlPoints.size() >= 0)
+        //{
+            //this->controlPoints.pop_back();
+            ////this->controlPoints.clear();
+            ////this->controlPoints.shrink_to_fit();
+            //update();
+        //}
 
     }
 }
 
 void PlotWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    if (event->buttons() & Qt::LeftButton)
+    if (event->buttons() & Qt::RightButton)
     {
         QPointF currentPos = event->localPos();
 
@@ -104,7 +110,7 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
         if (dragging)
         {
             mousePoint = currentPos;
-        recomputeFiber = true;
+            recomputeFiber = true;
             update();
         }
     }
@@ -444,12 +450,11 @@ void PlotWidget::paintEvent(QPaintEvent*)
     generateStaticReebSpaceCache();
     p.drawPixmap(0, 0, *(this->staticReebSpaceCache));
 
-    QPointF fiberPoint = p.combinedTransform().inverted().map(mousePoint);
-
-    // Draw fiber point
     auto penGrey = QPen(QColor(0, 0, 0, 250));
     penGrey.setWidthF(8.0);
     p.setPen(penGrey);
+
+    QPointF fiberPoint = p.combinedTransform().inverted().map(mousePoint);
     p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
 
     // Crosshair around fiber point
@@ -458,20 +463,22 @@ void PlotWidget::paintEvent(QPaintEvent*)
     //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
     //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
-
-
-    //p.drawLine(fiberPoint.x(), fiberPoint.y(), fiberPoint.x(), fiberPoint.y() + 1000);
-
-    //const Point_2 endPoint(controlPoint[0], controlPoint[1] + tetMesh.maxG + 10.0);
-
+    // Draw fiber point
 
 
     // ----------------------------------------------------------------
     // Fiber Drawing
     // ----------------------------------------------------------------
 
-    if (false && this->recomputeFiber == true)
+    if (this->recomputeFiber == true)
     {
+
+
+
+        //p.drawLine(fiberPoint.x(), fiberPoint.y(), fiberPoint.x(), fiberPoint.y() + 1000);
+
+        //const Point_2 endPoint(controlPoint[0], controlPoint[1] + tetMesh.maxG + 10.0);
+
         this->recomputeFiber = false;
 
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
@@ -544,7 +551,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // ----------------------------------------------------------------
 
 
-    if (this->recomputeFiber == true && controlPoints.size() >= 2)
+    if (this->recomputeFiberSurface == true && controlPoints.size() >= 2)
     {
 
         // TTK FS
@@ -626,8 +633,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //std::vector<FiberPoint> fibersAll = io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp").getFiberPoints();
 
 
-        this->recomputeFiber = false;
-        sibling->updateFiber(fibersAll);
+        this->recomputeFiberSurface = false;
+        sibling->updateFiberSurface(fibersAll);
     }
 
 
@@ -712,9 +719,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         }
 
         // Update the fiber
-        //
-        sibling->updateFiber(fibersAll);
-        this->recomputeFiber = false;
+        this->recomputeFiberSurface = false;
+        sibling->updateFiberSurface(fibersAll);
     }
 
 

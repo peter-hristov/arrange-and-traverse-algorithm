@@ -73,6 +73,6 @@ class Arrangement
     std::vector<std::pair<K::FT, int>> getIntersectedSegments();
 
     // Alpha, edgeId, edgeType
-    std::vector<std::tuple<K::FT, int, int>> getIntersectedSegments2(TetMesh &tetMesh,  const Segment_2 &controlSegment, const bool shouldSort);
+    std::vector<std::tuple<K::FT, int, int>> getIntersectedSegments2(TetMesh &tetMesh, const Segment_2 &controlSegment, const bool shouldSort, const bool shouldTruncate = false);
 
 };

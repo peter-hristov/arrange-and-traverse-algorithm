@@ -356,7 +356,7 @@ Point_2 Arrangement::findVisibleVertex(const Face_const_handle activeFace, const
 
 
 
-std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(TetMesh &tetMesh, const Segment_2 &controlSegment, const bool shouldSort)
+std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(TetMesh &tetMesh, const Segment_2 &controlSegment, const bool shouldSort, const bool shouldTruncate)
 {
     //Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
@@ -415,33 +415,31 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
 
         intersectedSegments.emplace_back(alpha, segmentIndex, type);
     }
-    //Timer::stop("Intersections Alphas                   :");
 
-    //Timer::stop("Computed Alpha intersections           :");
-    //Timer::stop("Computed AABB intersections in         :");
 
     if (shouldSort)
     {
-        //Timer::start();
         std::sort(intersectedSegments.begin(), intersectedSegments.end());
-        //Timer::stop("Sorting alpha intersections            :");
     }
 
 
-    // Only keep the part until a singular segment
-    //
-    //int counter = 0;
+    // Keep the sequence only up until you reach a singualr segment
+    if (shouldTruncate)
+    {
+        int counter = 0;
 
-    //for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
-    //{
-        //if (edgeType == 2 || edgeType == 0)
-        //{
-            //break;
-        //}
-        //counter++;
-    //}
+        for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
+        {
+            if (edgeType == 2 || edgeType == 0)
+            {
+                break;
+            }
+            counter++;
+        }
 
-    //intersectedSegments.erase(intersectedSegments.begin() + counter + 1, intersectedSegments.end());
+        intersectedSegments.erase(intersectedSegments.begin() + counter + 1, intersectedSegments.end());
+    }
+
 
     //for (const auto &[alpha, edgeId] : intersectedSegments)
     //{

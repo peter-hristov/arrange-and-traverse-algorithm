@@ -88,29 +88,16 @@ TracerVisualiserWidget::generateDisplayList()
 
     //setMaterial(1, 0, 0, 1.0, 0.0);
 
-    // Draw Fiber
-    //glBegin(GL_LINES);
-    //{
-        //for(const auto &faceFiber : this->faceFibers)
-        //{
-            //glColor3fv(faceFiber.colour.data());
-            //glVertex3fv(faceFiber.point.data());
-        //}
-    //}
-    //glEnd();
-
-
-
 
 
     glBegin(GL_TRIANGLES);
     {
         //for(const auto &faceFiber : this->faceFibers)
-        for(int i = 0 ; i < this->faceFibers.size() ; i+=3)
+        for(int i = 0 ; i < this->faceFiberSurface.size() ; i+=3)
         {
-            const auto &faceFiber = this->faceFibers[i];
-            const auto &faceFiber2 = this->faceFibers[i+1];
-            const auto &faceFiber3 = this->faceFibers[i+2];
+            const auto &faceFiber = this->faceFiberSurface[i];
+            const auto &faceFiber2 = this->faceFiberSurface[i+1];
+            const auto &faceFiber3 = this->faceFiberSurface[i+2];
 
 
 
@@ -141,6 +128,27 @@ TracerVisualiserWidget::generateDisplayList()
             glVertex3fv(faceFiber2.point.data());
             glVertex3fv(faceFiber3.point.data());
 
+        }
+    }
+    glEnd();
+
+
+
+    // Draw Fiber
+    glBegin(GL_LINES);
+    {
+        for(const auto &faceFiber : this->faceFibers)
+        {
+            if (this->enableLighting)
+            {
+                glColor3fv(faceFiber.colour.data());
+            }
+            else
+            {
+                setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+            }
+
+            glVertex3fv(faceFiber.point.data());
         }
     }
     glEnd();
@@ -718,6 +726,13 @@ void TracerVisualiserWidget::updateFiber(const std::vector<FiberPoint> &newFiber
     }
 
     this->faceFibers.insert(this->faceFibers.end(), newFiberPoints.begin(), newFiberPoints.end());
+    this->generateDisplayList();
+    this->update();
+}
+
+void TracerVisualiserWidget::updateFiberSurface(const std::vector<FiberPoint> &newFiberPoints)
+{
+    this->faceFiberSurface = newFiberPoints;
     this->generateDisplayList();
     this->update();
 }

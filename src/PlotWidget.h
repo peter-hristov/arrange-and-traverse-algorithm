@@ -46,6 +46,7 @@ class PlotWidget : public QWidget
 
         // Indicates that we need to recompute the fiber, clicked/dragged the mouse/fiber point
         bool recomputeFiber = false;
+        bool recomputeFiberSurface = false;
 
         Data &data;
         TracerVisualiserWidget *sibling;

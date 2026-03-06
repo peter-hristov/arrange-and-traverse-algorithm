@@ -1,4 +1,5 @@
 #include <iostream>
+#include <qnamespace.h>
 #include <utility>
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -23,6 +24,13 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     {
         close();   // closes this window
         return;
+    }
+
+    if (event->key() == Qt::Key_Backspace) {
+        this->plotWidget->controlPoints.pop_back();
+        this->plotWidget->recomputeFiber = true;
+        this->plotWidget->update();
+        this->update();
     }
 
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {

@@ -2537,7 +2537,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
     //FiberGraph fg1 = reebSpace.computeFiberGraph(tetMesh, singularArrangement, controlPoint);
     //Timer::stop("Computing fiber graph                  :");
 
-    std::cout << std::endl;
+    //std::cout << std::endl;
 
     //Timer::start();
     FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, controlPoint);

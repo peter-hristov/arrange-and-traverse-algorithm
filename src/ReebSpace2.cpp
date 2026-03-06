@@ -2439,9 +2439,9 @@ FiberGraph ReebSpace2::computeFiberGraph2(TetMesh &tetMesh, Arrangement &singula
     //}
 
 
-    Timer::start();
-    std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true);
-    Timer::stop("AABB search 2                          :");
+    //Timer::start();
+    std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true, true);
+    //Timer::stop("AABB search 2                          :");
 
 
 
@@ -2657,7 +2657,7 @@ FiberGraph ReebSpace2::computeFiberGraph2(TetMesh &tetMesh, Arrangement &singula
     }
 
 
-    std::cout << "We have performed " << graphUpdates << " graph updates.\n";
+    //std::cout << "We have performed " << graphUpdates << " graph updates.\n";
 
 
 
