@@ -34,7 +34,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-        this->plotWidget->recomputeFiber = true;
+        this->plotWidget->recomputeFiberSurface = true;
         this->plotWidget->update();
         this->update();
     }

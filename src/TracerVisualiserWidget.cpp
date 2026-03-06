@@ -134,6 +134,7 @@ TracerVisualiserWidget::generateDisplayList()
 
 
 
+    glDisable(GL_LIGHTING);
     // Draw Fiber
     glBegin(GL_LINES);
     {
@@ -152,6 +153,7 @@ TracerVisualiserWidget::generateDisplayList()
         }
     }
     glEnd();
+    glEnable(GL_LIGHTING);
 
 
 
@@ -385,9 +387,10 @@ TracerVisualiserWidget::drawScene()
         {this->data.tetMesh.maxX, this->data.tetMesh.maxY, this->data.tetMesh.maxZ},
     };
 
-    setMaterial(0., 0., 1., 1.0, 30.);
+    glDisable(GL_LIGHTING);
     glColor3f(1.0, 1.0, 1.0);
     drawWiredCube(vertices);
+    glEnable(GL_LIGHTING);
 
 
     glColor3f(1, 1, 1);

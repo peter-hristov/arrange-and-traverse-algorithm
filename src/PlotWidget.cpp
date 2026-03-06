@@ -65,13 +65,8 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) 
     {
-        mousePointInitialPos = event->localPos();
-        mousePoint = mousePointInitialPos;
-        dragging = false;
-        recomputeFiberSurface = true;
+        this->controlPoints.push_back(event->localPos());
         update();
-
-        this->controlPoints.push_back(mousePoint);
     }
 
     if (event->button() == Qt::RightButton) 
@@ -81,15 +76,6 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         dragging = false;
         recomputeFiber = true;
         update();
-
-        //if (this->controlPoints.size() >= 0)
-        //{
-            //this->controlPoints.pop_back();
-            ////this->controlPoints.clear();
-            ////this->controlPoints.shrink_to_fit();
-            //update();
-        //}
-
     }
 }
 
@@ -487,7 +473,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //const double u = -0.0734849;
         //const double v = -0.0625043;
 
-        qDebug() << "Computing fiber (" << u << ", " << v << ")";
+        //qDebug() << "Computing fiber (" << u << ", " << v << ")";
 
         //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
         //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
