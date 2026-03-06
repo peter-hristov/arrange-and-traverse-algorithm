@@ -27,7 +27,10 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_Backspace) {
-        this->plotWidget->controlPoints.pop_back();
+        if (this->plotWidget->controlPoints.size() >= 0)
+        {
+            this->plotWidget->controlPoints.pop_back();
+        }
         this->plotWidget->recomputeFiber = true;
         this->plotWidget->update();
         this->update();
