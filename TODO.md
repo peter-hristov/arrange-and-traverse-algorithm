@@ -3,21 +3,22 @@
 [ ] Current
     [x] Save fibers and fiber surfaces.
     [x] Draw fibers and fiber surfaces at the same time.
-
     [x] Run on TQ
     [x] Histogram of sheet area/volume
     [x] Read and visualise .vtp atoms
+    [x] Test correctness
+    [x] Fix bug where you click inside a sheet
+    [ ] Add perturbation to the mesh
 
-    [ ] Test correctness
     [ ] Save/load reeb space
-
 
     [ ] Why is it taking so much memory for example for ET-3?
 
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
-    [ ] (Optional )Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
+    [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
+    [ ] (Optional) Refactor code to make it more usable 
 
-    [x] Fix bug where you click inside a sheet
+
 
 [x] Faster Interactive Fiber Surfaces
 
@@ -46,11 +47,18 @@
         [x] Bugs
             [x] Mini triangles (with area bellow 1e-14), add an epsilong to colouring the vertices, robustness issues.
 
-
-
     [ ] (Optional) Reimplement cropped marching tets.
+    [ ] (Optional) Exact surface remeshing
     [ ] (Optional) Reeb graph of the restriction?
-    [ ] (Optional) Refactor code to make it more usable 
+
+[x] Flexible fibers
+    [x] Implement flexible fibers via a visible vertex
+    [x] Implement flexible fibers via a line. 
+
+    [x] Optimise the flexible fiber computation
+        [x] You don't need a full search, it will be at one of the edges.
+        [x] You don't need to do this for regular intersections, just used the +- triangles directly.
+        [x] Test if this actually works
 
 [ ] Stiched Fiber Surfaces
     [x] Implement the unaffected and regular cases
@@ -61,22 +69,11 @@
         [x] Speed up the computation based on when triangles are in/out?
         [x] Can we look at this per tet/per triangle of the FS?
 
-
-[x] Flexible fibers
-    [x] Implement flexible fibers via a visible vertex
-    [x] Implement flexible fibers via a line. 
-
-    [ ] Optimise the flexible fiber computation
-        [x] You don't need a full search, it will be at one of the edges.
-        [x] You don't need to do this for regular intersections, just used the +- triangles directly.
-        [ ] Test if this actually works
-
 [ ] Sheet polygon extraction and shrinking
     [x] Extract the boundary half-edges of sheet polygons (with holes)
     [x] Extract the boundary points of the sheet polygons (with holes)
     [x] Shrink the polygons with  "2D Straight Skeleton and Polygon Offsetting"
     [ ] Test the shrinking, how do the holes behave?
-
 
 
 [ ] Interactive UI

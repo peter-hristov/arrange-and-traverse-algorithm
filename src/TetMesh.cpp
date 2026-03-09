@@ -4,15 +4,31 @@
 #include <random>
 #include <queue>
 
+#include <vtkPointData.h>
+
 void TetMesh::perturbRangeValues(const double &epsilon)
 {
     static std::mt19937 gen(std::random_device{}());
     std::uniform_real_distribution<double> dist(-epsilon, epsilon);
 
-    for (int i = 0; i < this->vertexCoordinatesF.size(); i++) 
+    vtkPointData* pointData = this->originalMesh->GetPointData();
+    vtkDataArray* fDataArray = pointData->GetArray(1);
+    vtkDataArray* gDataArray = pointData->GetArray(0);
+
+    for (vtkIdType i = 0; i < fDataArray->GetNumberOfTuples(); i++) 
     {
-        this->vertexCoordinatesF[i] += dist(gen);
-        this->vertexCoordinatesG[i] += dist(gen);
+        const double newValue = fDataArray->GetTuple1(i) + dist(gen);
+
+        fDataArray->SetTuple1(i, newValue);
+        this->vertexCoordinatesF[i] = newValue;
+    }
+
+    for (vtkIdType i = 0; i < gDataArray->GetNumberOfTuples(); i++) 
+    {
+        const double newValue = gDataArray->GetTuple1(i) + dist(gen);
+
+        gDataArray->SetTuple1(i, newValue);
+        this->vertexCoordinatesG[i] = newValue;
     }
 }
 
