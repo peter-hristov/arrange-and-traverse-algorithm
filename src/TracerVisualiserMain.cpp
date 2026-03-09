@@ -28,6 +28,9 @@ int main(int argc, char* argv[])
     string filename;
     cliApp.add_option("--file, -f", filename, "Input data filename. Has to be either .txt of .vti.")->required();
 
+    string moleculeFilename;
+    cliApp.add_option("--molecule, -m", moleculeFilename, "Input data filename. Has to be either .txt of .vti.");
+
     bool performanceRun = false;
     cliApp.add_flag("--performanceRun, -p", performanceRun, "Only compute the Reeb space, no graphics..");
 
@@ -79,6 +82,7 @@ int main(int argc, char* argv[])
         std::cerr << "Error: " << e.what() << '\n';
         return 1;
     }
+
     
     //
     // TetMesh computation
@@ -352,6 +356,12 @@ int main(int argc, char* argv[])
 
     // Package all my data for visualisation
     Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
+
+
+    if (false == moleculeFilename.empty())
+    {
+        data.molecule = io::readMolecule(moleculeFilename);
+    }
 
     // Create the widget
     TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);

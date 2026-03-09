@@ -575,6 +575,7 @@ TracerVisualiserWidget::drawScene()
     }
 
 
+    this->renderMolecule();
 
 
 
@@ -740,3 +741,41 @@ void TracerVisualiserWidget::updateFiberSurface(const std::vector<FiberPoint> &n
     this->update();
 }
 
+void TracerVisualiserWidget::renderMolecule()
+{
+    if (!data.molecule)
+    {
+        return;
+    }
+
+    vtkPoints*    points = data.molecule->GetPoints();
+    vtkCellArray* lines  = data.molecule->GetLines();
+
+    glDisable(GL_LIGHTING);
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+
+
+    glBegin(GL_LINES);
+
+    lines->InitTraversal();
+    vtkNew<vtkIdList> idList;
+
+    while (lines->GetNextCell(idList))
+    {
+        for (vtkIdType i = 0; i < idList->GetNumberOfIds() - 1; i++)
+        {
+            double p0[3], p1[3];
+            points->GetPoint(idList->GetId(i),     p0);
+            points->GetPoint(idList->GetId(i + 1), p1);
+
+            glVertex3d(p0[0], p0[1], p0[2]);
+            glVertex3d(p1[0], p1[1], p1[2]);
+        }
+    }
+
+    glEnd();
+
+
+    glEnable(GL_LIGHTING);
+}

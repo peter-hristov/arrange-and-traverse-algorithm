@@ -107,6 +107,8 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void drawSolidTriangle(GLfloat vertices[3][3]);
     std::array<GLfloat, 3> computeTriangleNormal(const GLfloat* v0, const GLfloat* v1, const GLfloat* v2);
 
+    void renderMolecule();
+
     // Render Various Functions
     void cube();
     void drawAxis(GLfloat, GLfloat);

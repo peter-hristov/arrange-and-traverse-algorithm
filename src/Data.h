@@ -27,6 +27,9 @@
 #include "./ReebSpace2.h"
 #include "./SurfaceMesh.h"
 
+#include <vtkPolyData.h>
+#include <vtkSmartPointer.h>
+
 class Data
 {
   public:
@@ -51,4 +54,7 @@ class Data
     std::vector<SurfaceMesh> surfaceMeshes;
 
     std::string outputFibersFile = "./fibers.vtp";
+
+    vtkSmartPointer<vtkPolyData> molecule;
+
 };

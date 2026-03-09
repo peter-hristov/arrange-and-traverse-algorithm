@@ -95,7 +95,7 @@ class SurfaceMesh
 
             std::cout << "\nThe fiber surface has the following histogram of intersected sheets.\n";
             printf("%-10s %-8s %-12s %-8s %-12s\n", "Sheet ID", "|", "Area", "|", "Percentage");
-            printf("--------------------------------------------------------\n");
+            printf("----------------------------------------------------\n");
             for (const auto &[area, areaProportion, id] : sheetsAndAreas)
             {
                 printf("%-10d %-8s %-12.4f %-8s %.4f%%\n", id, "|", area, "|", areaProportion);

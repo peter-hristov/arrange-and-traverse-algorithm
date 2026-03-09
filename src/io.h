@@ -12,6 +12,11 @@
 
 #include "./FiberPoint.h"
 
+#include <vtkPolyData.h>
+#include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
+
+
 namespace io
 {
     TetMesh readData(const std::string&);
@@ -21,6 +26,8 @@ namespace io
     
     SurfaceMesh readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2);
     SurfaceMesh computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2);
+
+    vtkSmartPointer<vtkPolyData> readMolecule(const std::string& filename);
 
     SurfaceMesh readDataVtp(const std::string&);
     CGALMesh readCGALMesh(const std::string& filename);

@@ -1,6 +1,5 @@
 #include <filesystem>
 
-#include <vtkSmartPointer.h>
 #include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkCell.h>
@@ -13,11 +12,9 @@
 #include <vtkCellArray.h>
 #include <vtkLine.h>
 #include <vtkPoints.h>
-#include <vtkPolyData.h>
 #include <vtkPolyLine.h>
 #include <vtkDataArray.h>
 #include <vtkPointData.h>
-#include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPolyLine.h>
 #include <vtkCellArray.h>
@@ -1185,4 +1182,24 @@ void io::saveSheetGraph(ReebSpace2 &reebSpace, const std::string &filename)
 
     out << "}\n";
     out.close();
+}
+
+vtkSmartPointer<vtkPolyData> io::readMolecule(const std::string& filename)
+{
+    vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+    reader->SetFileName(filename.c_str());
+    reader->Update();
+
+    vtkSmartPointer<vtkPolyData> polyData = reader->GetOutput();
+
+    vtkPoints* points = polyData->GetPoints();
+    vtkCellArray* lines = polyData->GetLines();
+    vtkCellArray* verts = polyData->GetVerts();
+
+    //printf("Read: %s\n", filename.c_str());
+    //printf("  Points    : %lld\n", points->GetNumberOfPoints());
+    //printf("  Lines     : %lld\n", lines->GetNumberOfCells());
+    //printf("  Vertices  : %lld\n", verts->GetNumberOfCells());
+
+    return polyData;
 }
