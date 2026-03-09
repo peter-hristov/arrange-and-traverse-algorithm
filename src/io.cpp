@@ -50,7 +50,7 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
 {
     if (!polyData)
     {
-        std::cerr << "Failed to read polydata.\n";
+        std::cerr << "Polydata is not valid.\n";
     }
 
     // Clean up if it's a triangle soup, merge duplicated triangles

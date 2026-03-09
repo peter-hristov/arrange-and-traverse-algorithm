@@ -4,15 +4,20 @@
     [x] Save fibers and fiber surfaces.
     [x] Draw fibers and fiber surfaces at the same time.
 
-    [ ] Read and visualise .vtp atoms
+    [ ] Run on TQ
     [ ] Histogram of sheet area/volume
+
+    [ ] Read and visualise .vtp atoms
     [ ] Test correctness
+    [ ] Save/load reeb space
 
-    [ ] Map each regular vertex of the mesh to a sheet (sheet area estimate).
 
-    [ ] Fix bug where you click inside a sheet
     [ ] Why is it taking so much memory for example for ET-3?
-    [ ] Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
+
+    [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
+    [ ] (Optional )Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
+
+    [x] Fix bug where you click inside a sheet
 
 [x] Faster Interactive Fiber Surfaces
 

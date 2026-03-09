@@ -511,12 +511,11 @@ class SurfaceMesh
                 }
             }
 
-            std::cout << "Computing " << componentRepresentatives.size() << " fiber graphs...\n";
-
             // 3. Compute one flexible fiber per representative triangle
             //
             std::vector<int> componentSheets(componentRepresentatives.size());
-            //#pragma omp parallel for schedule(dynamic)
+
+            #pragma omp parallel for schedule(dynamic)
             for (auto &[face, componentId] : componentRepresentatives)
             {
                 componentSheets[componentId] = this->computeTriangleSheetId2(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
@@ -528,7 +527,6 @@ class SurfaceMesh
             {
                 const int componentId = this->componentId[face];
                 this->sheetId[face] =  componentSheets[componentId];
-
 
 
                 //this->sheetId[face] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
