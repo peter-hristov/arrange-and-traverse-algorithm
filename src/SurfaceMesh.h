@@ -73,6 +73,35 @@ class SurfaceMesh
 
         }
 
+        void printSheetHistogram(ReebSpace2 &reebSpace)
+        {
+            std::set<int> sheetIds;
+            for (auto f : mesh.faces())
+            {
+                sheetIds.insert(this->sheetId[f]);
+            }
+
+
+            std::vector<std::tuple<double, double, int>> sheetsAndAreas;
+            sheetsAndAreas.reserve(sheetIds.size());
+
+            for (const int id : sheetIds)
+            {
+                const std::tuple<double, double, int> sheetAndArea = {reebSpace.sheetArea.at(id), reebSpace.sheetAreaProportion.at(id), id};
+                sheetsAndAreas.emplace_back(sheetAndArea);
+            }
+
+            std::sort(sheetsAndAreas.begin(), sheetsAndAreas.end(), std::greater<>());
+
+            std::cout << "\nThe fiber surface has the following histogram of intersected sheets.\n";
+            printf("%-10s %-8s %-12s %-8s %-12s\n", "Sheet ID", "|", "Area", "|", "Percentage");
+            printf("--------------------------------------------------------\n");
+            for (const auto &[area, areaProportion, id] : sheetsAndAreas)
+            {
+                printf("%-10d %-8s %-12.4f %-8s %.4f%%\n", id, "|", area, "|", areaProportion);
+            }
+        }
+
         // Create mesh from a from a triangle soup
         SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId)
         {
