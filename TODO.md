@@ -4,10 +4,10 @@
     [x] Save fibers and fiber surfaces.
     [x] Draw fibers and fiber surfaces at the same time.
 
-    [ ] Run on TQ
-    [ ] Histogram of sheet area/volume
+    [x] Run on TQ
+    [x] Histogram of sheet area/volume
+    [x] Read and visualise .vtp atoms
 
-    [ ] Read and visualise .vtp atoms
     [ ] Test correctness
     [ ] Save/load reeb space
 
