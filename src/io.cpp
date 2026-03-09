@@ -33,7 +33,7 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
-#include <vtkCleanPolyData.h>
+#include <vtkStaticCleanPolyData.h>
 
 #include<ttkFiberSurface.h>
 #include<ttkRangePolygon.h>
@@ -54,7 +54,7 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
     }
 
     // Clean up if it's a triangle soup, merge duplicated triangles
-    vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
+    vtkSmartPointer<vtkStaticCleanPolyData> cleaner = vtkSmartPointer<vtkStaticCleanPolyData>::New();
     cleaner->SetInputData(polyData);
     //cleaner->SetTolerance(1e-6);
     cleaner->SetTolerance(0);
