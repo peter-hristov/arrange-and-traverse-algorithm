@@ -278,45 +278,42 @@ class SurfaceMesh
 
 
 
-            const std::set<int> tetTriangleIds = {
-                tetMesh.triangleIndices.at({a, b, c}),
-                tetMesh.triangleIndices.at({a, b, d}),
-                tetMesh.triangleIndices.at({a, c, d}),
-                tetMesh.triangleIndices.at({b, c, d}),
-            };
-
-
-            return reebSpace.computeFiberGraphReverse(tetMesh, singularArrangement, {u, v}, tetTriangleIds);
-
-
-
-
-            // Compute the fiber graph
-            //
-            //const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
-
-
-            //// Find which componnt we are in
-            ////
-            //const std::vector<int> tetTriangleIds = {
+            //const std::set<int> tetTriangleIds = {
                 //tetMesh.triangleIndices.at({a, b, c}),
                 //tetMesh.triangleIndices.at({a, b, d}),
                 //tetMesh.triangleIndices.at({a, c, d}),
                 //tetMesh.triangleIndices.at({b, c, d}),
             //};
 
-            //for (const int triangleId : tetTriangleIds)
-            //{
-                //if (fg.componentRoot.contains(triangleId))
-                //{
-                    //return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
-                //}
+            //return reebSpace.computeFiberGraphReverse(tetMesh, singularArrangement, {u, v}, tetTriangleIds);
 
-                ////printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
-            //}
 
-            //std::cerr << "Sheet for fiber surface triangle could not be found!\n";
-            //return -1;
+            // Compute the fiber graph
+            //
+            const auto fg = reebSpace.computeFiberGraph(tetMesh, singularArrangement, {u, v});
+
+
+            // Find which componnt we are in
+            //
+            const std::vector<int> tetTriangleIds = {
+                tetMesh.triangleIndices.at({a, b, c}),
+                tetMesh.triangleIndices.at({a, b, d}),
+                tetMesh.triangleIndices.at({a, c, d}),
+                tetMesh.triangleIndices.at({b, c, d}),
+            };
+
+            for (const int triangleId : tetTriangleIds)
+            {
+                if (fg.componentRoot.contains(triangleId))
+                {
+                    return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
+                }
+
+                //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
+            }
+
+            std::cerr << "Sheet for fiber surface triangle could not be found!\n";
+            return -1;
         }
 
 

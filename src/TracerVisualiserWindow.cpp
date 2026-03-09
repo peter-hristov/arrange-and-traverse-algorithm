@@ -95,8 +95,8 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         for (int i = 0 ; i < this->data.surfaceMeshes.size() ; i++)
         {
             std::cout << "Saving mesh " << i << std::endl;
-            io::saveFiberSurface(this->data.surfaceMeshes[i], "fs-pathch-" + std::to_string(i) + ".vtp");
-            io::writeImpassableEdgesToVTK(this->data.surfaceMeshes[i], "fs-pathch-" + std::to_string(i) + ".impassable.vtp");
+            io::saveFiberSurface(this->data.surfaceMeshes[i], "fs-patch-" + std::to_string(i) + ".vtp");
+            io::writeImpassableEdgesToVTK(this->data.surfaceMeshes[i], "fs-patch-" + std::to_string(i) + ".impassable.vtp");
         }
     }
 

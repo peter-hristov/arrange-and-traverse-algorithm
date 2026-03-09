@@ -2327,11 +2327,9 @@ FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singular
 
 
 
-
-
-    Timer::start();
+    //Timer::start();
     std::vector<std::pair<K::FT, int>> intersectedSegments = getIntersectedSegments(tetMesh, singularArrangement, controlSegment, true);
-    Timer::stop("AABB search 1                          :");
+    //Timer::stop("AABB search 1                          :");
 
     for (int i = intersectedSegments.size() - 1 ; i >= 0 ; i--)
     {
@@ -2713,8 +2711,8 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
     //}
 
 
-    int destinationSegmentId = 0;
-    int destinationIntersectedSegmentsId = 0;
+    int destinationSegmentId = -1;
+    int destinationIntersectedSegmentsId = -1;
 
     for (int i = 0 ; i < intersectedSegments.size() ; i++)
     {
@@ -2729,6 +2727,13 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
                 break;
             }
         }
+    }
+
+    // The control segment does not intersect the boundary of this face, then just compute the fiber another way
+    if (destinationSegmentId == -1)
+    {
+        std::array<double, 2> controlPointDouble = {CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y())};
+        return this->computeFiberGraph2(tetMesh, singularArrangement, controlPointDouble);
     }
 
 
@@ -2775,6 +2780,12 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
         pg.updateComponentsRegular(tetMesh, this->vertexRegionSegments[currentHalfEdge->data().id]);
         graphUpdates++;
         ++currentHalfEdge;
+
+        // If we are back at the start but we have not foudn the destination segment
+        if (currentHalfEdge == activeFace->outer_ccb())
+        {
+            throw std::runtime_error("Desired half-edge not found!");
+        }
 
     } while (true);
 
