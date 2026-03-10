@@ -79,15 +79,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_C) {
-
-        this->plotWidget->fiberPointsTraces.clear();
-        this->plotWidget->fiberPointsTraces.shrink_to_fit();
-        this->plotWidget->fiberPointsTraces.push_back({});  // add a new empty trace
-        this->plotWidget->update();
-
-        this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
-        this->tracerVisualiserWidget->faceFibers.clear();
-        this->tracerVisualiserWidget->update();
+        checkboxShowTraces->setChecked(!checkboxShowTraces->isChecked());
     }
 
     if (event->key() == Qt::Key_H) {
@@ -142,7 +134,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     fakeSlider = new QSlider(Qt::Horizontal);
     fakeSlider->setTracking(false);
 
-    checkbox2 = new QCheckBox("Case sensitive");
+    checkboxShowTraces = new QCheckBox("Show fiber point trace.");
+
+
 
     //
     // Layouts
@@ -163,7 +157,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     optionsLayout->addLayout(rowOneLayout, 0, 0);
 
-    optionsLayout2->addWidget(checkbox2, 0, 0);
+    optionsLayout2->addWidget(checkboxShowTraces, 0, 0);
     optionsLayout2->addWidget(fakeSlider, 0, 1);
 
 
@@ -189,6 +183,18 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     connect(checkboxShowFaces, &QCheckBox::toggled, [=](bool checked) {
             this->tracerVisualiserWidget->drawFaces = checked;
 
+            this->tracerVisualiserWidget->update();
+            });
+
+    connect(checkboxShowTraces, &QCheckBox::toggled, [=](bool checked) {
+
+            this->plotWidget->fiberPointsTraces.clear();
+            this->plotWidget->fiberPointsTraces.shrink_to_fit();
+            this->plotWidget->fiberPointsTraces.push_back({});  // add a new empty trace
+            this->plotWidget->update();
+
+            this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
+            this->tracerVisualiserWidget->faceFibers.clear();
             this->tracerVisualiserWidget->update();
             });
 

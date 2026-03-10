@@ -42,5 +42,5 @@ class TracerVisualiserWindow : public QWidget
     QSlider *fakeSlider;
 
 
-    QCheckBox *checkbox2;
+    QCheckBox *checkboxShowTraces;
 };
