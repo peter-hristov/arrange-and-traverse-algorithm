@@ -49,8 +49,11 @@ int main(int argc, char* argv[])
     string outputSheetPolygonsFilename;
     cliApp.add_option("--outputSheetPolygons, -o", outputSheetPolygonsFilename, "Filename where to output the coordinates of the polygons that represent each sheet.");
 
-    int fiberSampling = 1;
-    cliApp.add_option("--fiberSampling, -s", fiberSampling, "When saving fibers per component, how many do we save. Default is to save the centroid, otherwise sample along the boundary.");
+    string saveReebSpaceFile;
+    cliApp.add_option("--saveReebSpace, -s", saveReebSpaceFile, "Save the Reeb space to disk with this filename.");
+
+    string readReebSpaceFile;
+    cliApp.add_option("--readReebSpace, -l", readReebSpaceFile, "Load the Reeb space from disk with this filename.");
 
     int sheetOutputCount = 10;
     cliApp.add_option("--sheetOutputCount", sheetOutputCount, "How many sheets to sample for automatic feature extraction.");
@@ -160,36 +163,49 @@ int main(int argc, char* argv[])
     //
     ReebSpace2 reebSpace2;
 
-    //Timer::start();
-    //reebSpace2.computeEdgeRegionSegments(tetMesh, singularArrangement);
-    //Timer::stop("Computed red/blud intersetions         :");
+    if (readReebSpaceFile.empty())
+    {
+        Timer::start();
+        reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
+        Timer::stop("Computed red/blud intersetions         :");
 
-    //reebSpace2.edgeRegionSegments.clear();
-    //reebSpace2.edgeRegionSegments.shrink_to_fit();
+        Timer::start();
+        reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
+        Timer::stop("Edge regions plus/minus triangles      :");
 
-    Timer::start();
-    reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
-    Timer::stop("Computed red/blud intersetions         :");
+        Timer::start();
+        reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
+        Timer::stop("Computed vertex regions                :");
 
-    Timer::start();
-    reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
-    Timer::stop("Edge regions plus/minus triangles      :");
+        Timer::start();
+        reebSpace2.determineVertexRegionSegmentsOrientation(tetMesh, singularArrangement);
+        Timer::stop("Vertex regions plus/minus triangles    :");
 
-    Timer::start();
-    reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
-    Timer::stop("Computed vertex regions                :");
+        Timer::start();
+        reebSpace2.determineEdgeCrossingSegmentsOriantation(tetMesh, singularArrangement);
+        Timer::stop("Edge crossing plus/minus triangles     :");
 
-    Timer::start();
-    reebSpace2.determineVertexRegionSegmentsOrientation(tetMesh, singularArrangement);
-    Timer::stop("Vertex regions plus/minus triangles    :");
+        Timer::start();
+        reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
+        Timer::stop("Computed singular traversal            :");
 
-    Timer::start();
-    reebSpace2.determineEdgeCrossingSegmentsOriantation(tetMesh, singularArrangement);
-    Timer::stop("Edge crossing plus/minus triangles     :");
+        if (false == saveReebSpaceFile.empty())
+        {
+            io::saveReebSpace(reebSpace2, saveReebSpaceFile);
+        }
+    }
+    else
+    {
+        Timer::start();
+        reebSpace2 = io::loadReebSpace(readReebSpaceFile);
+        Timer::stop("Read reeb space                        :");
+    }
 
-    Timer::start();
-    reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
-    Timer::stop("Computed singular traversal            :");
+
+
+
+
+
 
 
     Timer::start();
@@ -333,19 +349,6 @@ int main(int argc, char* argv[])
         }
     }
 
-
-    if (false == outputSheetFibersFolder.empty())
-    {
-        try
-        {
-            io::generatefFaceFibersForSheets(tetMesh, arrangement, reebSpace, sheetOutputCount, fiberSampling, outputSheetFibersFolder);
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error: " << e.what() << '\n';
-            return 1;
-        }
-    }
 
 
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");

@@ -54,6 +54,9 @@ class ReebSpace2
 
         // Save on fiber graph per face, for visualisation after
         std::vector<FiberGraph> representativeFiberGraphs;
+
+
+
         
         // This tells you whether two sheets share a boundary (a half-edge or a vertex).
         // These are the edges of the sheet graph

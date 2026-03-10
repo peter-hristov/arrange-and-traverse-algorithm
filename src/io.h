@@ -32,6 +32,9 @@ namespace io
     SurfaceMesh readDataVtp(const std::string&);
     CGALMesh readCGALMesh(const std::string& filename);
 
+    void saveReebSpace(const ReebSpace2 &, const std::string&); 
+    ReebSpace2 loadReebSpace(const std::string& filename);
+
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveFibers(const std::string&, const std::vector<FiberPoint>&);

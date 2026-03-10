@@ -1203,3 +1203,124 @@ vtkSmartPointer<vtkPolyData> io::readMolecule(const std::string& filename)
 
     return polyData;
 }
+
+void io::saveReebSpace(const ReebSpace2 &reebSpace, const std::string& filename)
+{
+    std::ofstream out(filename, std::ios::binary);
+
+    auto writeInt  = [&](int v)  { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+    auto writeBool = [&](bool v) { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+
+    // edgeCrossingSegments
+    writeInt(reebSpace.edgeCrossingSegments.size());
+    for (const auto& [id, dir] : reebSpace.edgeCrossingSegments) { writeInt(id); writeBool(dir); }
+
+    // edgeRegionSegments
+    writeInt(reebSpace.edgeRegionSegments.size());
+    for (const auto& vec : reebSpace.edgeRegionSegments) {
+        writeInt(vec.size());
+        for (const auto& [id, dir] : vec) { writeInt(id); writeBool(dir); }
+    }
+
+    // vertexRegionSegments
+    writeInt(reebSpace.vertexRegionSegments.size());
+    for (const auto& vec : reebSpace.vertexRegionSegments) {
+        writeInt(vec.size());
+        for (const auto& [id, dir] : vec) { writeInt(id); writeBool(dir); }
+    }
+
+    // correspondenceGraph
+    writeInt(reebSpace.correspondenceGraph.size());
+    for (const auto& vec : reebSpace.correspondenceGraph) {
+        writeInt(vec.size());
+        for (int id : vec) writeInt(id);
+    }
+
+    // correspondenceGraphDS
+    writeInt(reebSpace.correspondenceGraphDS.parent.size());
+    for (int v : reebSpace.correspondenceGraphDS.parent) writeInt(v);
+    for (int v : reebSpace.correspondenceGraphDS.rank)   writeInt(v);
+
+    auto saveFiberGraph = [&](const FiberGraph& fg) {
+        writeInt(fg.componentRoot.size());
+        for (const auto& [k, v] : fg.componentRoot) { writeInt(k); writeInt(v); }
+        writeInt(fg.componentRepresentative.size());
+        for (const auto& [k, v] : fg.componentRepresentative) { writeInt(k); writeInt(v); }
+    };
+
+    // fiberGraphs
+    writeInt(reebSpace.fiberGraphs.size());
+    for (const auto& [fg1, fg2] : reebSpace.fiberGraphs) { saveFiberGraph(fg1); saveFiberGraph(fg2); }
+
+    // representativeFiberGraphs
+    writeInt(reebSpace.representativeFiberGraphs.size());
+    for (const auto& fg : reebSpace.representativeFiberGraphs) saveFiberGraph(fg);
+}
+
+ReebSpace2 io::loadReebSpace(const std::string& filename)
+{
+    ReebSpace2 reebSpace;
+    std::ifstream in(filename, std::ios::binary);
+
+    auto readInt  = [&]() { int  v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
+    auto readBool = [&]() { bool v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
+
+    // edgeCrossingSegments
+    int n = readInt();
+    reebSpace.edgeCrossingSegments.resize(n);
+    for (auto& [id, dir] : reebSpace.edgeCrossingSegments) { id = readInt(); dir = readBool(); }
+
+    // edgeRegionSegments
+    n = readInt();
+    reebSpace.edgeRegionSegments.resize(n);
+    for (auto& vec : reebSpace.edgeRegionSegments) {
+        int m = readInt(); vec.resize(m);
+        for (auto& [id, dir] : vec) { id = readInt(); dir = readBool(); }
+    }
+
+    // vertexRegionSegments
+    n = readInt();
+    reebSpace.vertexRegionSegments.resize(n);
+    for (auto& vec : reebSpace.vertexRegionSegments) {
+        int m = readInt(); vec.resize(m);
+        for (auto& [id, dir] : vec) { id = readInt(); dir = readBool(); }
+    }
+
+    // correspondenceGraph
+    n = readInt();
+    reebSpace.correspondenceGraph.resize(n);
+    for (auto& vec : reebSpace.correspondenceGraph) {
+        int m = readInt(); vec.resize(m);
+        for (int& id : vec) id = readInt();
+    }
+
+    // correspondenceGraphDS
+    n = readInt();
+    reebSpace.correspondenceGraphDS.parent.resize(n);
+    reebSpace.correspondenceGraphDS.rank.resize(n);
+    for (int& v : reebSpace.correspondenceGraphDS.parent) v = readInt();
+    for (int& v : reebSpace.correspondenceGraphDS.rank)   v = readInt();
+
+
+    auto loadFiberGraph = [&](FiberGraph& fg) {
+        int n = readInt();
+        fg.componentRoot.clear(); fg.componentRoot.reserve(n);
+        for (int i = 0; i < n; i++) { int k = readInt(), v = readInt(); fg.componentRoot[k] = v; }
+        n = readInt();
+        fg.componentRepresentative.clear(); fg.componentRepresentative.reserve(n);
+        for (int i = 0; i < n; i++) { int k = readInt(), v = readInt(); fg.componentRepresentative[k] = v; }
+    };
+
+
+    // fiberGraphs
+    n = readInt();
+    reebSpace.fiberGraphs.resize(n);
+    for (auto& [fg1, fg2] : reebSpace.fiberGraphs) { loadFiberGraph(fg1); loadFiberGraph(fg2); }
+
+    // representativeFiberGraphs
+    n = readInt();
+    reebSpace.representativeFiberGraphs.resize(n);
+    for (auto& fg : reebSpace.representativeFiberGraphs) loadFiberGraph(fg);
+
+    return reebSpace;
+}
