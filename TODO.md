@@ -9,9 +9,9 @@
     [x] Test correctness
     [x] Fix bug where you click inside a sheet
     [x] Add perturbation to the mesh
+    [x] Add fiber point trace
 
     [ ] Save/load reeb space
-
     [ ] Why is it taking so much memory for example for ET-3?
 
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).

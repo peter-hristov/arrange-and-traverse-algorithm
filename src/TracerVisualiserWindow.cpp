@@ -194,7 +194,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->update();
 
             this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
-            this->tracerVisualiserWidget->faceFibers.clear();
+            this->tracerVisualiserWidget->updateFiber({});
             this->tracerVisualiserWidget->update();
             });
 
