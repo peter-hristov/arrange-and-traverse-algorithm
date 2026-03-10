@@ -79,6 +79,12 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_C) {
+
+        this->plotWidget->fiberPointsTraces.clear();
+        this->plotWidget->fiberPointsTraces.shrink_to_fit();
+        this->plotWidget->fiberPointsTraces.push_back({});  // add a new empty trace
+        this->plotWidget->update();
+
         this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
         this->tracerVisualiserWidget->faceFibers.clear();
         this->tracerVisualiserWidget->update();

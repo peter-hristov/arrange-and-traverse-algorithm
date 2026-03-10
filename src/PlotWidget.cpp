@@ -74,6 +74,12 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
     {
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
+
+        if (false == this->sibling->clearFibers)
+        {
+            fiberPointsTraces.push_back({mousePoint});
+        }
+
         dragging = false;
         recomputeFiber = true;
         update();
@@ -97,6 +103,10 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
         if (dragging)
         {
             mousePoint = currentPos;
+            if (false == this->sibling->clearFibers)
+            {
+                fiberPointsTraces.back().push_back(mousePoint);
+            }
             recomputeFiber = true;
             update();
         }
@@ -437,18 +447,37 @@ void PlotWidget::paintEvent(QPaintEvent*)
     generateStaticReebSpaceCache();
     p.drawPixmap(0, 0, *(this->staticReebSpaceCache));
 
-    auto penGrey = QPen(QColor(0, 0, 0, 250));
-    penGrey.setWidthF(8.0);
-    p.setPen(penGrey);
+    auto penBlack = QPen(QColor(0, 0, 0, 250));
+    penBlack.setWidthF(8.0);
+    p.setPen(penBlack);
 
     QPointF fiberPoint = p.combinedTransform().inverted().map(mousePoint);
     p.drawEllipse(fiberPoint, sphereRadius, sphereRadius);
 
     // Crosshair around fiber point
-    penGrey.setWidthF(1.0);
-    p.setPen(penGrey);
     //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
     //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
+
+
+    if (false == this->sibling->clearFibers)
+    {
+        penBlack.setWidthF(8.0);
+        p.setPen(penBlack);
+
+        for (const QVector<QPointF> &fiberPointsTrace : this->fiberPointsTraces)
+        {
+            QVector<QPointF> fiberPointsTraceTransformed(fiberPointsTrace.size());
+            for (int i = 0 ; i < fiberPointsTrace.size() ; i++)
+            {
+                const QPointF &controlPoint = fiberPointsTrace[i];
+                const QPointF controlPointTransformed = p.combinedTransform().inverted().map(controlPoint);
+                fiberPointsTraceTransformed[i] = controlPointTransformed;
+            }
+            p.drawPolyline(QPolygonF(fiberPointsTraceTransformed));
+        }
+    }
+
+
 
     // Draw fiber point
 
@@ -501,8 +530,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
     //
     QVector<QPointF> controlPointsTransformed(this->controlPoints.size());
 
-    penGrey.setWidthF(8.0);
-    p.setPen(penGrey);
+    penBlack.setWidthF(8.0);
+    p.setPen(penBlack);
     for (int i = 0 ; i < this->controlPoints.size() ; i++)
     {
         const QPointF &controlPoint = this->controlPoints[i];

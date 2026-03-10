@@ -15,6 +15,9 @@
 #include "./TracerVisualiserWidget.h"
 #include "./TracerVisualiserWindow.h"
 
+#include <vtkPointData.h>
+#include <vtkFloatArray.h>
+
 using namespace std;
 
 
@@ -776,6 +779,43 @@ void TracerVisualiserWidget::renderMolecule()
 
     glEnd();
 
+    // Get the point data arrays
+    vtkFloatArray* colourArray = vtkFloatArray::SafeDownCast(data.molecule->GetPointData()->GetArray("atom_color"));
+    vtkFloatArray* radiusArray = vtkFloatArray::SafeDownCast(data.molecule->GetPointData()->GetArray("atom_radius")); // keeping your spelling
+    if (!colourArray || !radiusArray) { return; }
 
+    for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
+    {
+        // Read radius; skip if zero
+        const float radius = static_cast<float>(radiusArray->GetValue(i)) * 0.2;
+        if (radius < 0.000001f) { continue; }
+
+        // Read position
+        double pos[3];
+        points->GetPoint(i, pos);
+
+        // Read colour (3 floats)
+        const float r = static_cast<float>(colourArray->GetComponent(i, 0));
+        const float g = static_cast<float>(colourArray->GetComponent(i, 1));
+        const float b = static_cast<float>(colourArray->GetComponent(i, 2));
+
+        // Render sphere
+        glColor3f(r, g, b);
+        //setMaterial(r, g, b, 1.0f, 20.0f);
+
+        glPushMatrix();
+        {
+            glTranslatef(
+                static_cast<float>(pos[0]),
+                static_cast<float>(pos[1]),
+                static_cast<float>(pos[2]));
+
+            GLUquadric* sphere = gluNewQuadric();
+            gluSphere(sphere, radius, 16, 16);
+            gluDeleteQuadric(sphere);   // use gluDeleteQuadric, not delete
+        }
+        glPopMatrix();
+    }
     glEnable(GL_LIGHTING);
+
 }

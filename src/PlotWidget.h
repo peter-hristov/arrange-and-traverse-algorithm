@@ -72,6 +72,8 @@ class PlotWidget : public QWidget
 
         std::vector<QPointF> controlPoints;
 
+        QVector<QVector<QPointF>> fiberPointsTraces;
+
         int desiredSheetId = -1;
         //int desiredSheetId = 0;
         //int desiredSheetId = 152;
