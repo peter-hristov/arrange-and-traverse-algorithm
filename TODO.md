@@ -8,7 +8,7 @@
     [x] Read and visualise .vtp atoms
     [x] Test correctness
     [x] Fix bug where you click inside a sheet
-    [ ] Add perturbation to the mesh
+    [x] Add perturbation to the mesh
 
     [ ] Save/load reeb space
 
