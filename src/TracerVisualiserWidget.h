@@ -75,6 +75,9 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void updateFiber(const std::vector<FiberPoint>&);
     void updateFiberSurface(const std::vector<FiberPoint>&);
 
+    void clearFiber();
+    void clearFiberSurface();
+
     int displayListIndex = 0;
     void generateDisplayList();
 

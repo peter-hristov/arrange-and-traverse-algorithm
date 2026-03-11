@@ -105,6 +105,10 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
             mousePoint = currentPos;
             if (false == this->sibling->clearFibers)
             {
+                if (fiberPointsTraces.size() == 0)
+                {
+                    fiberPointsTraces.push_back({});
+                }
                 fiberPointsTraces.back().push_back(mousePoint);
             }
             recomputeFiber = true;
@@ -584,6 +588,11 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
         //controlPointsInternal = {{0.0, 0.2}, {0.0, -0.2}};
+
+
+        // ET diagonal
+        // Start point : -2.1, 0.9 end point 2.1, -0.6
+        //controlPointsInternal = {{-2.1, 0.9}, {2.1, -0.6}};
 
         //std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
 

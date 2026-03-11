@@ -409,7 +409,7 @@ class SurfaceMesh
 
 
 
-        void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace)
+        void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace)
         {
 
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
@@ -514,7 +514,7 @@ class SurfaceMesh
 
 
 
-        void computeTriangleSheets2(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+        void computeTriangleSheets2(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
         {
 
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(

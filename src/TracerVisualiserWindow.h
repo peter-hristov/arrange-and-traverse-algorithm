@@ -5,6 +5,7 @@
 #include <QGridLayout>
 #include <QSlider>
 #include <QComboBox>
+#include <QPushButton>
 
 
 #include "./Data.h"
@@ -40,6 +41,8 @@ class TracerVisualiserWindow : public QWidget
     QSlider *vertexOpacitySlider;
 
     QSlider *fakeSlider;
+    QPushButton *computeTracedFiberSurfaceButton; 
+    QPushButton *clearAllButton; 
 
 
     QCheckBox *checkboxShowTraces;

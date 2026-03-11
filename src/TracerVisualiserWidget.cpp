@@ -744,6 +744,20 @@ void TracerVisualiserWidget::updateFiberSurface(const std::vector<FiberPoint> &n
     this->update();
 }
 
+void TracerVisualiserWidget::clearFiber()
+{
+    this->faceFibers = {};
+    this->generateDisplayList();
+    this->update();
+}
+
+void TracerVisualiserWidget::clearFiberSurface()
+{
+    this->faceFiberSurface = {};
+    this->generateDisplayList();
+    this->update();
+}
+
 void TracerVisualiserWidget::renderMolecule()
 {
     if (!data.molecule)

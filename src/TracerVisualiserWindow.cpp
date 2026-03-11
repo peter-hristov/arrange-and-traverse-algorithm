@@ -82,6 +82,10 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         checkboxShowTraces->setChecked(!checkboxShowTraces->isChecked());
     }
 
+    if (event->key() == Qt::Key_D) {
+        this->computeTracedFiberSurfaceButton->click();
+    }
+
     if (event->key() == Qt::Key_H) {
         //this->data.printSheetHistogram();
     }
@@ -135,6 +139,8 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     fakeSlider->setTracking(false);
 
     checkboxShowTraces = new QCheckBox("Show fiber point trace.");
+    this->computeTracedFiberSurfaceButton = new QPushButton("Compute Traced Fiber Surface", this);
+    this->clearAllButton = new QPushButton("Clear All", this);
 
 
 
@@ -147,18 +153,17 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     auto rowOneLayout = new QGridLayout();
     rowOneLayout->addWidget(checkboxShowVertices,0, 0);
     rowOneLayout->addWidget(vertexOpacitySlider, 0, 1);
-
     rowOneLayout->addWidget(checkboxShowEdges,1, 0);
     rowOneLayout->addWidget(edgeOpacitySlider, 1, 1);
-
     rowOneLayout->addWidget(checkboxShowFaces,2, 0);
     rowOneLayout->addWidget(faceOpacitySlider, 2, 1);
 
-
     optionsLayout->addLayout(rowOneLayout, 0, 0);
 
-    optionsLayout2->addWidget(checkboxShowTraces, 0, 0);
-    optionsLayout2->addWidget(fakeSlider, 0, 1);
+    optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 0, 0);
+    optionsLayout2->addWidget(clearAllButton, 0, 1);
+    optionsLayout2->addWidget(checkboxShowTraces, 1, 0);
+    optionsLayout2->addWidget(fakeSlider, 1, 1);
 
 
     // Set up layout
@@ -169,6 +174,28 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     windowLayout->addLayout(optionsLayout, 1, 0);
     windowLayout->addLayout(optionsLayout2, 1, 1);
 
+    connect(this->clearAllButton, &QPushButton::clicked, this, [this]() {
+            this->plotWidget->fiberPointsTraces.clear();
+            this->plotWidget->fiberPointsTraces.shrink_to_fit();
+            this->plotWidget->controlPoints.clear();
+            this->plotWidget->controlPoints.shrink_to_fit();
+            this->plotWidget->update();
+
+            this->tracerVisualiserWidget->clearFiber();
+            this->tracerVisualiserWidget->clearFiberSurface();
+            this->tracerVisualiserWidget->update();
+            });
+
+    connect(this->computeTracedFiberSurfaceButton, &QPushButton::clicked, this, [this]() {
+            if (this->plotWidget->fiberPointsTraces.size() == 1)
+            {
+            this->plotWidget->controlPoints = std::move(this->plotWidget->fiberPointsTraces[0]);
+
+            this->plotWidget->recomputeFiberSurface = true;
+            this->plotWidget->update();
+            this->tracerVisualiserWidget->update();
+            }
+            });
 
     connect(checkboxShowVertices, &QCheckBox::toggled, [=](bool checked) {
             this->tracerVisualiserWidget->drawVertices = checked;
@@ -190,7 +217,6 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
             this->plotWidget->fiberPointsTraces.clear();
             this->plotWidget->fiberPointsTraces.shrink_to_fit();
-            this->plotWidget->fiberPointsTraces.push_back({});  // add a new empty trace
             this->plotWidget->update();
 
             this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
