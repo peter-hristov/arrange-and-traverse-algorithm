@@ -93,7 +93,9 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
 
     for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
     {
-        if (edgeType == 2 || edgeType == 0)
+        //if (edgeType == 2 || edgeType == 0)
+
+        if (edgeType == 2)
         {
             intersectionAlpha.emplace_back(CGAL::to_double(alpha));
         }
@@ -101,6 +103,8 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
 
     surfaceMesh.subdivideMesh(intersectionAlpha);
     Timer::stop("Subdivided mesh                        :");
+
+    std::cout << "Remeshed number of triangles : " << surfaceMesh.mesh.number_of_faces() << std::endl;
 
     //Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);

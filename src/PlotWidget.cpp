@@ -583,6 +583,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //controlPointsInternal = {{-0.021533425147216016, 0.17978634037260727}, {-0.026869776102463102, -0.17316282244046066}};
 
 
+        //controlPointsInternal = {{0.0, 0.2}, {0.0, -0.2}};
 
         //std::vector<FiberPoint> fibersAll = fiber::computeFiberSurfaceOld(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
 
