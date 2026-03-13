@@ -430,7 +430,7 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
 
         for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
         {
-            if (edgeType == 2 || edgeType == 0)
+            if (edgeType == 2 || edgeType == 0 || edgeType == -1)
             {
                 break;
             }

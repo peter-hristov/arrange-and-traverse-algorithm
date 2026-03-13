@@ -10,9 +10,11 @@
     [x] Fix bug where you click inside a sheet
     [x] Add perturbation to the mesh
     [x] Add fiber point trace
+    [x] Save/load reeb space
+    [x] Why is it taking so much memory for example for ET-3?
+    [x] Potential bug at isabel-4-cropped (crashed)
 
-    [ ] Save/load reeb space
-    [ ] Why is it taking so much memory for example for ET-3?
+    [ ] Only save fiber triangle seeds to save memory
 
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
     [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
