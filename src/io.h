@@ -45,6 +45,9 @@ namespace io
     void writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::string& filename);
     void saveSheetsFeatures(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
 
+    void saveOriginalMesh(const std::string, vtkSmartPointer<vtkUnstructuredGrid>);
+
+
 
     std::vector<FiberPoint> generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints);
     void generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string);

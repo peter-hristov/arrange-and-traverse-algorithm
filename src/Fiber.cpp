@@ -68,25 +68,25 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
 
     const Segment_2 controlSegment(startPoint, endPoint);
 
-    std::cout << "\n\n----------------------------------------------------------------------\n";
-    std::cout << "Comtputing fiber surface...\n";
-    std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
-    std::cout << "----------------------------------------------------------------------\n\n";
+    //std::cout << "\n\n----------------------------------------------------------------------\n";
+    //std::cout << "Comtputing fiber surface...\n";
+    //std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
+    //std::cout << "----------------------------------------------------------------------\n\n";
 
 
-    Timer::start();
+    //Timer::start();
 
     // Compute intersectinos with the AABB tree
-    Timer::start();
+    //Timer::start();
     const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true);
-    Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed Alpha intersections           :");
 
 
-    Timer::start();
+    //Timer::start();
     SurfaceMesh surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
-    Timer::stop("Computing fiber surfaces with TTK      :");
+    //Timer::stop("Computing fiber surfaces with TTK      :");
 
-    Timer::start();
+    //Timer::start();
 
     std::vector<double> intersectionAlpha;
     intersectionAlpha.reserve(intersectedSegments.size());
@@ -102,7 +102,7 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     }
 
     surfaceMesh.subdivideMesh(intersectionAlpha);
-    Timer::stop("Subdivided mesh                        :");
+    //Timer::stop("Subdivided mesh                        :");
 
 
     //Timer::start();
@@ -110,13 +110,13 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     //surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
     //Timer::stop("Computing triangle sheets              :");
 
-    Timer::start();
+    //Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
-    Timer::stop("Computing triangle sheets 2            :");
+    //Timer::stop("Computing triangle sheets 2            :");
 
-    std::cout << "Remeshed number of triangles : " << surfaceMesh.mesh.number_of_faces() << std::endl;
-    printf("Intersected %ld regular and %ld indefinite segments.\n", intersectedSegments.size(), intersectionAlpha.size());
+    //std::cout << "Remeshed number of triangles : " << surfaceMesh.mesh.number_of_faces() << std::endl;
+    //printf("Intersected %ld regular and %ld indefinite segments.\n", intersectedSegments.size(), intersectionAlpha.size());
 
 
     //surfaceMesh.printSheetHistogram(reebSpace);

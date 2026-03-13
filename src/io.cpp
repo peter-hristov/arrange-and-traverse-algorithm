@@ -1,6 +1,5 @@
 #include <filesystem>
 
-#include <vtkXMLUnstructuredGridReader.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkCell.h>
 #include <vtkDataArray.h>
@@ -30,6 +29,7 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkStaticCleanPolyData.h>
 
 #include<ttkFiberSurface.h>
@@ -48,6 +48,11 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
     if (!polyData)
     {
         std::cerr << "Polydata is not valid.\n";
+    }
+
+    if (polyData->GetPoints()->GetNumberOfPoints() == 0)
+    {
+        return {};
     }
 
     // Clean up if it's a triangle soup, merge duplicated triangles
@@ -77,11 +82,11 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
         return {};
     }
 
-    std::cout << "Before Number of points: " << polyData->GetPoints()->GetNumberOfPoints() << "\n";
-    std::cout << "Before Number of cells: " << polyData->GetNumberOfCells() << "\n";
+    //std::cout << "Before Number of points: " << polyData->GetPoints()->GetNumberOfPoints() << "\n";
+    //std::cout << "Before Number of cells: " << polyData->GetNumberOfCells() << "\n";
 
-    std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
-    std::cout << "Number of cells: " << cleanedPolyData->GetNumberOfCells() << "\n";
+    //std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
+    //std::cout << "Number of cells: " << cleanedPolyData->GetNumberOfCells() << "\n";
 
     std::vector<std::array<double, 3>> vertexCoordinates(points->GetNumberOfPoints()); 
     std::vector<double> edgeParam(points->GetNumberOfPoints()); 
@@ -594,12 +599,12 @@ SurfaceMesh io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, d
     fiberSurface->SetInputArrayToProcess(3, 1, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, field2Name.c_str()); // scalar2
     fiberSurface->Update();
 
-    std::cout << "Field names are " << field1Name.c_str() << " and " << field2Name.c_str() << std::endl;
+    //std::cout << "Field names are " << field1Name.c_str() << " and " << field2Name.c_str() << std::endl;
 
     vtkPolyData* fiberSurfMesh = vtkPolyData::SafeDownCast(fiberSurface->GetOutput());
 
 
-    std::cout << "The fiber surface has " << fiberSurfMesh->GetNumberOfCells() << " cells.\n";
+    //std::cout << "The fiber surface has " << fiberSurfMesh->GetNumberOfCells() << " cells.\n";
 
 
     return getSurfaceMesh(fiberSurfMesh);
@@ -1323,4 +1328,12 @@ ReebSpace2 io::loadReebSpace(const std::string& filename)
     for (auto& fg : reebSpace.representativeFiberGraphs) loadFiberGraph(fg);
 
     return reebSpace;
+}
+
+void io::saveOriginalMesh(const std::string filename, vtkSmartPointer<vtkUnstructuredGrid> originalMesh)
+{
+    auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(originalMesh);
+    writer->Write();
 }

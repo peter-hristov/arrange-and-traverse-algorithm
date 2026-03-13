@@ -17,6 +17,8 @@
 #include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
 #include "./UnitTests.h"
+#include "./Performance.h"
+#include "src/Performance.h"
 
 
 using namespace std;
@@ -54,6 +56,9 @@ int main(int argc, char* argv[])
 
     string readReebSpaceFile;
     cliApp.add_option("--readReebSpace, -l", readReebSpaceFile, "Load the Reeb space from disk with this filename.");
+
+    string fiberBenchmarkFile;
+    cliApp.add_option("--fiberPerformanceTimingsFile, -b", fiberBenchmarkFile, "Benchmakr for timings.");
 
     int sheetOutputCount = 10;
     cliApp.add_option("--sheetOutputCount", sheetOutputCount, "How many sheets to sample for automatic feature extraction.");
@@ -350,6 +355,14 @@ int main(int argc, char* argv[])
     }
 
 
+    if (false == fiberBenchmarkFile.empty())
+    {
+        //performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
+        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberBenchmarkFile);
+        return 0;
+    }
+
+    io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
 
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
 

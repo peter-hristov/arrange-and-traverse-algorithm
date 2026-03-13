@@ -2398,7 +2398,7 @@ FiberGraph ReebSpace2::computeFiberGraph(TetMesh &tetMesh, Arrangement &singular
 
     }
     
-    std::cout << "We have performed " << graphUpdates << " graph updates.\n";
+    //std::cout << "We have performed " << graphUpdates << " graph updates.\n";
 
     return pg;
 }
