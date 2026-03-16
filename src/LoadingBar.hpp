@@ -11,6 +11,8 @@
 #include <iomanip>
 #include <chrono>
 
+#include "./Timer.h"
+
 class LoadingBar
 {
 private:
@@ -61,11 +63,12 @@ private:
         int elapsed = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(now - start).count());
         int minutes = elapsed / 60;
         int seconds = elapsed % 60;
+        double memory = Timer::getCurrentRSS();
 
         std::cout << "\r[" << barBuffer << "] " 
                   << std::setw(3) << progress << "%  "
                   << "[" << minutes << "m:" << std::setw(2) << std::setfill('0') << seconds << "s]" 
-                  << (message.empty() ? "" : "  " + message);
+                  << (message.empty() ? "" : "  " + message) << std::setprecision(2) <<  " (" << memory << " Mb)";
 
         std::cout.flush();
 
