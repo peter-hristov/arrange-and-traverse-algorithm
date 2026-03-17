@@ -2422,6 +2422,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
 std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint)
 {
+
+
     //Timer::start();
     //FiberGraph fg1 = reebSpace.computeFiberGraph(tetMesh, singularArrangement, controlPoint);
     //Timer::stop("Computing fiber graph                  :");
@@ -2429,23 +2431,29 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
     //std::cout << std::endl;
 
     //Timer::start();
-    FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, controlPoint);
-    //Timer::stop("Computing fiber graph 2                :");
 
-    //if (false == fg1.areEqual(fg))
-    //{
-        //throw std::runtime_error("Fiber graphs are not equal!.");
-    //}
+    //FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, controlPoint);
+    //const std::vector<FiberPoint> fiber2 = fiber::processFiberGraph2(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
 
-    //Timer::start();
-    //const std::vector<FiberPoint> fiber = fiber::processFiberGraph(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
-    //Timer::stop("Computing fiber                        :");
+    //Timer::stop("Computing fiber old way                :");
+
+
 
     //Timer::start();
-    const std::vector<FiberPoint> fiber2 = fiber::processFiberGraph2(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
-    //Timer::stop("Computing fiber graph paths cyc        :");
 
-    return fiber2;
+    auto fiberSeeds = reebSpace.computeSeedFibers(tetMesh, singularArrangement, controlPoint);
+    const std::vector<FiberPoint> fiberNew =  computeFiberSat2(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
+
+    //Timer::stop("Computing fiber new way                :");
+
+
+
+    //std::cout << std::endl;
+
+
+
+
+    return fiberNew;
 }
 
 
@@ -2625,6 +2633,177 @@ std::vector<FiberPoint> fiber::computeFiberFromFiberGraph(const TetMesh &tetMesh
 
 
 
+std::vector<FiberPoint> fiber::computeFiberSat2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
+{
+    Face_const_handle activeFace = arrangement.getActiveFace(fiberPoint);
+    const int activeFaceId = arrangement.arrangementFacesIdices[activeFace];
+
+    //Timer::start();
+
+    // The sizes of these data structures are linear in the size of the fiber, not an issue
+    std::queue<int> bfsQueue;
+    // This also acts as the visited array
+    std::unordered_map<int, int> triangleSheetId;
+    // Needed to close loops closed fibers, hack because we are not visiting tets, but triangles
+    std::unordered_set<std::pair<int, int>, MyHash<std::pair<int, int>>> activeAdjacentTrianglesConnected;
+    // Cache barycentric coordintes, they are expensive to compute
+    std::unordered_map<int, std::array<double, 3>> triangleBarycentricCoordinates;
+
+    //vector<int> sheetIds;
+    for (const auto &[triangleId, componentId] : fiberSeeds)
+    {
+        const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+        bfsQueue.push(triangleId);
+        triangleSheetId[triangleId] = sheetId;
+    }
+    //std::cout << std::endl;
+
+    CartesianPoint P(fiberPoint[0], fiberPoint[1]);
+    std::vector<FiberPoint> faceFibers;
+
+    while (false == bfsQueue.empty())
+    {
+        const int currentTriangleId = bfsQueue.front();
+        const int currentSheeId = triangleSheetId[currentTriangleId];
+        bfsQueue.pop();
+
+        const std::array<float, 3> sheetColour = fiber::fiberColours[currentSheeId % fiber::fiberColours.size()];
+
+        const std::set<int> triangleUnpacked = tetMesh.triangles[currentTriangleId];
+        const std::vector<int> triangleIndices = std::vector<int>(triangleUnpacked.begin(), triangleUnpacked.end());
+
+        std::array<double, 3> barycentricCoordinatesCurrent;
+
+        if (triangleBarycentricCoordinates.contains(currentTriangleId))
+        {
+            barycentricCoordinatesCurrent = triangleBarycentricCoordinates[currentTriangleId];
+        }
+        else
+        {
+            const CartesianPoint A(tetMesh.vertexCoordinatesF[triangleIndices[0]], tetMesh.vertexCoordinatesG[triangleIndices[0]]);
+            const CartesianPoint B(tetMesh.vertexCoordinatesF[triangleIndices[1]], tetMesh.vertexCoordinatesG[triangleIndices[1]]);
+            const CartesianPoint C(tetMesh.vertexCoordinatesF[triangleIndices[2]], tetMesh.vertexCoordinatesG[triangleIndices[2]]);
+            CGAL::Barycentric_coordinates::triangle_coordinates_2(A, B, C, P, barycentricCoordinatesCurrent.begin());
+            triangleBarycentricCoordinates[currentTriangleId] = barycentricCoordinatesCurrent;
+        }
+
+        // Sanity check
+        assert(barycentricCoordinatesCurrent[0] > 0 && barycentricCoordinatesCurrent[1] > 0 && barycentricCoordinatesCurrent[2] > 0);
+
+        // Look at the neighbours
+        for (const int &neighbourTriagleId : tetMesh.tetIncidentTriangles[currentTriangleId])
+        {
+            if (neighbourTriagleId == currentTriangleId)
+            {
+                continue;
+            }
+
+            // We can't skip visited neighbours, because there may be a fiber between us (completing a circle)
+            //if (triangleColour.contains(neighbourTriagle)) { continue; }
+
+            const std::set<int> triangle2Unpacked = tetMesh.triangles[neighbourTriagleId];
+            const std::vector<int> triangle2Indices = std::vector<int>(triangle2Unpacked.begin(), triangle2Unpacked.end());
+
+
+
+            // The neighbour is active if we've already seen it
+            bool isActive = triangleSheetId.contains(neighbourTriagleId);
+
+            // Or if the image of the triangle contains the fiber points
+            // We use a fast test to avoid having to use barycentric coordinates all the time
+            if (false == isActive)
+            {
+                CartesianPoint A(tetMesh.vertexCoordinatesF[triangle2Indices[0]], tetMesh.vertexCoordinatesG[triangle2Indices[0]]);
+                CartesianPoint B(tetMesh.vertexCoordinatesF[triangle2Indices[1]], tetMesh.vertexCoordinatesG[triangle2Indices[1]]);
+                CartesianPoint C(tetMesh.vertexCoordinatesF[triangle2Indices[2]], tetMesh.vertexCoordinatesG[triangle2Indices[2]]);
+
+                std::vector<CartesianPoint> triangle = {A, B, C};
+                const auto result = CGAL::bounded_side_2(triangle.begin(), triangle.end(), P);
+
+                isActive = (result == CGAL::ON_BOUNDED_SIDE);
+            }
+
+            // Determine if the triangle is active
+            if (isActive)
+            {
+                // Only add the neighbour if we have not already visited it
+                if (false == triangleSheetId.contains(neighbourTriagleId))
+                {
+                    // BFS things
+                    bfsQueue.push(neighbourTriagleId);
+                    triangleSheetId[neighbourTriagleId] = currentSheeId;
+                }
+
+                // Even if we have aleady added a neighbour, maybe there still isn't a fiber between us (for finishing loops)
+
+                // At this point, we know that both us and we neighbour are active, is there already a fiber between us? Then skip
+                if (activeAdjacentTrianglesConnected.contains({currentTriangleId, neighbourTriagleId}))
+                {
+                    continue;
+                }
+                else
+                {
+                    activeAdjacentTrianglesConnected.insert({currentTriangleId, neighbourTriagleId});
+                    activeAdjacentTrianglesConnected.insert({neighbourTriagleId, currentTriangleId});
+                }
+
+
+
+
+                // Compute barycentric coordinates for drawing
+                std::array<double, 3> barycentricCoordinatesNeighbour;
+                if (triangleBarycentricCoordinates.contains(neighbourTriagleId))
+                {
+                    barycentricCoordinatesNeighbour = triangleBarycentricCoordinates[neighbourTriagleId];
+                }
+                else
+                {
+                    CartesianPoint A(tetMesh.vertexCoordinatesF[triangle2Indices[0]], tetMesh.vertexCoordinatesG[triangle2Indices[0]]);
+                    CartesianPoint B(tetMesh.vertexCoordinatesF[triangle2Indices[1]], tetMesh.vertexCoordinatesG[triangle2Indices[1]]);
+                    CartesianPoint C(tetMesh.vertexCoordinatesF[triangle2Indices[2]], tetMesh.vertexCoordinatesG[triangle2Indices[2]]);
+
+                    CGAL::Barycentric_coordinates::triangle_coordinates_2(A, B, C, P, barycentricCoordinatesNeighbour.begin());
+                    triangleBarycentricCoordinates[neighbourTriagleId] = barycentricCoordinatesNeighbour;
+                }
+
+                
+
+
+                //
+                // Add a fiber segment
+                //
+                FiberPoint fb(
+                        barycentricCoordinatesCurrent[0], 
+                        barycentricCoordinatesCurrent[1], 
+                        {
+                            tetMesh.vertexDomainCoordinates[triangleIndices[0]],
+                            tetMesh.vertexDomainCoordinates[triangleIndices[1]],
+                            tetMesh.vertexDomainCoordinates[triangleIndices[2]],
+                        },
+                        sheetColour);
+                fb.sheetId = currentSheeId;
+                fb.triangleId = currentTriangleId;
+                faceFibers.push_back(fb);
+
+                FiberPoint fb2(barycentricCoordinatesNeighbour[0], barycentricCoordinatesNeighbour[1], {
+                        tetMesh.vertexDomainCoordinates[triangle2Indices[0]],
+                        tetMesh.vertexDomainCoordinates[triangle2Indices[1]],
+                        tetMesh.vertexDomainCoordinates[triangle2Indices[2]],
+                        },
+                        sheetColour);
+                fb2.sheetId = currentSheeId;
+                fb2.triangleId = neighbourTriagleId;
+                faceFibers.push_back(fb2);
+
+                //printf("Adding fiber between %d -> %d\n", currentTriangleId, neighbourTriagleId);
+            }
+        }
+    }
+
+    return faceFibers;
+
+    //Timer::stop("Computed fiber in                      :");
+}
 
 
 

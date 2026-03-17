@@ -13,6 +13,18 @@
 namespace unitTests
 {
 
+    inline bool testAreFiberSeedsCorrect(ReebSpace2 &reebSpaceS)
+    {
+
+        for (int i = 0 ; i < reebSpaceS.representativeFiberGraphs.size() ; i++)
+        {
+
+        }
+
+        return true;
+
+    }
+
     inline bool testAreSheetsIdentical(const TetMesh &tetMesh, const Arrangement &regularArrangement, const Arrangement &singularArrangement, ReebSpace &reebSpace, ReebSpace2 &reebSpaceS)
     {
 

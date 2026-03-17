@@ -14,11 +14,19 @@
     [x] Why is it taking so much memory for example for ET-3?
     [x] Potential bug at isabel-4-cropped (crashed)
 
-    [ ] Only save fiber triangle seeds to save memory
 
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
     [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
     [ ] (Optional) Refactor code to make it more usable 
+
+    [ ] Only save fiber triangle seeds to save memory
+
+        [ ] Use binary search to speed up
+
+        ET-3
+        Without seeds           - 807
+        Seed fiber graphs       - 7607
+        Seed triangles          - 838.41
 
 
 

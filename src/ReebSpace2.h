@@ -52,8 +52,12 @@ class ReebSpace2
         // The second preimage graph is o2: at the target $b$, before all regular segments
         std::vector<std::pair<FiberGraph, FiberGraph>> fiberGraphs;
 
-        // Save on fiber graph per face, for visualisation after
+        // Save one fiber graph per face, for visualisation after
         std::vector<FiberGraph> representativeFiberGraphs;
+
+        // Save one fiber graph seed per face, for visualisation after
+        // Each seed is <triangleId, componentId>
+        std::vector<std::vector<std::pair<int, int>>> representativeFiberGraphSeeds;
 
 
 
@@ -136,6 +140,9 @@ class ReebSpace2
 
         FiberGraph computeFiberGraph2(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
         FiberGraph computeFiberGraph3(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
+
+
+        std::vector<std::pair<int, int>> computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
 
         // Unit Tests, mostly depricated
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);

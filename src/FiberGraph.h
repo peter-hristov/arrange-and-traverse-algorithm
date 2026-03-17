@@ -9,6 +9,7 @@
 #include <limits> 
 
 #include "./TetMesh.h"
+#include "./Arrangement.h"
 #include "./DisjointSet.h"
 
 
@@ -198,7 +199,7 @@ class FiberGraph
         }
 
         // Get the two neighbours in the mesh that are part of the fiber
-        std::vector<int> getNeighbours(const int &triangleId, const TetMesh &tetMesh)
+        std::vector<int> getNeighbours(const int &triangleId, const TetMesh &tetMesh, const bool allNeighbours = false)
         {
             // Get the two neighbours of the current triangle in the fiber component
             std::vector<int> neighbours;
@@ -223,47 +224,13 @@ class FiberGraph
             return neighbours;
         }
 
-
-        void bfsSearch(const int &root, std::unordered_set<int> &visited, const TetMesh &tetMesh)
+        // Compute Connected Components from scratch
+        void computeConnectedComponentsFromSeeds(const TetMesh &tetMesh, const std::vector<std::pair<int, int>> &seeds)
         {
-            std::queue<int> q;
-            q.push(root);
-
-            visited.insert(root);
-
-            // Obtain the next available componentId
-            const int componentId = FiberGraph::componentCount++;
-
-            // All new components will have this as their root
-            this->componentRoot[root] = componentId;
-
-            this->componentRepresentative[componentId] = root;
-
-            // This is a new component now
-            //this->uniqueComponentIds.insert(componentId);
-
-            //std::cout << "\nConnected component with root " << componentId << "...\n";
-            //std::cerr << "\nComponent FAST INSIDE: ";
-            //for (int c : this->getUniqueComponentsFase())
-            //{
-                //std::cerr << c << " ";
-            //}
-
-            while (false == q.empty())
+            std::unordered_set<int> visited;
+            for (auto &[triangleId, componentId] : seeds)
             {
-                const int currentTriangleId = q.front();
-                q.pop();
-
-                for (const int &neighbourTriangleId : this->getNeighbours(currentTriangleId, tetMesh))
-                {
-                    if (false == visited.contains(neighbourTriangleId))
-                    {
-                        //printf("%d -> from %d.\n", currentTriangleId, neighbourTriangleId);
-                        visited.insert(neighbourTriangleId);
-                        q.push(neighbourTriangleId);
-                        this->componentRoot[neighbourTriangleId] = componentId;
-                    }
-                }
+                bfsSearch(triangleId, visited, tetMesh, componentId);
             }
         }
 
@@ -412,6 +379,11 @@ class FiberGraph
             }
         }
 
+
+
+
+
+
         const std::vector<std::pair<int, int>> establishCorrespondence(const TetMesh &tetMesh, const std::pair<int, bool> &intersectingSegment, const FiberGraph &pg2) const
         {
             const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(intersectingSegment.first, intersectingSegment.second);
@@ -472,6 +444,106 @@ class FiberGraph
             return componentCorrespondence;
         }
 
+
+        void bfsSearch(const int &rootTriangleId, std::unordered_set<int> &visited, const TetMesh &tetMesh, int componentId = -1)
+        {
+            std::queue<int> q;
+            q.push(rootTriangleId);
+
+            visited.insert(rootTriangleId);
+
+            // If the component ID has not been set, get a new one
+            if (componentId == -1)
+            {
+                componentId = FiberGraph::componentCount++;
+            }
+
+            // All new components will have this as their root
+            this->componentRoot[rootTriangleId] = componentId;
+
+            this->componentRepresentative[componentId] = rootTriangleId;
+
+            // This is a new component now
+            //this->uniqueComponentIds.insert(componentId);
+
+            //std::cout << "\nConnected component with root " << componentId << "...\n";
+            //std::cerr << "\nComponent FAST INSIDE: ";
+            //for (int c : this->getUniqueComponentsFase())
+            //{
+                //std::cerr << c << " ";
+            //}
+
+            while (false == q.empty())
+            {
+                const int currentTriangleId = q.front();
+                q.pop();
+
+                for (const int &neighbourTriangleId : this->getNeighbours(currentTriangleId, tetMesh))
+                {
+                    if (false == visited.contains(neighbourTriangleId))
+                    {
+                        //printf("%d -> from %d.\n", currentTriangleId, neighbourTriangleId);
+                        visited.insert(neighbourTriangleId);
+                        q.push(neighbourTriangleId);
+                        this->componentRoot[neighbourTriangleId] = componentId;
+                    }
+                }
+            }
+        }
+
+
+
+        // This can probs be done with a binary search but linear search is better since edge degrees are small in practise
+        //
+        static int findFiberSeedUpdateIndex(const std::vector<int> &minusTriangles, const std::vector<std::pair<int, int>> &fiberSeeds)
+        {
+            for (int i = 0 ; i < fiberSeeds.size() ; i++)
+            {
+                const auto &[triangleId, componentId] = fiberSeeds[i];
+
+                for (const int &minusTriangleId : minusTriangles)
+                {
+                    if (triangleId == minusTriangleId)
+                    {
+                        return i;
+                    }
+                }
+
+            }
+
+            return -1;
+        }
+
+
+        static void updateSeedsRegular(TetMesh &tetMesh, const std::vector<std::pair<int, bool>> &intersectingEdges, std::vector<std::pair<int, int>> &fiberSeeds)
+        {
+            for (const auto &[edgeId, isDirectionLowerToUpper] : intersectingEdges)
+            {
+                const std::vector<int> &minusTriangles = tetMesh.getMinusTriangles(edgeId, isDirectionLowerToUpper);
+                const std::vector<int> &plusTriangles = tetMesh.getPlusTriangles(edgeId, isDirectionLowerToUpper);
+
+                const int updateIndex = findFiberSeedUpdateIndex(minusTriangles, fiberSeeds);
+
+                if (updateIndex != -1)
+                {
+                    fiberSeeds[updateIndex].first = plusTriangles[0];
+                }
+
+            }
+        }
+
+        std::vector<std::pair<int, int>> getFiberGraphSeeds()
+        {
+
+            std::vector<std::pair<int, int>> fiberSeeds;
+            fiberSeeds.reserve(componentRepresentative.size());
+            for (const auto &[componentId, triangleId] : componentRepresentative)
+            {
+                fiberSeeds.emplace_back(std::pair<int, int>{triangleId, componentId});
+            }
+
+            return fiberSeeds;
+        }
 
             
 };
