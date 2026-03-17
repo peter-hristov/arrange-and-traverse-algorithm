@@ -53,7 +53,7 @@ class ReebSpace2
         std::vector<std::pair<FiberGraph, FiberGraph>> fiberGraphs;
 
         // Save one fiber graph per face, for visualisation after
-        //std::vector<FiberGraph> representativeFiberGraphs;
+        std::vector<FiberGraph> representativeFiberGraphs;
 
         // Save one fiber graph seed per face, for visualisation after
         // Each seed is <triangleId, componentId>

@@ -19,11 +19,8 @@
     [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
     [ ] (Optional) Refactor code to make it more usable 
 
-    [ ] Only save fiber triangle seeds to save memory
-
-        [ ] Use binary search to speed up
-
-        ET-3 (just RS stage Mb)
+    [x] Only save fiber triangle seeds to save memory
+        Evaluating improvements on ET-3 (just RS stage Mb)
         Without seeds           - 807
         Seed fiber graphs       - 7607
         Seed triangles          - 838.41
