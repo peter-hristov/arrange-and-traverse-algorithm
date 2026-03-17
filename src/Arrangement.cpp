@@ -456,3 +456,4 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
 
     return intersectedSegments;
 }
+

@@ -53,7 +53,7 @@ class ReebSpace2
         std::vector<std::pair<FiberGraph, FiberGraph>> fiberGraphs;
 
         // Save one fiber graph per face, for visualisation after
-        std::vector<FiberGraph> representativeFiberGraphs;
+        //std::vector<FiberGraph> representativeFiberGraphs;
 
         // Save one fiber graph seed per face, for visualisation after
         // Each seed is <triangleId, componentId>
@@ -143,6 +143,7 @@ class ReebSpace2
 
 
         std::vector<std::pair<int, int>> computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
+        std::vector<std::pair<int, int>> computeSeedFibersGivenLine(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
 
         // Unit Tests, mostly depricated
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);

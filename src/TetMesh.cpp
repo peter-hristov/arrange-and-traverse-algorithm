@@ -750,3 +750,23 @@ const std::array<std::array<float, 3>, 3> TetMesh::getTriangleVerticesCoordinate
     };
 
 }
+
+bool TetMesh::isTriangleActive(const int &triangleId, const CartesianPoint &controlPoint) const
+{
+    // Skip if the neighbour is not active
+    const std::set<int> &triangleUnpacked = this->triangles[triangleId];
+    const std::vector<int> triangleIndices = {
+        *triangleUnpacked.begin(),
+        *std::next(triangleUnpacked.begin(), 1),
+        *std::next(triangleUnpacked.begin(), 2) 
+    };
+
+    const std::vector<CartesianPoint> triangleCoordinates = {
+        CartesianPoint (this->vertexCoordinatesF[triangleIndices[0]], this->vertexCoordinatesG[triangleIndices[0]]),
+        CartesianPoint (this->vertexCoordinatesF[triangleIndices[1]], this->vertexCoordinatesG[triangleIndices[1]]),
+        CartesianPoint (this->vertexCoordinatesF[triangleIndices[2]], this->vertexCoordinatesG[triangleIndices[2]]) 
+    };
+    const auto result = CGAL::bounded_side_2(triangleCoordinates.begin(), triangleCoordinates.end(), controlPoint);
+
+    return result == CGAL::ON_BOUNDED_SIDE;
+}

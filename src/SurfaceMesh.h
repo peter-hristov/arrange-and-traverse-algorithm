@@ -468,7 +468,98 @@ class SurfaceMesh
             }
         }
 
+        bool bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint, std::vector<bool> &visited)
+        {
+            std::queue<int> bfsQueue;
+            bfsQueue.push(seedTriangleId);
+            visited[seedTriangleId] = true;
+            
+            while (!bfsQueue.empty())
+            {
+                const int currentTriangleId = bfsQueue.front();
+                bfsQueue.pop();
 
+                // If it's the one we want, we are done
+                if (std::find(tetTriangleIds.begin(), tetTriangleIds.end(), currentTriangleId) != tetTriangleIds.end())
+                {
+                    return true;
+                }
+
+                for (const int &neighbourTriangleId : tetMesh.tetIncidentTriangles[currentTriangleId])
+                {
+                    // Skip if it's visited
+                    if (visited[neighbourTriangleId]) { continue; }
+
+                    // Skip if it's not active
+                    if (false == tetMesh.isTriangleActive(neighbourTriangleId, controlPoint)) { continue; }
+
+                    bfsQueue.push(neighbourTriangleId);
+                    visited[neighbourTriangleId] = true;
+                }
+            }
+
+            return false;
+        }
+
+        int findFiberPointComponent(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const std::vector<int> &tetTriangleIds, const Segment_2 &controlSegment, const double pointAlpha)
+        {
+
+            const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - pointAlpha, controlSegment[1], pointAlpha);
+            const CartesianPoint controlPointCartesian(CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y()));
+
+            std::vector<bool> visited(tetMesh.triangleIndices.size(), false);
+
+            for (const auto &[triangleId, componentId] : fiberSeeds)
+            {
+                if (bfsComponentFromSeed(tetMesh, singularArrangement, triangleId, tetTriangleIds, controlPointCartesian, visited))
+                {
+                    return componentId;
+                }
+            }
+
+            return -1;
+        }
+
+
+        int computeTriangleSheetId3(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+        {
+            // 1. Compute the edgePara at the center of the triangle
+            double midPointAlpha = 0.0;
+            for (const auto v : mesh.vertices_around_face(mesh.halfedge(triangle))) 
+            {
+                midPointAlpha += this->edgeParam[v];
+            }
+            midPointAlpha /= 3.0;
+
+            // 2. Compute the fiber graph at the alpha in the range
+            const std::vector<std::pair<int, int>> fiberSeeds = reebSpace.computeSeedFibersGivenLine(tetMesh, singularArrangement, controlSegment, midPointAlpha, intersectedSegments);
+
+            // 3. Determine which fiber component contains a triangle from the tet
+            const int tetId = this->tetId[triangle];
+
+            const int a = tetMesh.tetrahedra[tetId][0];
+            const int b = tetMesh.tetrahedra[tetId][1];
+            const int c = tetMesh.tetrahedra[tetId][2];
+            const int d = tetMesh.tetrahedra[tetId][3];
+
+            const std::vector<int> tetTriangleIds = {
+                tetMesh.triangleIndices.at({a, b, c}),
+                tetMesh.triangleIndices.at({a, b, d}),
+                tetMesh.triangleIndices.at({a, c, d}),
+                tetMesh.triangleIndices.at({b, c, d}),
+            };
+
+            const int componentId = findFiberPointComponent(tetMesh, singularArrangement, fiberSeeds, tetTriangleIds, controlSegment, midPointAlpha);
+
+            if (componentId != -1)
+            {
+                return reebSpace.correspondenceGraphDS.find(componentId);
+            }
+
+            std::cerr << "Triangle ID has not been found in the interactive fiber surface computation!\n";
+
+            return -1;
+        }
 
         int computeTriangleSheetId2(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
         {
@@ -548,7 +639,8 @@ class SurfaceMesh
             #pragma omp parallel for schedule(dynamic)
             for (auto &[face, componentId] : componentRepresentatives)
             {
-                componentSheets[componentId] = this->computeTriangleSheetId2(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
+                //componentSheets[componentId] = this->computeTriangleSheetId2(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
+                componentSheets[componentId] = this->computeTriangleSheetId3(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
             }
 
             // 4. Set up the sheetIds of each triangle based on the connected component

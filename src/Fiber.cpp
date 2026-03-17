@@ -2442,7 +2442,7 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
     //Timer::start();
 
     auto fiberSeeds = reebSpace.computeSeedFibers(tetMesh, singularArrangement, controlPoint);
-    const std::vector<FiberPoint> fiberNew =  computeFiberSat2(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
+    const std::vector<FiberPoint> fiberNew =  computeFiberFromTriangleSeed(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
 
     //Timer::stop("Computing fiber new way                :");
 
@@ -2633,7 +2633,7 @@ std::vector<FiberPoint> fiber::computeFiberFromFiberGraph(const TetMesh &tetMesh
 
 
 
-std::vector<FiberPoint> fiber::computeFiberSat2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
+std::vector<FiberPoint> fiber::computeFiberFromTriangleSeed(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
 {
     Face_const_handle activeFace = arrangement.getActiveFace(fiberPoint);
     const int activeFaceId = arrangement.arrangementFacesIdices[activeFace];

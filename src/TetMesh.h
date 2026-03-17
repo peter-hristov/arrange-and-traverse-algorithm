@@ -110,4 +110,5 @@ class TetMesh
     void singularTraversalBFS(const std::vector<int> &roots, std::vector<bool> &visited);
     int computeSingularSetConnectivity2();
 
+    bool isTriangleActive(const int &triangleId, const CartesianPoint &controlPoint) const;
 };

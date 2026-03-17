@@ -23,7 +23,7 @@
 
         [ ] Use binary search to speed up
 
-        ET-3
+        ET-3 (just RS stage Mb)
         Without seeds           - 807
         Seed fiber graphs       - 7607
         Seed triangles          - 838.41
