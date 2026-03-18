@@ -1,4 +1,5 @@
 //#include <qpoint.h>
+#include "src/CGALTypedefs.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #include <OpenGL/gl.h>
@@ -652,11 +653,25 @@ TracerVisualiserWidget::mousePressEvent(QMouseEvent* event)
         Ball_Mouse(&theBall, vNow);
         Ball_BeginDrag(&theBall);
 
+
+
+
+
+
         this->update();
     }
     if (event->button() == Qt::RightButton) {
-        initialX = event->localPos().x();
-        initialY = event->localPos().y();
+        //initialX = event->localPos().x();
+        //initialY = event->localPos().y();
+
+        int sheetId = pickSegment(event->x(), event->y());
+        qDebug() << "Selected sheet:" << sheetId;
+
+        if (sheetId >= 0)
+        {
+            qDebug() << "Selected sheet:" << sheetId;
+            update(); // trigger repaint if you want to highlight
+        }
     }
 }
 
@@ -740,6 +755,8 @@ void TracerVisualiserWidget::updateFiber(const std::vector<FiberPoint> &newFiber
 void TracerVisualiserWidget::updateFiberSurface(const std::vector<FiberPoint> &newFiberPoints)
 {
     this->faceFiberSurface = newFiberPoints;
+    this->buildAABBTree();
+
     this->generateDisplayList();
     this->update();
 }
@@ -833,3 +850,61 @@ void TracerVisualiserWidget::renderMolecule()
     glEnable(GL_LIGHTING);
 
 }
+
+void TracerVisualiserWidget::buildAABBTree()
+{
+    pickingTriangles.clear();
+    pickingSheetIds.clear();
+
+    for (int i = 0; i + 2 < faceFiberSurface.size(); i += 3)
+    {
+        const auto& v0 = faceFiberSurface[i].point;
+        const auto& v1 = faceFiberSurface[i+1].point;
+        const auto& v2 = faceFiberSurface[i+2].point;
+
+        pickingTriangles.emplace_back(
+            CartesianPoint_3(v0[0], v0[1], v0[2]),
+            CartesianPoint_3(v1[0], v1[1], v1[2]),
+            CartesianPoint_3(v2[0], v2[1], v2[2])
+        );
+        pickingSheetIds.push_back(faceFiberSurface[i].sheetId);
+    }
+
+    aabbTriangleTree.rebuild(pickingTriangles.begin(), pickingTriangles.end());
+    aabbTriangleTree.accelerate_distance_queries();
+
+    qDebug() << "AABB tree built with" << pickingTriangles.size() << "triangles";
+}
+
+int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
+{
+    makeCurrent(); // <-- add this
+
+    if (pickingTriangles.empty()) return -1;
+
+    // Grab matrices from OpenGL state
+    GLint    viewport[4];
+    GLdouble mv[16], proj[16];
+    glGetIntegerv(GL_VIEWPORT,        viewport);
+    glGetDoublev(GL_MODELVIEW_MATRIX,  mv);
+    glGetDoublev(GL_PROJECTION_MATRIX, proj);
+
+    // Flip Y: OpenGL origin is bottom-left, Qt is top-left
+    double winY = viewport[3] - mouseY;
+
+    // Unproject near and far plane points to get ray
+    GLdouble nx, ny, nz, fx, fy, fz;
+    gluUnProject(mouseX, winY, 0.0, mv, proj, viewport, &nx, &ny, &nz);
+    gluUnProject(mouseX, winY, 1.0, mv, proj, viewport, &fx, &fy, &fz);
+
+    CartesianPoint_3 origin(nx, ny, nz);
+    CartesianPoint_3 target(fx, fy, fz);
+    CartesianKernel::Ray_3 ray(origin, target);
+
+    auto hit = aabbTriangleTree.first_intersected_primitive(ray);
+    if (!hit) return -1;
+
+    int idx = std::distance(pickingTriangles.begin(), *hit);
+    return pickingSheetIds[idx];
+}
+

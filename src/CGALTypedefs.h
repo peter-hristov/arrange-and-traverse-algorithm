@@ -104,6 +104,7 @@ typedef CGAL::Arr_walk_along_line_point_location<Arrangement_2> Point_location;
 typedef CGAL::Simple_cartesian<double> CartesianKernel;
 typedef CartesianKernel::Point_2 CartesianPoint;
 typedef CartesianKernel::Point_3 CartesianPoint_3;
+typedef CartesianKernel::Triangle_3 CartesianTriangle_3;
 typedef CartesianKernel::Vector_2 CartesianVector;
 typedef CartesianKernel::Segment_2 CartesianSegment;
 typedef CartesianKernel::Line_2 CartesianLine;
@@ -138,6 +139,15 @@ typedef CGAL::AABB_segment_primitive_2<K, Iterator> Primitive;
 typedef CGAL::AABB_traits_2<K, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> TreeAABB;
 
+// For way casting to select a segment
+//
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_triangle_primitive.h>
+
+using IteratorTriangleTree  = std::vector<CartesianTriangle_3>::iterator;
+using PrimitiveTriangleTree = CGAL::AABB_triangle_primitive<CartesianKernel, IteratorTriangleTree>;
+using TraitsTriangleTree    = CGAL::AABB_traits<CartesianKernel, PrimitiveTriangleTree>;
+using TriangleTree  = CGAL::AABB_tree<TraitsTriangleTree>;
 
 
 //typedef K::Segment_3 Segment_3;

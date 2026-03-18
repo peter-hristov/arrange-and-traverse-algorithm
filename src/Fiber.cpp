@@ -42,7 +42,7 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
             allFiberPoints.push_back(FiberPoint(
                         point,
                         triangleColour, 
-                        1,
+                        sheetId,
                         -1
                         ));
         }

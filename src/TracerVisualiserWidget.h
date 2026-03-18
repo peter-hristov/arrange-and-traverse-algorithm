@@ -1,5 +1,7 @@
 #pragma once
 
+#include "./CGALTypedefs.h"
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #include <OpenGL/gl.h>
@@ -127,5 +129,18 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     // Utility
     void setMaterial(GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+
+
+    // Store these as members
+    std::vector<CartesianTriangle_3> pickingTriangles;
+    std::vector<int>                 pickingSheetIds;
+
+    TriangleTree aabbTriangleTree;
+
+    void buildAABBTree();
+
+    int pickSegment(int mouseX, int mouseY);
+
+    int selectedSheetId = -1;
 
 }; // class GLPolygonWidget
