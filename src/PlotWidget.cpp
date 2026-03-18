@@ -452,9 +452,12 @@ void PlotWidget::generateStaticReebSpaceCache()
     {
         staticReebSpaceCache = std::make_unique<QPixmap>(resolution, resolution);
         staticReebSpaceCache->fill(Qt::white);
-        qDebug() << "Redrawing REEB SPACE ...";
+        //qDebug() << "Redrawing REEB SPACE ...";
         QPainter p(staticReebSpaceCache.get());
+
+        Timer::start();
         this->drawReebSpaceBackground(p);
+        Timer::stop("Rendered Reeb space                    :");
     }
 }
 

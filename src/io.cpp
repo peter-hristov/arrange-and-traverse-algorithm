@@ -1258,9 +1258,15 @@ void io::saveReebSpace(const ReebSpace2 &reebSpace, const std::string& filename)
     for (const auto& [fg1, fg2] : reebSpace.fiberGraphs) { saveFiberGraph(fg1); saveFiberGraph(fg2); }
 
     // representativeFiberGraphs
-    writeInt(reebSpace.representativeFiberGraphs.size());
-    for (const auto& fg : reebSpace.representativeFiberGraphs) saveFiberGraph(fg);
-}
+    //writeInt(reebSpace.representativeFiberGraphs.size());
+    //for (const auto& fg : reebSpace.representativeFiberGraphs) saveFiberGraph(fg);
+
+    // representativeFiberGraphSeeds
+    writeInt(reebSpace.representativeFiberGraphSeeds.size());
+    for (const auto& vec : reebSpace.representativeFiberGraphSeeds) {
+        writeInt(vec.size());
+        for (const auto& [a, b] : vec) { writeInt(a); writeInt(b); }
+    }}
 
 ReebSpace2 io::loadReebSpace(const std::string& filename)
 {
@@ -1323,9 +1329,18 @@ ReebSpace2 io::loadReebSpace(const std::string& filename)
     for (auto& [fg1, fg2] : reebSpace.fiberGraphs) { loadFiberGraph(fg1); loadFiberGraph(fg2); }
 
     // representativeFiberGraphs
+    //n = readInt();
+    //reebSpace.representativeFiberGraphs.resize(n);
+    //for (auto& fg : reebSpace.representativeFiberGraphs) loadFiberGraph(fg);
+
+
+    // representativeFiberGraphSeeds
     n = readInt();
-    reebSpace.representativeFiberGraphs.resize(n);
-    for (auto& fg : reebSpace.representativeFiberGraphs) loadFiberGraph(fg);
+    reebSpace.representativeFiberGraphSeeds.resize(n);
+    for (auto& vec : reebSpace.representativeFiberGraphSeeds) {
+        int m = readInt(); vec.resize(m);
+        for (auto& [a, b] : vec) { a = readInt(); b = readInt(); }
+    }
 
     return reebSpace;
 }
