@@ -70,7 +70,12 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         update();
     }
 
-    if (event->button() == Qt::LeftButton) 
+    else if (event->button() == Qt::LeftButton && event->modifiers() == Qt::ShiftModifier)
+    {
+        controlPointSheetSelection = event->localPos();
+        update();
+    }
+    else if (event->button() == Qt::LeftButton) 
     {
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
@@ -157,14 +162,34 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         {
             const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
 
-            if (desiredSheetId != -1 && sheetId != desiredSheetId)
+            //if (!this->sibling->selectedSheetIds.empty() && !this->sibling->selectedSheetIds.contains(sheetId))
+            //{
+                //continue;
+            //}
+
+            //if (desiredSheetId != -1 && sheetId != desiredSheetId)
+            //{
+                //continue;
+            //}
+
+            float alpha;
+
+            if (this->sibling->selectedSheetIds.empty())
             {
-                continue;
+                alpha = 0.3;
+            }
+            else if (this->sibling->selectedSheetIds.contains(sheetId))
+            {
+                alpha = 0.7;
+            }
+            else
+            {
+                alpha = 0.05;
             }
 
             const array<float, 3> colorF = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
 
-            p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], 0.292f));
+            p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], alpha));
             p.setPen(Qt::NoPen);
             p.drawPolygon(qPolygon);
         }
@@ -462,7 +487,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
     //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
     //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
-
     if (false == this->sibling->clearFibers)
     {
         penBlack.setWidthF(8.0);
@@ -480,6 +504,28 @@ void PlotWidget::paintEvent(QPaintEvent*)
             p.drawPolyline(QPolygonF(fiberPointsTraceTransformed));
         }
     }
+
+    if (controlPointSheetSelection.has_value())
+    {
+        QPointF pos = p.combinedTransform().inverted().map(controlPointSheetSelection.value());
+        const float u = this->paddedMinF + (pos.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
+        const float v = this->paddedMinG + (pos.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+        
+        Face_const_handle activeFace = data.singularArrangement.getActiveFace(std::array<double, 2>{u, v});
+        for (const int componentId : data.reebSpace2.correspondenceGraph[activeFace->data()])
+        {
+            const int sheetId = data.reebSpace2.correspondenceGraphDS.find(componentId);
+            this->sibling->selectedSheetIds.insert(sheetId);
+
+            printf("Adding sheet %d with area %.2f (which is %.2f%%).\n", sheetId, data.reebSpace2.sheetArea[sheetId], 100.0 * data.reebSpace2.sheetArea[sheetId]);
+        }
+
+        controlPointSheetSelection.reset();
+
+        this->staticReebSpaceCache = nullptr;
+        this->update();
+    }
+
 
 
 
@@ -512,7 +558,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
         //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
         
-        const std::vector<FiberPoint> fiber = fiber::computeFiberSAT(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+        const std::vector<FiberPoint> fiber = fiber::computeFiberSAT(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->sibling->selectedSheetIds);
 
         sibling->updateFiber(fiber);
     }

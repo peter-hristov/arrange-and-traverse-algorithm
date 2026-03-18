@@ -70,6 +70,8 @@ class PlotWidget : public QWidget
         // Position of where we click and drag on the widget
         QPointF mousePoint;
 
+        std::optional<QPointF> controlPointSheetSelection;
+
         QVector<QPointF> controlPoints;
 
         QVector<QVector<QPointF>> fiberPointsTraces;

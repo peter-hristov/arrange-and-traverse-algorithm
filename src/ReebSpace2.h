@@ -142,7 +142,7 @@ class ReebSpace2
         FiberGraph computeFiberGraph3(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
 
 
-        std::vector<std::pair<int, int>> computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
+        std::vector<std::pair<int, int>> computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, const std::set<int> &);
         std::vector<std::pair<int, int>> computeSeedFibersGivenLine(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
 
         // Unit Tests, mostly depricated

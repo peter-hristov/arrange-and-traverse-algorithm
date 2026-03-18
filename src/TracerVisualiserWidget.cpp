@@ -653,24 +653,27 @@ TracerVisualiserWidget::mousePressEvent(QMouseEvent* event)
         Ball_Mouse(&theBall, vNow);
         Ball_BeginDrag(&theBall);
 
-
-
-
-
-
         this->update();
     }
     if (event->button() == Qt::RightButton) {
         //initialX = event->localPos().x();
         //initialY = event->localPos().y();
 
-        int sheetId = pickSegment(event->x(), event->y());
-        qDebug() << "Selected sheet:" << sheetId;
+        const int sheetId = pickSegment(event->x(), event->y());
 
         if (sheetId >= 0)
         {
-            qDebug() << "Selected sheet:" << sheetId;
-            update(); // trigger repaint if you want to highlight
+            this->selectedSheetIds.insert(sheetId);
+
+            for (const int id : this->selectedSheetIds)
+            {
+                //std::cout << "Sheet " << id << " has area " << data.reebSpace2.sheetArea[id] << " which is a ratio of : " << 100.0 * data.reebSpace2.sheetArea[id] <<  std::endl;
+                printf("Sheet %d had area %.2f (which is %.2f%%).\n", id, data.reebSpace2.sheetArea[id], 100.0 * data.reebSpace2.sheetArea[id]);
+            }
+
+            static_cast<PlotWidget*>(this->sibling)->staticReebSpaceCache = nullptr;
+            this->sibling->update();
+            update();
         }
     }
 }
@@ -688,16 +691,16 @@ TracerVisualiserWidget::mouseMoveEvent(QMouseEvent* event)
 
         this->update();
     } else if (event->buttons() == Qt::RightButton) {
-        float x = event->localPos().x();
-        float y = event->localPos().y();
+        //float x = event->localPos().x();
+        //float y = event->localPos().y();
 
-        translateX -= (initialX - x) / 10;
-        translateY += (initialY - y) / 10;
+        //translateX -= (initialX - x) / 10;
+        //translateY += (initialY - y) / 10;
 
-        initialX = event->localPos().x();
-        initialY = event->localPos().y();
+        //initialX = event->localPos().x();
+        //initialY = event->localPos().y();
 
-        this->update();
+        //this->update();
     }
 }
 

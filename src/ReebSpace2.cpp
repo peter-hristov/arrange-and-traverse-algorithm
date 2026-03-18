@@ -343,13 +343,11 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
             return a.second > b.second; // ascending by area
             });
 
-    //for (int i = 0 ; i < sortedSheets.size() ; i++)
-    //{
-        //const auto &[sheetId, area] = sortedSheets[i];
-        //std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
-    //}
-
-
+    for (int i = 0 ; i < std::min(sortedSheets.size(), (size_t)30) ; i++)
+    {
+        const auto &[sheetId, area] = sortedSheets[i];
+        std::cout << i << ": sheet " << sheetId << " has area " << area << " which is a ratio of : " << 100.0 * this->sheetAreaProportion[sheetId] <<  std::endl;
+    }
 
 
 
@@ -2982,7 +2980,7 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
 
 
 
-std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint)
+std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
     const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
 
@@ -3030,7 +3028,24 @@ std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibers(TetMesh &tetMesh,
 
     //FiberGraph pg = this->representativeFiberGraphs[activeFace->data()];
 
-    std::vector<std::pair<int, int>> fiberSeeds = this->representativeFiberGraphSeeds[activeFace->data()];
+    std::vector<std::pair<int, int>> fiberSeeds;
+
+
+    // If there are selected sheets, only use their fiber components
+    //
+    for (const auto &[triangleId, componentId] : this->representativeFiberGraphSeeds[activeFace->data()])
+    {
+        if (!selectedSheetIds.empty())
+        {
+            const int sheetId = this->correspondenceGraphDS.find(componentId);
+            if (!selectedSheetIds.contains(sheetId))
+                continue;
+        }
+
+        fiberSeeds.push_back({triangleId, componentId});
+    }
+
+
 
     // Construct a new fiber graph for that point
 
@@ -3318,7 +3333,7 @@ std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibersGivenLine(TetMesh 
     if (destinationSegmentId == -1)
     {
         std::array<double, 2> controlPointDouble = {CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y())};
-        return this->computeSeedFibers(tetMesh, singularArrangement, controlPointDouble);
+        return this->computeSeedFibers(tetMesh, singularArrangement, controlPointDouble, {});
     }
 
 

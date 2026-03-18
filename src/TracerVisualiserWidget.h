@@ -49,6 +49,8 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     int fiberColour = 0;
 
+    std::set<int> selectedSheetIds;
+
     //std::vector<std::vector<float>> fiberColours = {
         //{1, 0, 0},
         //{0, 1, 0},
@@ -141,6 +143,5 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     int pickSegment(int mouseX, int mouseY);
 
-    int selectedSheetId = -1;
 
 }; // class GLPolygonWidget

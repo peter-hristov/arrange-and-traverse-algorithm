@@ -179,10 +179,13 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->fiberPointsTraces.shrink_to_fit();
             this->plotWidget->controlPoints.clear();
             this->plotWidget->controlPoints.shrink_to_fit();
-            this->plotWidget->update();
+            this->plotWidget->staticReebSpaceCache = nullptr;
 
+            this->tracerVisualiserWidget->selectedSheetIds = {};
             this->tracerVisualiserWidget->clearFiber();
             this->tracerVisualiserWidget->clearFiberSurface();
+
+            this->plotWidget->update();
             this->tracerVisualiserWidget->update();
             });
 
