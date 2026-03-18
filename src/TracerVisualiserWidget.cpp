@@ -92,73 +92,79 @@ TracerVisualiserWidget::generateDisplayList()
 
     //setMaterial(1, 0, 0, 1.0, 0.0);
 
-
-
-    glBegin(GL_TRIANGLES);
+    if (this->drawFiberSurfaces)
     {
-        //for(const auto &faceFiber : this->faceFibers)
-        for(int i = 0 ; i < this->faceFiberSurface.size() ; i+=3)
+        glBegin(GL_TRIANGLES);
         {
-            const auto &faceFiber = this->faceFiberSurface[i];
-            const auto &faceFiber2 = this->faceFiberSurface[i+1];
-            const auto &faceFiber3 = this->faceFiberSurface[i+2];
-
-
-
-            if (this->enableLighting)
+            //for(const auto &faceFiber : this->faceFibers)
+            for(int i = 0 ; i < this->faceFiberSurface.size() ; i+=3)
             {
-                setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
-
-                GLfloat vertices[3][3] = {
-                    {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
-                    {faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
-                    {faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
-
-                };
-
-                std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
+                const auto &faceFiber = this->faceFiberSurface[i];
+                const auto &faceFiber2 = this->faceFiberSurface[i+1];
+                const auto &faceFiber3 = this->faceFiberSurface[i+2];
 
 
-                // Set normal for OpenGL
-                glNormal3fv(normal.data());
+
+                if (this->enableLighting)
+                {
+                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+
+                    GLfloat vertices[3][3] = {
+                        {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
+                        {faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
+                        {faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
+
+                    };
+
+                    std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
+
+
+                    // Set normal for OpenGL
+                    glNormal3fv(normal.data());
+                }
+                else
+                {
+                    glColor3fv(faceFiber.colour.data());
+
+                }
+
+                glVertex3fv(faceFiber.point.data());
+                glVertex3fv(faceFiber2.point.data());
+                glVertex3fv(faceFiber3.point.data());
+
             }
-            else
-            {
-                glColor3fv(faceFiber.colour.data());
-
-            }
-
-            glVertex3fv(faceFiber.point.data());
-            glVertex3fv(faceFiber2.point.data());
-            glVertex3fv(faceFiber3.point.data());
-
         }
+        glEnd();
+
     }
-    glEnd();
 
 
 
-    glDisable(GL_LIGHTING);
-    // Draw Fiber
-    glBegin(GL_LINES);
+
+    if (this->drawFibers)
     {
-        for(const auto &faceFiber : this->faceFibers)
+        glDisable(GL_LIGHTING);
+        // Draw Fiber
+        glBegin(GL_LINES);
         {
-            if (this->enableLighting)
+            for(const auto &faceFiber : this->faceFibers)
             {
-                glColor3fv(faceFiber.colour.data());
-            }
-            else
-            {
-                setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
-            }
+                if (this->enableLighting)
+                {
+                    glColor3fv(faceFiber.colour.data());
+                }
+                else
+                {
+                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+                }
 
-            glVertex3fv(faceFiber.point.data());
+                glVertex3fv(faceFiber.point.data());
+            }
         }
-    }
-    glEnd();
-    glEnable(GL_LIGHTING);
+        glEnd();
+        glEnable(GL_LIGHTING);
 
+    }
 
 
 

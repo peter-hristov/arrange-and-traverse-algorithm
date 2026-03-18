@@ -9,6 +9,7 @@
 #include "./TracerVisualiserWindow.h"
 #include "./Data.h"
 #include "./io.h"
+#include "src/ReebSpace2.h"
 
 using namespace std;
 void
@@ -116,14 +117,14 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     plotWidget->sibling = tracerVisualiserWidget;
     tracerVisualiserWidget->sibling = plotWidget;
 
-    checkboxShowVertices = new QCheckBox("Show Vertices");
-    checkboxShowVertices->setChecked(true);
+    checkboxShowFibers = new QCheckBox("Show Fibers");
+    checkboxShowFibers->setChecked(true);
 
-    checkboxShowEdges = new QCheckBox("Show Edges");
-    checkboxShowEdges->setChecked(true);
+    checkboxShowFiberSurfaces = new QCheckBox("Show Fiber Surface");
+    checkboxShowFiberSurfaces->setChecked(true);
 
-    checkboxShowFaces = new QCheckBox("Show Faces");
-    checkboxShowFaces->setChecked(true);
+    //checkboxShowFaces = new QCheckBox("Show Faces");
+    //checkboxShowFaces->setChecked(true);
 
 
     vertexOpacitySlider = new QSlider(Qt::Horizontal);
@@ -142,6 +143,16 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     this->computeTracedFiberSurfaceButton = new QPushButton("Compute Traced Fiber Surface", this);
     this->clearAllButton = new QPushButton("Clear All", this);
 
+    this->clearFibersButton = new QPushButton("Clear Fibers", this);
+    this->clearFiberSurfaceButton = new QPushButton("Clear FS", this);
+    this->clearSelectedSheetsButton = new QPushButton("Clear Sheets", this);
+
+
+    // Create widgets
+    this->spinBoxAddSheet = new QSpinBox(this);
+    this->buttonAddSheet = new QPushButton("Add sheet", this);
+
+    spinBoxAddSheet->setRange(1, FiberGraph::componentCount);
 
 
     //
@@ -151,19 +162,29 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     optionsLayout2 = new QGridLayout();
 
     auto rowOneLayout = new QGridLayout();
-    rowOneLayout->addWidget(checkboxShowVertices,0, 0);
-    rowOneLayout->addWidget(vertexOpacitySlider, 0, 1);
-    rowOneLayout->addWidget(checkboxShowEdges,1, 0);
-    rowOneLayout->addWidget(edgeOpacitySlider, 1, 1);
-    rowOneLayout->addWidget(checkboxShowFaces,2, 0);
-    rowOneLayout->addWidget(faceOpacitySlider, 2, 1);
+    rowOneLayout->addWidget(checkboxShowFibers,0, 0);
+    //rowOneLayout->addWidget(vertexOpacitySlider, 0, 1);
+    rowOneLayout->addWidget(checkboxShowFiberSurfaces,1, 0);
+    //rowOneLayout->addWidget(edgeOpacitySlider, 1, 1);
+    //rowOneLayout->addWidget(checkboxShowFaces,2, 0);
+    //rowOneLayout->addWidget(faceOpacitySlider, 2, 1);
 
     optionsLayout->addLayout(rowOneLayout, 0, 0);
 
-    optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 0, 0);
-    optionsLayout2->addWidget(clearAllButton, 0, 1);
+
+    optionsLayout2->addWidget(clearFibersButton, 0, 0);
+    optionsLayout2->addWidget(clearFiberSurfaceButton, 0, 1);
+    optionsLayout2->addWidget(clearSelectedSheetsButton, 0, 2);
+    optionsLayout2->addWidget(clearAllButton, 0, 3);
+
+
+
     optionsLayout2->addWidget(checkboxShowTraces, 1, 0);
-    optionsLayout2->addWidget(fakeSlider, 1, 1);
+    optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 1, 1);
+    //optionsLayout2->addWidget(fakeSlider, 1, 1);
+
+    optionsLayout2->addWidget(spinBoxAddSheet, 2, 0);
+    optionsLayout2->addWidget(buttonAddSheet, 2, 1);
 
 
     // Set up layout
@@ -173,6 +194,49 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     windowLayout->addLayout(optionsLayout, 1, 0);
     windowLayout->addLayout(optionsLayout2, 1, 1);
+
+    connect(spinBoxAddSheet, &QSpinBox::editingFinished, buttonAddSheet, &QPushButton::click);
+
+    connect(buttonAddSheet, &QPushButton::clicked, this, [this]() {
+            const int sheetId = spinBoxAddSheet->value();
+
+            if (this->data.reebSpace2.sheetArea.contains(sheetId))
+            {
+                this->tracerVisualiserWidget->selectedSheetIds.insert(sheetId);
+
+                this->plotWidget->staticReebSpaceCache = nullptr;
+                this->plotWidget->update();
+                this->tracerVisualiserWidget->update();
+            }
+            });
+
+
+    connect(this->clearFibersButton, &QPushButton::clicked, this, [this]() {
+            this->plotWidget->fiberPointsTraces.clear();
+            this->plotWidget->fiberPointsTraces.shrink_to_fit();
+
+            this->tracerVisualiserWidget->clearFiber();
+
+            this->plotWidget->update();
+            this->tracerVisualiserWidget->update();
+            });
+
+
+    connect(this->clearFiberSurfaceButton, &QPushButton::clicked, this, [this]() {
+            this->plotWidget->controlPoints.clear();
+            this->plotWidget->controlPoints.shrink_to_fit();
+            this->tracerVisualiserWidget->clearFiberSurface();
+
+            this->plotWidget->update();
+            this->tracerVisualiserWidget->update();
+            });
+    connect(this->clearSelectedSheetsButton, &QPushButton::clicked, this, [this]() {
+            this->plotWidget->staticReebSpaceCache = nullptr;
+            this->tracerVisualiserWidget->selectedSheetIds = {};
+
+            this->plotWidget->update();
+            this->tracerVisualiserWidget->update();
+            });
 
     connect(this->clearAllButton, &QPushButton::clicked, this, [this]() {
             this->plotWidget->fiberPointsTraces.clear();
@@ -200,21 +264,23 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             }
             });
 
-    connect(checkboxShowVertices, &QCheckBox::toggled, [=](bool checked) {
-            this->tracerVisualiserWidget->drawVertices = checked;
+    connect(checkboxShowFibers, &QCheckBox::toggled, [=](bool checked) {
+            this->tracerVisualiserWidget->drawFibers = checked;
+            this->tracerVisualiserWidget->generateDisplayList();
             this->tracerVisualiserWidget->update();
             });
 
-    connect(checkboxShowEdges, &QCheckBox::toggled, [=](bool checked) {
-            this->tracerVisualiserWidget->drawEdges = checked;
+    connect(checkboxShowFiberSurfaces, &QCheckBox::toggled, [=](bool checked) {
+            this->tracerVisualiserWidget->drawFiberSurfaces = checked;
+            this->tracerVisualiserWidget->generateDisplayList();
             this->tracerVisualiserWidget->update();
             });
 
-    connect(checkboxShowFaces, &QCheckBox::toggled, [=](bool checked) {
-            this->tracerVisualiserWidget->drawFaces = checked;
+    //connect(checkboxShowFaces, &QCheckBox::toggled, [=](bool checked) {
+            //this->tracerVisualiserWidget->drawFaces = checked;
 
-            this->tracerVisualiserWidget->update();
-            });
+            //this->tracerVisualiserWidget->update();
+            //});
 
     connect(checkboxShowTraces, &QCheckBox::toggled, [=](bool checked) {
 

@@ -5,6 +5,7 @@
 #include <QGridLayout>
 #include <QSlider>
 #include <QComboBox>
+#include <QSpinBox>
 #include <QPushButton>
 
 
@@ -32,8 +33,8 @@ class TracerVisualiserWindow : public QWidget
     QGridLayout *optionsLayout;
     QGridLayout * optionsLayout2;
 
-    QCheckBox *checkboxShowVertices;
-    QCheckBox *checkboxShowEdges;
+    QCheckBox *checkboxShowFibers;
+    QCheckBox *checkboxShowFiberSurfaces;
     QCheckBox *checkboxShowFaces;
 
     QSlider *faceOpacitySlider;
@@ -42,8 +43,15 @@ class TracerVisualiserWindow : public QWidget
 
     QSlider *fakeSlider;
     QPushButton *computeTracedFiberSurfaceButton; 
+
+
+    QPushButton *clearFibersButton; 
+    QPushButton *clearFiberSurfaceButton; 
+    QPushButton *clearSelectedSheetsButton; 
     QPushButton *clearAllButton; 
 
 
     QCheckBox *checkboxShowTraces;
+    QSpinBox* spinBoxAddSheet;
+    QPushButton* buttonAddSheet;
 };
