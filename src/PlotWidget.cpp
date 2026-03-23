@@ -653,7 +653,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         {
             this->data.surfaceMeshes.push_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId));
 
-            const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back());
+            const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back(), this->sibling->selectedSheetIds);
 
             fibersAll.insert(
                     fibersAll.end(), 
@@ -672,7 +672,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
             {
                 this->data.surfaceMeshes.emplace_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId));
 
-                const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back());
+                const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back(), this->sibling->selectedSheetIds);
                 fibersAll.insert(
                         fibersAll.end(), 
                         std::make_move_iterator(fibers.begin()), 

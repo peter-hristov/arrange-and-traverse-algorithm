@@ -17,7 +17,7 @@
 
 
 
-std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &surfaceMesh)
+std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &surfaceMesh, const std::set<int> &selectedSheetIds)
 {
     std::vector<FiberPoint> allFiberPoints;
 
@@ -34,10 +34,14 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
             triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
         }
 
+        if (false == selectedSheetIds.contains(sheetId))
+        {
+            continue;
+        }
+
         for (auto v : vertices_around_face(surfaceMesh.mesh.halfedge(f), surfaceMesh.mesh))
         {
             std::array<double, 3> point = { surfaceMesh.mesh.point(v)[0], surfaceMesh.mesh.point(v)[1], surfaceMesh.mesh.point(v)[2] };
-
 
             allFiberPoints.push_back(FiberPoint(
                         point,
