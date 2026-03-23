@@ -34,7 +34,7 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
             triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
         }
 
-        if (false == selectedSheetIds.contains(sheetId))
+        if (false == selectedSheetIds.empty() && false == selectedSheetIds.contains(sheetId))
         {
             continue;
         }
