@@ -44,11 +44,11 @@ TracerVisualiserWidget::initializeGL()
     {
         glEnable(GL_LIGHTING);
         glEnable(GL_LIGHT0);
-        glEnable(GL_COLOR_MATERIAL);
         glDisable(GL_CULL_FACE);
-
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+        //glEnable(GL_COLOR_MATERIAL);
+        //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     }
 
     // Enable alpha blending
@@ -78,7 +78,12 @@ TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GL
     GLfloat mat[4] = { red, green, blue, alpha };
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat); // optional
+
+    // Use a low white specular instead of the full material colour
+    GLfloat specular[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+    //glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat); // optional
+
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
