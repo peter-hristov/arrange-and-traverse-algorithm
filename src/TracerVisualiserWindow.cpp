@@ -152,10 +152,13 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     // Create widgets
     this->spinBoxAddSheet = new QSpinBox(this);
-    this->buttonAddSheet = new QPushButton("Add sheet", this);
-
     spinBoxAddSheet->setRange(1, FiberGraph::componentCount);
 
+    this->buttonAddSheet = new QPushButton("Add sheet", this);
+
+    this->spinBoxAddTopSheets = new QSpinBox(this);
+    spinBoxAddTopSheets->setRange(1, 100);
+    this->buttonAddTopSheets = new QPushButton("Add Top sheets", this);
 
     //
     // Layouts
@@ -190,6 +193,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     optionsLayout2->addWidget(spinBoxAddSheet, 2, 0);
     optionsLayout2->addWidget(buttonAddSheet, 2, 1);
 
+    optionsLayout2->addWidget(spinBoxAddTopSheets, 2, 2);
+    optionsLayout2->addWidget(buttonAddTopSheets, 2, 3);
+
 
     // Set up layout
     windowLayout = new QGridLayout(this);
@@ -213,6 +219,23 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
                 this->tracerVisualiserWidget->update();
             }
             });
+
+    connect(buttonAddTopSheets, &QPushButton::clicked, this, [this]() {
+            const int numberOfSheets = spinBoxAddTopSheets->value();
+            this->tracerVisualiserWidget->selectedSheetIds = {};
+
+            for (int i = 0 ; i < numberOfSheets ; i++)
+            {
+                this->tracerVisualiserWidget->selectedSheetIds.insert(data.reebSpace2.sheetOrder[i]);
+            }
+
+
+            this->plotWidget->staticReebSpaceCache = nullptr;
+            this->plotWidget->update();
+            this->tracerVisualiserWidget->update();
+
+            });
+
 
 
     connect(this->clearFibersButton, &QPushButton::clicked, this, [this]() {

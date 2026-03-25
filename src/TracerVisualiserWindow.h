@@ -54,6 +54,10 @@ class TracerVisualiserWindow : public QWidget
 
 
     QCheckBox *checkboxShowTraces;
+
     QSpinBox* spinBoxAddSheet;
     QPushButton* buttonAddSheet;
+
+    QSpinBox* spinBoxAddTopSheets;
+    QPushButton* buttonAddTopSheets;
 };

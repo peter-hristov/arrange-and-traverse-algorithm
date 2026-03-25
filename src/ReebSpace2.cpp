@@ -350,6 +350,10 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
     }
 
 
+    for (int i = 0 ; i < sortedSheets.size() ; i++)
+    {
+        this->sheetOrder.push_back(sortedSheets[i].first);
+    }
 
     // Can we get some fibers for each
     // How many non-empty fiber graphs are t here? should be the same as the number of faces

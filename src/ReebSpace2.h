@@ -76,6 +76,9 @@ class ReebSpace2
         std::map<int, double> sheetArea;
         std::map<int, double> sheetAreaProportion;
 
+        // Given a number n, what's the nth biggest sheet
+        std::vector<int> sheetOrder;
+
 
         std::map<int, std::vector<std::vector<Halfedge_const_handle>>> sheetBoundaries;
 
