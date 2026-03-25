@@ -1251,136 +1251,129 @@ vtkSmartPointer<vtkPolyData> io::readMolecule(const std::string& filename)
 void io::saveReebSpace(const ReebSpace2 &reebSpace, const std::string& filename)
 {
     std::ofstream out(filename, std::ios::binary);
+    if (!out) { std::cerr << "Failed to open " << filename << "\n"; return; }
 
-    auto writeInt  = [&](int v)  { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
-    auto writeBool = [&](bool v) { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+    auto writeInt  = [&](int v)    { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+    auto writeBool = [&](bool v)   { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+    auto writeSize = [&](size_t v) { out.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
 
     // edgeCrossingSegments
-    writeInt(reebSpace.edgeCrossingSegments.size());
+    writeSize(reebSpace.edgeCrossingSegments.size());
     for (const auto& [id, dir] : reebSpace.edgeCrossingSegments) { writeInt(id); writeBool(dir); }
 
     // edgeRegionSegments
-    writeInt(reebSpace.edgeRegionSegments.size());
+    writeSize(reebSpace.edgeRegionSegments.size());
     for (const auto& vec : reebSpace.edgeRegionSegments) {
-        writeInt(vec.size());
+        writeSize(vec.size());
         for (const auto& [id, dir] : vec) { writeInt(id); writeBool(dir); }
     }
 
     // vertexRegionSegments
-    writeInt(reebSpace.vertexRegionSegments.size());
+    writeSize(reebSpace.vertexRegionSegments.size());
     for (const auto& vec : reebSpace.vertexRegionSegments) {
-        writeInt(vec.size());
+        writeSize(vec.size());
         for (const auto& [id, dir] : vec) { writeInt(id); writeBool(dir); }
     }
 
     // correspondenceGraph
-    writeInt(reebSpace.correspondenceGraph.size());
+    writeSize(reebSpace.correspondenceGraph.size());
     for (const auto& vec : reebSpace.correspondenceGraph) {
-        writeInt(vec.size());
+        writeSize(vec.size());
         for (int id : vec) writeInt(id);
     }
 
     // correspondenceGraphDS
-    writeInt(reebSpace.correspondenceGraphDS.parent.size());
+    writeSize(reebSpace.correspondenceGraphDS.parent.size());
     for (int v : reebSpace.correspondenceGraphDS.parent) writeInt(v);
-    for (int v : reebSpace.correspondenceGraphDS.rank)   writeInt(v);
+    writeSize(reebSpace.correspondenceGraphDS.rank.size());  // was missing
+    for (int v : reebSpace.correspondenceGraphDS.rank) writeInt(v);
 
     auto saveFiberGraph = [&](const FiberGraph& fg) {
-        writeInt(fg.componentRoot.size());
+        writeSize(fg.componentRoot.size());
         for (const auto& [k, v] : fg.componentRoot) { writeInt(k); writeInt(v); }
-        writeInt(fg.componentRepresentative.size());
+        writeSize(fg.componentRepresentative.size());
         for (const auto& [k, v] : fg.componentRepresentative) { writeInt(k); writeInt(v); }
     };
 
     // fiberGraphs
-    writeInt(reebSpace.fiberGraphs.size());
+    writeSize(reebSpace.fiberGraphs.size());
     for (const auto& [fg1, fg2] : reebSpace.fiberGraphs) { saveFiberGraph(fg1); saveFiberGraph(fg2); }
 
-    // representativeFiberGraphs
-    //writeInt(reebSpace.representativeFiberGraphs.size());
-    //for (const auto& fg : reebSpace.representativeFiberGraphs) saveFiberGraph(fg);
-
     // representativeFiberGraphSeeds
-    writeInt(reebSpace.representativeFiberGraphSeeds.size());
+    writeSize(reebSpace.representativeFiberGraphSeeds.size());
     for (const auto& vec : reebSpace.representativeFiberGraphSeeds) {
-        writeInt(vec.size());
+        writeSize(vec.size());
         for (const auto& [a, b] : vec) { writeInt(a); writeInt(b); }
     }
+    // componentCount
+    writeInt(FiberGraph::componentCount);
 }
 
 ReebSpace2 io::loadReebSpace(const std::string& filename)
 {
     ReebSpace2 reebSpace;
     std::ifstream in(filename, std::ios::binary);
+    if (!in) { std::cerr << "Failed to open " << filename << "\n"; return reebSpace; }
 
-    auto readInt  = [&]() { int  v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
-    auto readBool = [&]() { bool v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
+    auto readInt  = [&]() { int    v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
+    auto readBool = [&]() { bool   v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
+    auto readSize = [&]() { size_t v; in.read(reinterpret_cast<char*>(&v), sizeof(v)); return v; };
 
     // edgeCrossingSegments
-    int n = readInt();
-    reebSpace.edgeCrossingSegments.resize(n);
+    reebSpace.edgeCrossingSegments.resize(readSize());
     for (auto& [id, dir] : reebSpace.edgeCrossingSegments) { id = readInt(); dir = readBool(); }
 
     // edgeRegionSegments
-    n = readInt();
-    reebSpace.edgeRegionSegments.resize(n);
+    reebSpace.edgeRegionSegments.resize(readSize());
     for (auto& vec : reebSpace.edgeRegionSegments) {
-        int m = readInt(); vec.resize(m);
+        vec.resize(readSize());
         for (auto& [id, dir] : vec) { id = readInt(); dir = readBool(); }
     }
 
     // vertexRegionSegments
-    n = readInt();
-    reebSpace.vertexRegionSegments.resize(n);
+    reebSpace.vertexRegionSegments.resize(readSize());
     for (auto& vec : reebSpace.vertexRegionSegments) {
-        int m = readInt(); vec.resize(m);
+        vec.resize(readSize());
         for (auto& [id, dir] : vec) { id = readInt(); dir = readBool(); }
     }
 
     // correspondenceGraph
-    n = readInt();
-    reebSpace.correspondenceGraph.resize(n);
+    reebSpace.correspondenceGraph.resize(readSize());
     for (auto& vec : reebSpace.correspondenceGraph) {
-        int m = readInt(); vec.resize(m);
+        vec.resize(readSize());
         for (int& id : vec) id = readInt();
     }
 
     // correspondenceGraphDS
-    n = readInt();
-    reebSpace.correspondenceGraphDS.parent.resize(n);
-    reebSpace.correspondenceGraphDS.rank.resize(n);
+    reebSpace.correspondenceGraphDS.parent.resize(readSize());
     for (int& v : reebSpace.correspondenceGraphDS.parent) v = readInt();
-    for (int& v : reebSpace.correspondenceGraphDS.rank)   v = readInt();
-
+    reebSpace.correspondenceGraphDS.rank.resize(readSize());  // was using parent's size
+    for (int& v : reebSpace.correspondenceGraphDS.rank) v = readInt();
 
     auto loadFiberGraph = [&](FiberGraph& fg) {
-        int n = readInt();
-        fg.componentRoot.clear(); fg.componentRoot.reserve(n);
+        int n = readSize();
+        fg.componentRoot.clear();
         for (int i = 0; i < n; i++) { int k = readInt(), v = readInt(); fg.componentRoot[k] = v; }
-        n = readInt();
-        fg.componentRepresentative.clear(); fg.componentRepresentative.reserve(n);
+        n = readSize();
+        fg.componentRepresentative.clear();
         for (int i = 0; i < n; i++) { int k = readInt(), v = readInt(); fg.componentRepresentative[k] = v; }
     };
 
-
     // fiberGraphs
-    n = readInt();
-    reebSpace.fiberGraphs.resize(n);
+    reebSpace.fiberGraphs.resize(readSize());
     for (auto& [fg1, fg2] : reebSpace.fiberGraphs) { loadFiberGraph(fg1); loadFiberGraph(fg2); }
 
-    // representativeFiberGraphs
-    //n = readInt();
-    //reebSpace.representativeFiberGraphs.resize(n);
-    //for (auto& fg : reebSpace.representativeFiberGraphs) loadFiberGraph(fg);
-
-
     // representativeFiberGraphSeeds
-    n = readInt();
-    reebSpace.representativeFiberGraphSeeds.resize(n);
+    reebSpace.representativeFiberGraphSeeds.resize(readSize());
     for (auto& vec : reebSpace.representativeFiberGraphSeeds) {
-        int m = readInt(); vec.resize(m);
+        vec.resize(readSize());
         for (auto& [a, b] : vec) { a = readInt(); b = readInt(); }
     }
+
+    FiberGraph::componentCount = readInt();
+
+    reebSpace.correspondenceGraphDS.finalise();
+    reebSpace.numberOfSheets = reebSpace.correspondenceGraphDS.countComponents();
 
     return reebSpace;
 }

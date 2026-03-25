@@ -22,9 +22,11 @@
     [x] Extract sheet feature
     [x] Select top n sheets
 
-    [ ] Colour map for sheets
-    [ ] 
-    [ ] Multiple control polygos for the FS
+    [ ] Standard categorical colour map for sheets
+    [ ] Sort by volume when you colour
+    [ ] Performance issues?
+
+    [ ] (Optional) Multiple control polygos for the FS
 
 
     [ ] How do we actually extract sheets?

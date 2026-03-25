@@ -30,7 +30,6 @@ std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlP
 
     std::vector<std::vector<std::array<double, 2>>> sheetControlPolygonsPoints;
 
-
     std::vector<bool> isBoundaryHole(currentSheetBoundaries.size(), false);
     std::vector<Polygon_2_EPIC> sheetBoundaryPolygons;
 
@@ -637,6 +636,8 @@ void ReebSpace2::traverse(TetMesh &tetMesh, Arrangement &singularArrangement, co
         bar.update((100 * computedFaces) / totalFaces);
     }
 
+
+    this->fiberGraphs = {};
 
     // Postprocessing
     this->correspondenceGraphDS.finalise();

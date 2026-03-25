@@ -791,10 +791,17 @@ void PlotWidget::paintEvent(QPaintEvent*)
         // Draw polygons and compute expected size
         int expectedSize = 0;
         this->featureControlPolygons = {};
+
+        std::cout << "Computing sheet epsilon polygons... \n";
         for (const int desiredSheetId : this->sibling->selectedSheetIds)
         {
 
-            const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
+            if (false == data.reebSpace2.sheetEpsilonPolygons.contains(desiredSheetId))
+            {
+                data.reebSpace2.sheetEpsilonPolygons[desiredSheetId] = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
+            }
+
+            const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.sheetEpsilonPolygons.at(desiredSheetId);
 
             // Draw the control polygons 
             //
@@ -834,7 +841,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
         {
             //qDebug() << "Computing feature for sheet " << desiredSheetId;
 
-            const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
+            //const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
+
+            const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.sheetEpsilonPolygons.at(desiredSheetId);
 
             for (const auto &sheetPolygon : sheetPolygons)
             {

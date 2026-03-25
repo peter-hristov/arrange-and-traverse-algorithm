@@ -66,21 +66,20 @@ class ReebSpace2
         // These are the edges of the sheet graph
         std::set<std::set<int>> areSheetsConnected;
 
-
         std::vector<std::vector<std::array<float, 2>>> sheetBoundary;
         //int orderIndex = 0;
 
         std::map<int, std::vector<int>> trianglesPerSheet;
         int numberOfSheets;
-
         std::map<int, double> sheetArea;
         std::map<int, double> sheetAreaProportion;
-
         // Given a number n, what's the nth biggest sheet
         std::vector<int> sheetOrder;
 
-
         std::map<int, std::vector<std::vector<Halfedge_const_handle>>> sheetBoundaries;
+        std::map<int, std::vector<std::vector<std::array<double, 2>>>> sheetEpsilonPolygons;
+
+
 
 
 
