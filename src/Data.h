@@ -52,6 +52,7 @@ class Data
     {}
 
     std::vector<SurfaceMesh> surfaceMeshes;
+    std::vector<SurfaceMesh> surfaceMeshesFeatures;
 
     vtkSmartPointer<vtkPolyData> molecule;
 

@@ -38,6 +38,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     bool drawFibers = 1;
     bool drawFiberSurfaces = 1;
+    bool drawFiberSurfaceFeatures = 1;
 
     bool enableLighting = 1;
 
@@ -78,12 +79,15 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     std::vector<FiberPoint> faceFibers;
     std::vector<FiberPoint> faceFiberSurface;
+    std::vector<FiberPoint> faceFiberSurfaceFeatures;
 
     void updateFiber(const std::vector<FiberPoint>&);
     void updateFiberSurface(const std::vector<FiberPoint>&);
+    void updateFiberSurfaceFeatures(const std::vector<FiberPoint>&);
 
     void clearFiber();
     void clearFiberSurface();
+    void clearFiberSurfaceSheets();
 
     int displayListIndex = 0;
     void generateDisplayList();

@@ -99,6 +99,10 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         std::cout << "Saving surfaces to to " << filename << std::endl;
         io::saveFiberSurface(this->data.surfaceMeshes, filename);
 
+        filename = "./output/fiber-surface-features.vtp";
+        std::cout << "Saving surfaces to to " << filename << std::endl;
+        io::saveFiberSurface(this->data.surfaceMeshesFeatures, filename);
+
         filename = "./output/reeb-space.png";
         std::cout << "Saving surfaces to to " << filename << std::endl;
 
@@ -269,10 +273,12 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->update();
             this->tracerVisualiserWidget->update();
             });
+
     connect(this->clearSelectedSheetsButton, &QPushButton::clicked, this, [this]() {
             this->plotWidget->staticReebSpaceCache = nullptr;
             this->plotWidget->featureControlPolygons = {};
             this->tracerVisualiserWidget->selectedSheetIds = {};
+            this->tracerVisualiserWidget->clearFiberSurfaceSheets();
 
             this->plotWidget->update();
             this->tracerVisualiserWidget->update();

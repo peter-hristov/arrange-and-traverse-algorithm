@@ -675,7 +675,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         this->data.surfaceMeshes.clear();
         this->data.surfaceMeshes.shrink_to_fit();
-        this->featureControlPolygons = {};
 
         std::vector<FiberPoint> fibersAll;
         if (controlPointsTransformed.size() == 2)
@@ -824,9 +823,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
         // 
         // Draw polygons and calculate expectes size
 
-        this->data.surfaceMeshes.clear();  // add this
-        this->data.surfaceMeshes.shrink_to_fit();  // add this
-        this->data.surfaceMeshes.reserve(expectedSize);  // add this
+        this->data.surfaceMeshesFeatures.clear();  // add this
+        this->data.surfaceMeshesFeatures.shrink_to_fit();  // add this
+        this->data.surfaceMeshesFeatures.reserve(expectedSize);  // add this
 
         for (const int desiredSheetId : this->sibling->selectedSheetIds)
         {
@@ -839,9 +838,9 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
                 for (int i = 0 ; i < controlPointsInternal.size(); i++)
                 {
-                    this->data.surfaceMeshes.emplace_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId));
+                    this->data.surfaceMeshesFeatures.emplace_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId));
 
-                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back(), this->sibling->selectedSheetIds);
+                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshesFeatures.back(), this->sibling->selectedSheetIds);
 
                     fibersAll.insert(
                             fibersAll.end(), 
@@ -871,7 +870,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         }
 
         this->recomputeFiberSurfaceFeature = false;
-        sibling->updateFiberSurface(fibersAll);
+        sibling->updateFiberSurfaceFeatures(fibersAll);
     }
 
 
