@@ -291,19 +291,24 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             });
 
     connect(this->clearAllButton, &QPushButton::clicked, this, [this]() {
-            this->plotWidget->fiberPointsTraces.clear();
-            this->plotWidget->fiberPointsTraces.shrink_to_fit();
-            this->plotWidget->controlPoints.clear();
-            this->plotWidget->controlPoints.shrink_to_fit();
-            this->plotWidget->featureControlPolygons = {};
-            this->plotWidget->staticReebSpaceCache = nullptr;
 
-            this->tracerVisualiserWidget->selectedSheetIds = {};
-            this->tracerVisualiserWidget->clearFiber();
-            this->tracerVisualiserWidget->clearFiberSurface();
+            this->clearFibersButton->click();
+            this->clearFiberSurfaceButton->click();
+            this->clearSelectedSheetsButton->click();
 
-            this->plotWidget->update();
-            this->tracerVisualiserWidget->update();
+            //this->plotWidget->fiberPointsTraces.clear();
+            //this->plotWidget->fiberPointsTraces.shrink_to_fit();
+            //this->plotWidget->controlPoints.clear();
+            //this->plotWidget->controlPoints.shrink_to_fit();
+            //this->plotWidget->featureControlPolygons = {};
+            //this->plotWidget->staticReebSpaceCache = nullptr;
+
+            //this->tracerVisualiserWidget->selectedSheetIds = {};
+            //this->tracerVisualiserWidget->clearFiber();
+            //this->tracerVisualiserWidget->clearFiberSurface();
+
+            //this->plotWidget->update();
+            //this->tracerVisualiserWidget->update();
             });
 
 
