@@ -675,6 +675,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         this->data.surfaceMeshes.clear();
         this->data.surfaceMeshes.shrink_to_fit();
+        this->featureControlPolygons = {};
 
         std::vector<FiberPoint> fibersAll;
         if (controlPointsTransformed.size() == 2)
@@ -694,7 +695,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         }
         else
         {
-            this->data.surfaceMeshes.reserve(controlPointsInternal.size() + 1);
+            this->data.surfaceMeshes.reserve(controlPointsInternal.size());
 
             for (int i = 0 ; i < controlPointsInternal.size() ; i++)
             {

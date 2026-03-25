@@ -19,9 +19,8 @@
     [x] Output the names of saved files
     [x] Set min/max values for f/g
     [x] Revamp axis visualisation of the Reeb space
-
-    [ ] Extract sheet feature
-
+    [x] Extract sheet feature
+    [x] Select top n sheets
 
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
     [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)

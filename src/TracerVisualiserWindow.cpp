@@ -143,7 +143,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     checkboxShowTraces = new QCheckBox("Show fiber point trace.");
     this->computeTracedFiberSurfaceButton = new QPushButton("Compute Traced Fiber Surface", this);
-    this->computeFiberSurfaceFeatureButton = new QPushButton("Compute Feature", this);
+    this->computeFiberSurfaceFeatureButton = new QPushButton("Compute Features", this);
     this->computeFiberSurfaceButton = new QPushButton("Compute Fiber Surface", this);
     this->clearAllButton = new QPushButton("Clear All", this);
 
@@ -151,7 +151,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     this->clearFiberSurfaceButton = new QPushButton("Clear FS", this);
     this->clearSelectedSheetsButton = new QPushButton("Clear Sheets", this);
 
-    this->buttonAddNewControlPolygon = new QPushButton("Add FSCP", this);
+    //this->buttonAddNewControlPolygon = new QPushButton("Add FSCP", this);
 
 
     // Create widgets
