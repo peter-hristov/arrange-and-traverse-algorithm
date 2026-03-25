@@ -15,6 +15,7 @@
     [x] Potential bug at isabel-4-cropped (crashed)
 
 
+
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
     [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
     [ ] (Optional) Refactor code to make it more usable 

@@ -53,8 +53,6 @@ class Data
 
     std::vector<SurfaceMesh> surfaceMeshes;
 
-    std::string outputFibersFile = "./fibers.vtp";
-
     vtkSmartPointer<vtkPolyData> molecule;
 
 };

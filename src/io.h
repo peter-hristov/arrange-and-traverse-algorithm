@@ -37,11 +37,14 @@ namespace io
 
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
-    void saveFibers(const std::string&, const std::vector<FiberPoint>&);
+    void saveFibers(const std::vector<FiberPoint>&, const std::string&);
 
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 
-    void saveFiberSurface(SurfaceMesh& mesh, const std::string& filename);
+    void saveFiberSurface(std::vector<SurfaceMesh> &mesh, const std::string& filename);
+
+    vtkSmartPointer<vtkPolyData> buildFiberSurfacePolyData(SurfaceMesh& surfMesh);
+
     void writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::string& filename);
     void saveSheetsFeatures(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
 

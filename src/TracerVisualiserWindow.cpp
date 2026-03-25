@@ -92,15 +92,13 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_S) {
         // Save the fibers
-        io::saveFibers(data.outputFibersFile, this->tracerVisualiserWidget->faceFibers);
+        std::string filename = "./output/fibers.vtp";
+        std::cout << "Saving fibers to " << filename << std::endl;
+        io::saveFibers(this->tracerVisualiserWidget->faceFibers, filename);
 
-        // Save the fiber surface
-        for (int i = 0 ; i < this->data.surfaceMeshes.size() ; i++)
-        {
-            std::cout << "Saving mesh " << i << std::endl;
-            io::saveFiberSurface(this->data.surfaceMeshes[i], "fs-patch-" + std::to_string(i) + ".vtp");
-            io::writeImpassableEdgesToVTK(this->data.surfaceMeshes[i], "fs-patch-" + std::to_string(i) + ".impassable.vtp");
-        }
+        filename = "./output/fiber-surface.vtp";
+        io::saveFiberSurface(this->data.surfaceMeshes, filename);
+        std::cout << "Saving surfaces to to " << filename << std::endl;
     }
 
 }

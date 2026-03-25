@@ -18,6 +18,8 @@
 #include <vtkPolyLine.h>
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
+#include <vtkAppendPolyData.h>
+
 
 //#include <vtkPolygon.h>
 #include <vtkIntArray.h>
@@ -334,7 +336,7 @@ CGALMesh io::readCGALMesh(const std::string& filename)
     return mesh;
 }
 
-void io::saveFiberSurface(SurfaceMesh& surfMesh, const std::string& filename)
+vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh)
 {
     const CGALMesh& mesh = surfMesh.mesh;
 
@@ -389,6 +391,10 @@ void io::saveFiberSurface(SurfaceMesh& surfMesh, const std::string& filename)
     vtkTriangleId->SetName("triangleId");
     vtkTriangleId->SetNumberOfComponents(1);
 
+    auto colourArray = vtkSmartPointer<vtkDoubleArray>::New();
+    colourArray->SetName("Colour");
+    colourArray->SetNumberOfComponents(3);
+
     for (auto f : mesh.faces())
     {
         // Collect vertices of this face
@@ -401,11 +407,13 @@ void io::saveFiberSurface(SurfaceMesh& surfMesh, const std::string& filename)
         int tid = surfMesh.tetId[f];
         int sid = surfMesh.sheetId[f];
         int cid = surfMesh.componentId[f];
+        std::array<float, 3> triangleColour = fiber::fiberColours[sid % fiber::fiberColours.size()];
 
         vtkTetId->InsertNextValue(tid);
         vtkSheetId->InsertNextValue(sid);
         vtkComponentId->InsertNextValue(cid);
         vtkTriangleId->InsertNextValue(f.idx());
+        colourArray->InsertNextTuple(triangleColour.data());
     }
 
     // -------------------------------------------------------------------------
@@ -439,14 +447,30 @@ void io::saveFiberSurface(SurfaceMesh& surfMesh, const std::string& filename)
     polyData->GetCellData()->AddArray(vtkComponentId);
     polyData->GetCellData()->AddArray(vtkTriangleId);
     polyData->GetFieldData()->AddArray(vtkImpassable);  // edge attribute
+    polyData->GetCellData()->AddArray(colourArray);
 
-    // -------------------------------------------------------------------------
-    // 5. Write .vtp (XML PolyData)
-    // -------------------------------------------------------------------------
+    polyData->GetCellData()->SetScalars(colourArray);  // optional: for coloring
+
+    return polyData;
+}
+
+void io::saveFiberSurface(std::vector<SurfaceMesh>& surfMeshes, const std::string& filename)
+{
+
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+        std::filesystem::create_directories(filePath.parent_path());
+
+    auto appender = vtkSmartPointer<vtkAppendPolyData>::New();
+    for (auto& surfMesh : surfMeshes)
+        appender->AddInputData(buildFiberSurfacePolyData(surfMesh));
+
+    appender->Update();
+
     auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
     writer->SetFileName(filename.c_str());
-    writer->SetInputData(polyData);
-    writer->SetDataModeToBinary();   // or SetDataModeToAscii()
+    writer->SetInputConnection(appender->GetOutputPort());
+    writer->SetDataModeToBinary();
     writer->Write();
 }
 
@@ -977,17 +1001,22 @@ void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, cons
     writer->SetInputData(triangulatedPolyData);
     writer->SetDataModeToAscii(); // optional for debugging
     writer->Write();
-
-    std::cout << "Saved " << polys->GetNumberOfCells() 
-        << " polygons to " << outputSheetPolygonsFilename << std::endl;
-
 }
 
 
 
-void io::saveFibers(const std::string &outputFile, const std::vector<FiberPoint> &fiberPoints)
+void io::saveFibers(const std::vector<FiberPoint> &fiberPoints, const std::string &filename)
 {
-    std::cout << "Saving fibers in " << outputFile << std::endl;
+    //std::cout << "Saving fibers in " << filename << std::endl;
+
+    // Create parent directory if it doesn't exist
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+    {
+        std::filesystem::create_directories(filePath.parent_path());
+    }
+
+    //std::cout << "Saving fibers in " << outputFile << std::endl;
     //std::cout << "The fiber has size " << this->faceFibers.size() << std::endl;  
 
     // 1. Create the points
@@ -1036,7 +1065,7 @@ void io::saveFibers(const std::string &outputFile, const std::vector<FiberPoint>
 
     // 6. Write to .vtp file (XML format)
     auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-    writer->SetFileName(outputFile.c_str());
+    writer->SetFileName(filename.c_str());
     writer->SetInputData(polyData);
     writer->Write();
 }
@@ -1127,7 +1156,7 @@ void io::generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arran
 
         //std::cout << "Saving fibers..." << std::endl;
         std::string outputFile = folderPathFs.string() + "/fibers_" + std::to_string(sheetId) + ".vtp";
-        io::saveFibers(outputFile, sheetFibers);
+        io::saveFibers(sheetFibers, outputFile);
     }
 }
 
