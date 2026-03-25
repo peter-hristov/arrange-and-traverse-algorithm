@@ -851,8 +851,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
                 for (int i = 0 ; i < controlPointsInternal.size(); i++)
                 {
-                    auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
-                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(mesh, {desiredSheetId});
+                    auto surfaceMesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
+                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(surfaceMesh, {desiredSheetId});
 
                     //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
                             //data.tetMesh, 

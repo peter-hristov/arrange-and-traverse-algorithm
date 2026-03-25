@@ -44,7 +44,55 @@ class SurfaceMesh
         {
 
         }
+        void bind_property_maps()
+        {
+            bool created;
 
+            std::tie(edgeParam, created) = mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
+            std::tie(tetId, created)      = mesh.add_property_map<CGALMesh::Face_index,int>("f:tetId", -1);
+            std::tie(sheetId, created)    = mesh.add_property_map<CGALMesh::Face_index,int>("f:sheetId", -1);
+            std::tie(componentId, created)= mesh.add_property_map<CGALMesh::Face_index,int>("f:componentId", -1);
+            std::tie(isImpassable, created)= mesh.add_property_map<CGALMesh::Edge_index,bool>("e:isImpassable", false);
+        }
+
+        // --- Copy constructor ---
+        SurfaceMesh(const SurfaceMesh& other)
+            : mesh(other.mesh)
+        {
+            bind_property_maps();
+        }
+
+        // --- Move constructor ---
+        SurfaceMesh(SurfaceMesh&& other) noexcept
+            : mesh(std::move(other.mesh))
+            {
+                bind_property_maps();
+            }
+
+        // --- Copy assignment ---
+        SurfaceMesh& operator=(const SurfaceMesh& other)
+        {
+            if (this != &other)
+            {
+                mesh = other.mesh;
+                bind_property_maps();
+            }
+            return *this;
+        }
+
+        // --- Move assignment ---
+        SurfaceMesh& operator=(SurfaceMesh&& other) noexcept
+        {
+            if (this != &other)
+            {
+                mesh = std::move(other.mesh);
+                bind_property_maps();
+            }
+            return *this;
+        }
+
+        // --- Destructor ---
+        ~SurfaceMesh() = default;
 
         void print()
         {
@@ -121,19 +169,19 @@ class SurfaceMesh
             // Merge duplicate vertices
             //std::vector<std::size_t> old_to_new;
             //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons,
-                    //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
-                            //old_to_new.begin(), boost::identity_property_map(), std::size_t(0)
-                            //))
-                    //);
+            //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
+            //old_to_new.begin(), boost::identity_property_map(), std::size_t(0)
+            //))
+            //);
 
 
             //// Merge duplicate polygons
             //std::vector<std::size_t> old_to_new2;
             //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons,
-                    //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
-                            //old_to_new2.begin(), boost::identity_property_map(), std::size_t(0)
-                            //))
-                    //);
+            //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
+            //old_to_new2.begin(), boost::identity_property_map(), std::size_t(0)
+            //))
+            //);
 
 
             // Orient triangles
@@ -157,7 +205,7 @@ class SurfaceMesh
 
 
             std::tie(this->tetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
-            
+
             if (false == created)
             {
                 throw std::runtime_error("TetId property could not be added to the mesh.");
@@ -310,10 +358,10 @@ class SurfaceMesh
 
 
             //const std::set<int> tetTriangleIds = {
-                //tetMesh.triangleIndices.at({a, b, c}),
-                //tetMesh.triangleIndices.at({a, b, d}),
-                //tetMesh.triangleIndices.at({a, c, d}),
-                //tetMesh.triangleIndices.at({b, c, d}),
+            //tetMesh.triangleIndices.at({a, b, c}),
+            //tetMesh.triangleIndices.at({a, b, d}),
+            //tetMesh.triangleIndices.at({a, c, d}),
+            //tetMesh.triangleIndices.at({b, c, d}),
             //};
 
             //return reebSpace.computeFiberGraphReverse(tetMesh, singularArrangement, {u, v}, tetTriangleIds);
@@ -458,13 +506,13 @@ class SurfaceMesh
 
 
                 //this->sheetId[face] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
-                
+
                 //this->sheetId[face] =  componentId;
                 //const int realSheetId = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
 
                 //if (this->sheetId[face] != realSheetId)
                 //{
-                    //throw std::runtime_error("Triangle sheet Id not the same as its component id.");
+                //throw std::runtime_error("Triangle sheet Id not the same as its component id.");
                 //}
             }
         }
@@ -474,7 +522,7 @@ class SurfaceMesh
             std::queue<int> bfsQueue;
             bfsQueue.push(seedTriangleId);
             visited[seedTriangleId] = true;
-            
+
             while (!bfsQueue.empty())
             {
                 const int currentTriangleId = bfsQueue.front();
@@ -637,7 +685,7 @@ class SurfaceMesh
             //
             std::vector<int> componentSheets(componentRepresentatives.size());
 
-            #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
             for (auto &[face, componentId] : componentRepresentatives)
             {
                 //componentSheets[componentId] = this->computeTriangleSheetId2(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
@@ -653,13 +701,13 @@ class SurfaceMesh
 
 
                 //this->sheetId[face] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
-                
+
                 //this->sheetId[face] =  componentId;
                 //const int realSheetId = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
 
                 //if (this->sheetId[face] != realSheetId)
                 //{
-                    //throw std::runtime_error("Triangle sheet Id not the same as its component id.");
+                //throw std::runtime_error("Triangle sheet Id not the same as its component id.");
                 //}
             }
         }
@@ -1011,5 +1059,5 @@ class SurfaceMesh
 
             return activeEdges;
         }
-            
+
 };

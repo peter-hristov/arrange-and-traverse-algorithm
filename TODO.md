@@ -25,6 +25,7 @@
     [ ] Standard categorical colour map for sheets
     [ ] Sort by volume when you colour
     [ ] Performance issues?
+    [ ] FIX Optional
 
     [ ] (Optional) Multiple control polygos for the FS
 
