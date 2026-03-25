@@ -224,11 +224,6 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     connect(spinBoxAddSheet, &QSpinBox::editingFinished, buttonAddSheet, &QPushButton::click);
 
 
-
-    connect(buttonAddNewControlPolygon, &QPushButton::clicked, this, [this]() {
-            });
-
-
     connect(buttonAddSheet, &QPushButton::clicked, this, [this]() {
             const int sheetId = spinBoxAddSheet->value();
 

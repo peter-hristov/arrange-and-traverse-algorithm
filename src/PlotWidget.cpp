@@ -31,7 +31,9 @@
 #include "./Fiber.h"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
-#include "src/SurfaceMesh.h"
+#include "./SurfaceMesh.h"
+
+#include "./LoadingBar.hpp"
 
 using namespace std;
 
@@ -786,9 +788,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //
         std::vector<FiberPoint> fibersAll;
 
-
         // Draw polygons and compute expected size
-        //int expectedSize = 0;
+        int expectedSize = 0;
         this->featureControlPolygons = {};
         for (const int desiredSheetId : this->sibling->selectedSheetIds)
         {
@@ -808,7 +809,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
                     controlPointsTransformed[i][j] = rescalePoint(sheetPolygon[j][0], sheetPolygon[j][1]);
                     //p.drawEllipse(controlPointsTransformed[i][j], 20, 20);
 
-                    //expectedSize++;
+                    expectedSize++;
                 }
 
                 this->featureControlPolygons.push_back(QPolygonF(controlPointsTransformed[i]));
@@ -827,8 +828,11 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //this->data.surfaceMeshesFeatures.shrink_to_fit();  // add this
         //this->data.surfaceMeshesFeatures.reserve(expectedSize);  // add this
 
+        LoadingBar bar(40, "Computing features fiber surfaces...");
+        int computedFS = 0;
         for (const int desiredSheetId : this->sibling->selectedSheetIds)
         {
+            //qDebug() << "Computing feature for sheet " << desiredSheetId;
 
             const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
 
@@ -839,14 +843,25 @@ void PlotWidget::paintEvent(QPaintEvent*)
                 for (int i = 0 ; i < controlPointsInternal.size(); i++)
                 {
                     auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
+                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(mesh, {desiredSheetId});
 
-                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(mesh, this->sibling->selectedSheetIds);
+                    //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
+                            //data.tetMesh, 
+                            //data.singularArrangement, 
+                            //data.reebSpace2, 
+                            //{controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, 
+                            //desiredSheetId
+                            //);
 
                     fibersAll.insert(
                             fibersAll.end(), 
                             std::make_move_iterator(fibers.begin()), 
                             std::make_move_iterator(fibers.end())
                             );
+
+                    computedFS++;
+
+                    bar.update((100 * computedFS) / expectedSize);
 
                     //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
                     //data.tetMesh, 

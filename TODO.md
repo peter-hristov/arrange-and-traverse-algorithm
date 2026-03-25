@@ -22,6 +22,13 @@
     [x] Extract sheet feature
     [x] Select top n sheets
 
+    [ ] Colour map for sheets
+    [ ] 
+    [ ] Multiple control polygos for the FS
+
+
+    [ ] How do we actually extract sheets?
+
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).
     [ ] (Optional) Optimize extracting only the singular fiber components (not all fiber components of singular fibers)
     [ ] (Optional) Refactor code to make it more usable 

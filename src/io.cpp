@@ -1305,7 +1305,8 @@ void io::saveReebSpace(const ReebSpace2 &reebSpace, const std::string& filename)
     for (const auto& vec : reebSpace.representativeFiberGraphSeeds) {
         writeInt(vec.size());
         for (const auto& [a, b] : vec) { writeInt(a); writeInt(b); }
-    }}
+    }
+}
 
 ReebSpace2 io::loadReebSpace(const std::string& filename)
 {
