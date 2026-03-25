@@ -853,9 +853,8 @@ QPointF PlotWidget::rescalePoint(const float &u, const GLfloat &v)
 void PlotWidget::drawAxisLabels2(QPainter& p)
 {
     auto font = p.font();
-    auto penBlack = QPen(Qt::gray);
-    penBlack.setWidthF(3.0);
-
+    auto penBlack = QPen(Qt::black);
+    penBlack.setWidthF(5.0);
     p.setPen(penBlack);
 
     font.setPixelSize(70);
