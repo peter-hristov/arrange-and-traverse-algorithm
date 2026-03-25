@@ -25,6 +25,7 @@
 #include <CGAL/Polygon_mesh_processing/repair.h>
 #include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
 
+// TODO Copy and move constructors
 class SurfaceMesh
 {
     public:

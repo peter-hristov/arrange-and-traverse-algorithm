@@ -60,4 +60,6 @@ class TracerVisualiserWindow : public QWidget
 
     QSpinBox* spinBoxAddTopSheets;
     QPushButton* buttonAddTopSheets;
+
+    QPushButton* buttonAddNewControlPolygon;
 };

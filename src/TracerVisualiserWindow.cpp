@@ -88,6 +88,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_H) {
         //this->data.printSheetHistogram();
     }
+
     if (event->key() == Qt::Key_S) {
         // Save the fibers
         std::string filename = "./output/fibers.vtp";
@@ -95,12 +96,13 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         io::saveFibers(this->tracerVisualiserWidget->faceFibers, filename);
 
         filename = "./output/fiber-surface.vtp";
-        io::saveFiberSurface(this->data.surfaceMeshes, filename);
         std::cout << "Saving surfaces to to " << filename << std::endl;
+        io::saveFiberSurface(this->data.surfaceMeshes, filename);
 
         filename = "./output/reeb-space.png";
-        this->plotWidget->saveToFile(filename);
         std::cout << "Saving surfaces to to " << filename << std::endl;
+
+        this->plotWidget->saveToFile(filename);
     }
 
 }
@@ -149,6 +151,8 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     this->clearFiberSurfaceButton = new QPushButton("Clear FS", this);
     this->clearSelectedSheetsButton = new QPushButton("Clear Sheets", this);
 
+    this->buttonAddNewControlPolygon = new QPushButton("Add FSCP", this);
+
 
     // Create widgets
     this->spinBoxAddSheet = new QSpinBox(this);
@@ -188,6 +192,8 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     optionsLayout2->addWidget(computeFiberSurfaceButton, 1, 1);
     optionsLayout2->addWidget(computeFiberSurfaceFeatureButton, 1, 2);
     optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 1, 3);
+    //optionsLayout2->addWidget(buttonAddNewControlPolygon, 1, 4);
+
     //optionsLayout2->addWidget(fakeSlider, 1, 1);
 
     optionsLayout2->addWidget(spinBoxAddSheet, 2, 0);
@@ -206,6 +212,12 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     windowLayout->addLayout(optionsLayout2, 1, 1);
 
     connect(spinBoxAddSheet, &QSpinBox::editingFinished, buttonAddSheet, &QPushButton::click);
+
+
+
+    connect(buttonAddNewControlPolygon, &QPushButton::clicked, this, [this]() {
+            });
+
 
     connect(buttonAddSheet, &QPushButton::clicked, this, [this]() {
             const int sheetId = spinBoxAddSheet->value();
@@ -259,6 +271,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             });
     connect(this->clearSelectedSheetsButton, &QPushButton::clicked, this, [this]() {
             this->plotWidget->staticReebSpaceCache = nullptr;
+            this->plotWidget->featureControlPolygons = {};
             this->tracerVisualiserWidget->selectedSheetIds = {};
 
             this->plotWidget->update();
@@ -270,6 +283,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->fiberPointsTraces.shrink_to_fit();
             this->plotWidget->controlPoints.clear();
             this->plotWidget->controlPoints.shrink_to_fit();
+            this->plotWidget->featureControlPolygons = {};
             this->plotWidget->staticReebSpaceCache = nullptr;
 
             this->tracerVisualiserWidget->selectedSheetIds = {};

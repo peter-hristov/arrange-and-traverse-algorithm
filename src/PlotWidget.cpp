@@ -474,7 +474,8 @@ void PlotWidget::saveToFile(const std::string& filename)
         std::filesystem::create_directories(filePath.parent_path());
 
     // Force a repaint so everything is current, then grab
-    this->repaint();
+    //this->repaint();
+
     QPixmap pixmap = this->grab();
     pixmap = pixmap.scaled(1000, 1000, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
@@ -544,7 +545,13 @@ void PlotWidget::paintEvent(QPaintEvent*)
         this->update();
     }
 
-
+    // Draw the feature control polygons
+    for (const auto &polygon : this->featureControlPolygons)
+    {
+        p.setPen(QPen(Qt::black, 3.0, Qt::DashLine));
+        p.drawPolygon(polygon);
+    }
+    p.setPen(penBlack);
 
 
     // Draw fiber point
@@ -773,71 +780,95 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // Feature Drawing
     // ----------------------------------------------------------------
 
-    if (recomputeFiberSurfaceFeature && this->sibling->selectedSheetIds.size() == 1)
+    if (recomputeFiberSurfaceFeature && this->sibling->selectedSheetIds.size() > 0)
     {
-        const int desiredSheetId = *this->sibling->selectedSheetIds.begin();
-
-        const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
-
-        // Draw the control polygons 
-        //
-        QVector<QVector<QPointF>> controlPointsTransformed(sheetPolygons.size());
-        for (int i = 0 ; i < sheetPolygons.size() ; i++)
-        {
-            const auto &sheetPolygon = sheetPolygons[i];
-            controlPointsTransformed[i].resize(sheetPolygon.size());
-
-            for (int j = 0 ; j < sheetPolygon.size() ; j++)
-            {
-                controlPointsTransformed[i][j] = rescalePoint(sheetPolygon[j][0], sheetPolygon[j][1]);
-                p.drawEllipse(controlPointsTransformed[i][j], 20, 20);
-            }
-
-            p.drawPolygon(QPolygonF(controlPointsTransformed[i]));
-        }
-
-
-
-
         // Compute the fiber surface
         //
         std::vector<FiberPoint> fibersAll;
 
-        for (const auto &sheetPolygon : sheetPolygons)
+
+        // Draw polygons and compute expected size
+        int expectedSize = 0;
+        this->featureControlPolygons = {};
+        for (const int desiredSheetId : this->sibling->selectedSheetIds)
         {
-            std::vector<std::array<double, 2>> controlPointsInternal = sheetPolygon;
 
-            for (int i = 0 ; i < controlPointsInternal.size(); i++)
+            const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
+
+            // Draw the control polygons 
+            //
+            QVector<QVector<QPointF>> controlPointsTransformed(sheetPolygons.size());
+            for (int i = 0 ; i < sheetPolygons.size() ; i++)
             {
-                this->data.surfaceMeshes.emplace_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId));
+                const auto &sheetPolygon = sheetPolygons[i];
+                controlPointsTransformed[i].resize(sheetPolygon.size());
 
-                const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back(), this->sibling->selectedSheetIds);
+                for (int j = 0 ; j < sheetPolygon.size() ; j++)
+                {
+                    controlPointsTransformed[i][j] = rescalePoint(sheetPolygon[j][0], sheetPolygon[j][1]);
+                    //p.drawEllipse(controlPointsTransformed[i][j], 20, 20);
 
-                fibersAll.insert(
-                        fibersAll.end(), 
-                        std::make_move_iterator(fibers.begin()), 
-                        std::make_move_iterator(fibers.end())
-                        );
+                    expectedSize++;
+                }
 
-                //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
-                        //data.tetMesh, 
-                        //data.singularArrangement, 
-                        //data.reebSpace2, 
-                        //{controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, 
-                        //desiredSheetId
-                        //);
+                this->featureControlPolygons.push_back(QPolygonF(controlPointsTransformed[i]));
 
-                //fibersAll.insert(
-                        //fibersAll.end(), 
-                        //std::make_move_iterator(fibers.begin()), 
-                        //std::make_move_iterator(fibers.end())
-                        //);
+                p.setPen(QPen(Qt::black, 3.0, Qt::DashLine));
+                p.drawPolygon(QPolygonF(controlPointsTransformed[i]));
+            }
+        }
+
+
+
+        // 
+        // Draw polygons and calculate expectes size
+
+        this->data.surfaceMeshes.clear();  // add this
+        this->data.surfaceMeshes.shrink_to_fit();  // add this
+        this->data.surfaceMeshes.reserve(expectedSize);  // add this
+
+        for (const int desiredSheetId : this->sibling->selectedSheetIds)
+        {
+
+            const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
+
+            for (const auto &sheetPolygon : sheetPolygons)
+            {
+                std::vector<std::array<double, 2>> controlPointsInternal = sheetPolygon;
+
+                for (int i = 0 ; i < controlPointsInternal.size(); i++)
+                {
+                    this->data.surfaceMeshes.emplace_back(fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId));
+
+                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(this->data.surfaceMeshes.back(), this->sibling->selectedSheetIds);
+
+                    fibersAll.insert(
+                            fibersAll.end(), 
+                            std::make_move_iterator(fibers.begin()), 
+                            std::make_move_iterator(fibers.end())
+                            );
+
+                    //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
+                    //data.tetMesh, 
+                    //data.singularArrangement, 
+                    //data.reebSpace2, 
+                    //{controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, 
+                    //desiredSheetId
+                    //);
+
+                    //fibersAll.insert(
+                    //fibersAll.end(), 
+                    //std::make_move_iterator(fibers.begin()), 
+                    //std::make_move_iterator(fibers.end())
+                    //);
+
+                }
 
             }
 
+            // Update the fiber
         }
 
-        // Update the fiber
         this->recomputeFiberSurfaceFeature = false;
         sibling->updateFiberSurface(fibersAll);
     }

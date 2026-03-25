@@ -74,6 +74,7 @@ class PlotWidget : public QWidget
         std::optional<QPointF> controlPointSheetSelection;
 
         QVector<QPointF> controlPoints;
+        QVector<QPolygonF> featureControlPolygons;
 
         QVector<QVector<QPointF>> fiberPointsTraces;
 
