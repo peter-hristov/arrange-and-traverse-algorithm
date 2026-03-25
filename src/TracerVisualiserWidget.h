@@ -145,6 +145,4 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void buildAABBTree();
 
     int pickSegment(int mouseX, int mouseY);
-
-
 }; // class GLPolygonWidget

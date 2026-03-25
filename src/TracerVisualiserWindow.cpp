@@ -39,9 +39,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
-        this->plotWidget->recomputeFiberSurface = true;
-        this->plotWidget->update();
-        this->update();
+        this->computeFiberSurfaceButton->click();
     }
 
     if (event->key() == Qt::Key_I) {
@@ -143,6 +141,8 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     checkboxShowTraces = new QCheckBox("Show fiber point trace.");
     this->computeTracedFiberSurfaceButton = new QPushButton("Compute Traced Fiber Surface", this);
+    this->computeFiberSurfaceFeatureButton = new QPushButton("Compute Feature", this);
+    this->computeFiberSurfaceButton = new QPushButton("Compute Fiber Surface", this);
     this->clearAllButton = new QPushButton("Clear All", this);
 
     this->clearFibersButton = new QPushButton("Clear Fibers", this);
@@ -182,7 +182,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
 
     optionsLayout2->addWidget(checkboxShowTraces, 1, 0);
-    optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 1, 1);
+    optionsLayout2->addWidget(computeFiberSurfaceButton, 1, 1);
+    optionsLayout2->addWidget(computeFiberSurfaceFeatureButton, 1, 2);
+    optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 1, 3);
     //optionsLayout2->addWidget(fakeSlider, 1, 1);
 
     optionsLayout2->addWidget(spinBoxAddSheet, 2, 0);
@@ -253,6 +255,19 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
             this->plotWidget->update();
             this->tracerVisualiserWidget->update();
+            });
+
+
+    connect(this->computeFiberSurfaceButton, &QPushButton::clicked, this, [this]() {
+            this->plotWidget->recomputeFiberSurface = true;
+            this->plotWidget->update();
+            this->update();
+            });
+
+    connect(this->computeFiberSurfaceFeatureButton, &QPushButton::clicked, this, [this]() {
+            this->plotWidget->recomputeFiberSurfaceFeature = true;
+            this->plotWidget->update();
+            this->update();
             });
 
     connect(this->computeTracedFiberSurfaceButton, &QPushButton::clicked, this, [this]() {

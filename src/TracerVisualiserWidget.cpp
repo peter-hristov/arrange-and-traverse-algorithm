@@ -887,7 +887,7 @@ void TracerVisualiserWidget::buildAABBTree()
     aabbTriangleTree.rebuild(pickingTriangles.begin(), pickingTriangles.end());
     aabbTriangleTree.accelerate_distance_queries();
 
-    qDebug() << "AABB tree built with" << pickingTriangles.size() << "triangles";
+    //qDebug() << "AABB tree built with" << pickingTriangles.size() << "triangles";
 }
 
 int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)

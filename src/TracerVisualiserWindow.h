@@ -43,6 +43,8 @@ class TracerVisualiserWindow : public QWidget
 
     QSlider *fakeSlider;
     QPushButton *computeTracedFiberSurfaceButton; 
+    QPushButton *computeFiberSurfaceButton; 
+    QPushButton *computeFiberSurfaceFeatureButton; 
 
 
     QPushButton *clearFibersButton; 
