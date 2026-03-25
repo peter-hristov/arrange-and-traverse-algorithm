@@ -1391,3 +1391,58 @@ void io::saveOriginalMesh(const std::string filename, vtkSmartPointer<vtkUnstruc
     writer->SetInputData(originalMesh);
     writer->Write();
 }
+
+void io::saveFiberPointsAsTriangleSoup(const std::vector<FiberPoint>& fiberPoints, const std::string& filename)
+{
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+        std::filesystem::create_directories(filePath.parent_path());
+
+    auto vtkPts = vtkSmartPointer<vtkPoints>::New();
+    auto vtkCells = vtkSmartPointer<vtkCellArray>::New();
+
+    auto vtkSheetId = vtkSmartPointer<vtkIntArray>::New();
+    vtkSheetId->SetName("sheetId");
+    vtkSheetId->SetNumberOfComponents(1);
+
+    auto vtkTriangleId = vtkSmartPointer<vtkIntArray>::New();
+    vtkTriangleId->SetName("triangleId");
+    vtkTriangleId->SetNumberOfComponents(1);
+
+    auto colourArray = vtkSmartPointer<vtkDoubleArray>::New();
+    colourArray->SetName("Colour");
+    colourArray->SetNumberOfComponents(3);
+
+    // Every 3 points is a triangle
+    for (int i = 0; i + 2 < (int)fiberPoints.size(); i += 3)
+    {
+        vtkIdType ids[3];
+        for (int j = 0; j < 3; j++)
+        {
+            ids[j] = vtkPts->InsertNextPoint(fiberPoints[i+j].point.data());
+        }
+
+        vtkCells->InsertNextCell(3, ids);
+
+        // Per-cell (per-triangle) attributes — use first point's values
+        vtkSheetId->InsertNextValue(fiberPoints[i].sheetId);
+        vtkTriangleId->InsertNextValue(fiberPoints[i].triangleId);
+
+        std::array<double, 3> col = {fiberPoints[i].colour[0], fiberPoints[i].colour[1], fiberPoints[i].colour[2]};
+        colourArray->InsertNextTuple(col.data());
+    }
+
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(vtkPts);
+    polyData->SetPolys(vtkCells);
+    polyData->GetCellData()->AddArray(vtkSheetId);
+    polyData->GetCellData()->AddArray(vtkTriangleId);
+    polyData->GetCellData()->AddArray(colourArray);
+    polyData->GetCellData()->SetScalars(colourArray);
+
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(polyData);
+    writer->SetDataModeToBinary();
+    writer->Write();
+}

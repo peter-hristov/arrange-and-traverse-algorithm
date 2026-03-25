@@ -97,11 +97,13 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 
         filename = "./output/fiber-surface.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
-        io::saveFiberSurface(this->data.surfaceMeshes, filename);
+        //io::saveFiberSurface(this->data.surfaceMeshes, filename);
+        io::saveFiberPointsAsTriangleSoup(this->tracerVisualiserWidget->faceFiberSurface, filename);
 
         filename = "./output/fiber-surface-features.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
-        io::saveFiberSurface(this->data.surfaceMeshesFeatures, filename);
+        //io::saveFiberSurface(this->data.surfaceMeshesFeatures, filename);
+        io::saveFiberPointsAsTriangleSoup(this->tracerVisualiserWidget->faceFiberSurfaceFeatures, filename);
 
         filename = "./output/reeb-space.png";
         std::cout << "Saving surfaces to to " << filename << std::endl;
@@ -128,6 +130,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     checkboxShowFiberSurfaces = new QCheckBox("Show Fiber Surface");
     checkboxShowFiberSurfaces->setChecked(true);
+
+    checkboxShowFeatures = new QCheckBox("Show Features");
+    checkboxShowFeatures->setChecked(true);
 
     //checkboxShowFaces = new QCheckBox("Show Faces");
     //checkboxShowFaces->setChecked(true);
@@ -178,6 +183,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     rowOneLayout->addWidget(checkboxShowFibers,0, 0);
     //rowOneLayout->addWidget(vertexOpacitySlider, 0, 1);
     rowOneLayout->addWidget(checkboxShowFiberSurfaces,1, 0);
+    rowOneLayout->addWidget(checkboxShowFeatures,2, 0);
     //rowOneLayout->addWidget(edgeOpacitySlider, 1, 1);
     //rowOneLayout->addWidget(checkboxShowFaces,2, 0);
     //rowOneLayout->addWidget(faceOpacitySlider, 2, 1);
@@ -237,10 +243,10 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             });
 
     connect(buttonAddTopSheets, &QPushButton::clicked, this, [this]() {
-            const int numberOfSheets = spinBoxAddTopSheets->value();
+            const size_t numberOfSheets = spinBoxAddTopSheets->value();
             this->tracerVisualiserWidget->selectedSheetIds = {};
 
-            for (int i = 0 ; i < numberOfSheets ; i++)
+            for (int i = 0 ; i < std::min(numberOfSheets, data.reebSpace2.sheetOrder.size()) ; i++)
             {
                 this->tracerVisualiserWidget->selectedSheetIds.insert(data.reebSpace2.sheetOrder[i]);
             }
@@ -332,6 +338,12 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     connect(checkboxShowFiberSurfaces, &QCheckBox::toggled, [=](bool checked) {
             this->tracerVisualiserWidget->drawFiberSurfaces = checked;
+            this->tracerVisualiserWidget->generateDisplayList();
+            this->tracerVisualiserWidget->update();
+            });
+
+    connect(checkboxShowFeatures, &QCheckBox::toggled, [=](bool checked) {
+            this->tracerVisualiserWidget->drawFiberSurfaceFeatures = checked;
             this->tracerVisualiserWidget->generateDisplayList();
             this->tracerVisualiserWidget->update();
             });
