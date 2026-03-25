@@ -66,6 +66,18 @@ int main(int argc, char* argv[])
     string outputSheetFibersFolder;
     cliApp.add_option("--outputSheetFibersFolder", outputSheetFibersFolder, "Folder in which to ouput fiber for each sheet.");
 
+    std::optional<float> fMin;
+    cliApp.add_option("--fMin", fMin, "Set the min value for the f scalar field.");
+
+    std::optional<float> gMin;
+    cliApp.add_option("--gMin", gMin, "Set the min value for the g scalar field.");
+
+    std::optional<float> fMax;
+    cliApp.add_option("--fMax", fMax, "Set the max value for the f scalar field.");
+
+    std::optional<float> gMax;
+    cliApp.add_option("--gMax", gMax, "Set the max value for the g scalar field.");
+
     //string outputFibersFilename = "./fibers.vtp";
     //cliApp.add_option("--outputFibers", outputSheetPolygonsFilename, "Filename where to save the visible fiber components. Must be .vtp");
 
@@ -105,7 +117,7 @@ int main(int argc, char* argv[])
     Timer::stop("Sorting range points                   :");
 
     Timer::start();
-    tetMesh.computeBoundingBoxes();
+    tetMesh.computeBoundingBoxes(fMin, fMax, gMin, gMax);
     Timer::stop("Computing bounding boxes               :");
 
     Timer::start();

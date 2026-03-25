@@ -67,10 +67,16 @@ void TetMesh::computeRangeBoundingBox()
     maxG = *maxGIt;
 }
 
-void TetMesh::computeBoundingBoxes()
+void TetMesh::computeBoundingBoxes(std::optional<float> fMin, std::optional<float> fMax, std::optional<float> gMin, std::optional<float> gMax)
 {
     computeDomainBoundingBox();
     computeRangeBoundingBox();
+
+    if (fMin.has_value()) { this->minF = fMin.value(); }
+    if (fMax.has_value()) { this->maxF = fMax.value(); }
+
+    if (gMin.has_value()) { this->minG = gMin.value(); }
+    if (gMax.has_value()) { this->maxG = gMax.value(); }
 }
 
 void TetMesh::sortVertices()
