@@ -68,7 +68,7 @@ class PlotWidget : public QWidget
         QPointF mousePointInitialPos;
 
         // Position of where we click and drag on the widget
-        QPointF mousePoint;
+        QPointF mousePoint{-10, -10};
 
         std::optional<QPointF> controlPointSheetSelection;
 
@@ -91,9 +91,12 @@ class PlotWidget : public QWidget
         const float sphereRadius = this->resolution / 100.0;
         const float controlPointRadious = this->resolution / 200.0;
 
+        void saveToFile(const std::string& filename);
+
     protected:
         void mouseMoveEvent(QMouseEvent* event);
         void mousePressEvent(QMouseEvent* event);
         void drawInteriorPointsImages(QPainter& p);
         void drawAxisLabels(QPainter& p);
+        void drawAxisLabels2(QPainter& p);
 };

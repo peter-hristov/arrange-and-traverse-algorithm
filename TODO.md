@@ -14,6 +14,9 @@
     [x] Why is it taking so much memory for example for ET-3?
     [x] Potential bug at isabel-4-cropped (crashed)
 
+    [ ] Saved fiber surfaced with fiber visualiser colours
+    [ ] Save fiber surfaces all in one file
+    [ ] Output the names of saved files
 
 
     [ ] (Optional) Map each regular vertex of the mesh to a sheet (sheet area estimate).

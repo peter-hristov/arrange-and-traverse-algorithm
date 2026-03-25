@@ -456,6 +456,10 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh
 
 void io::saveFiberSurface(std::vector<SurfaceMesh>& surfMeshes, const std::string& filename)
 {
+    if (surfMeshes.empty())
+    {
+        return;
+    }
 
     std::filesystem::path filePath(filename);
     if (filePath.has_parent_path())
@@ -681,10 +685,6 @@ TetMesh io::readDataVtu(const std::string &filename)
         throw std::runtime_error("Mesh contains no cells: " + filename);
     }
 
-    // Set deault names for the range axis
-    tetMesh.longnameF = "f";
-    tetMesh.longnameG = "g";
-
     int numVertices = mesh->GetPoints()->GetNumberOfPoints(); 
     int numTets = mesh->GetNumberOfCells();
 
@@ -729,6 +729,11 @@ TetMesh io::readDataVtu(const std::string &filename)
 
     vtkDataArray* fDataArray = pointData->GetArray(1);
     vtkDataArray* gDataArray = pointData->GetArray(0);
+
+    // Set deault names for the range axis
+    tetMesh.longnameF = fDataArray->GetName();
+    tetMesh.longnameG = gDataArray->GetName();
+
 
     assert(fDataArray->GetNumberOfTuples() == numVertices);
     assert(gDataArray->GetNumberOfTuples() == numVertices);
@@ -1007,6 +1012,11 @@ void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, cons
 
 void io::saveFibers(const std::vector<FiberPoint> &fiberPoints, const std::string &filename)
 {
+    if (fiberPoints.empty())
+    {
+        return;
+    }
+
     //std::cout << "Saving fibers in " << filename << std::endl;
 
     // Create parent directory if it doesn't exist

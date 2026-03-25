@@ -99,6 +99,10 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         filename = "./output/fiber-surface.vtp";
         io::saveFiberSurface(this->data.surfaceMeshes, filename);
         std::cout << "Saving surfaces to to " << filename << std::endl;
+
+        filename = "./output/reeb-space.png";
+        this->plotWidget->saveToFile(filename);
+        std::cout << "Saving surfaces to to " << filename << std::endl;
     }
 
 }

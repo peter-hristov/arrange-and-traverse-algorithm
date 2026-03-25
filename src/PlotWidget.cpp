@@ -11,6 +11,7 @@
 #include <QVector>
 #include <QtGui>
 
+#include <filesystem>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -466,6 +467,20 @@ void PlotWidget::resizeEvent(QResizeEvent* event)
     generateStaticReebSpaceCache();
 }
 
+void PlotWidget::saveToFile(const std::string& filename)
+{
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+        std::filesystem::create_directories(filePath.parent_path());
+
+    // Force a repaint so everything is current, then grab
+    this->repaint();
+    QPixmap pixmap = this->grab();
+    pixmap = pixmap.scaled(1000, 1000, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+    pixmap.save(QString::fromStdString(filename));
+}
+
 void PlotWidget::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
@@ -823,7 +838,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
     p.restore();
-    drawAxisLabels(p);
+    drawAxisLabels2(p);
 }
 
 
@@ -833,6 +848,43 @@ QPointF PlotWidget::rescalePoint(const float &u, const GLfloat &v)
     const float rescaledU = (resolution / (paddedMaxF - paddedMinF)) * (u - paddedMinF);
     const float rescaledV = (resolution / (paddedMaxG - paddedMinG)) * (v - paddedMinG);
     return QPointF(rescaledU, rescaledV);
+}
+
+void PlotWidget::drawAxisLabels2(QPainter& p)
+{
+    auto font = p.font();
+    auto penBlack = QPen(Qt::black);
+    penBlack.setWidthF(5.0);
+
+    p.setPen(penBlack);
+
+    font.setPixelSize(70);
+    p.setFont(font);
+
+    float boxOffset = 15;
+
+
+    // X Axis
+    //p.drawLine(boxOffset, resolution - boxOffset, resolution - boxOffset + 100, resolution - boxOffset);
+    // Y Axis
+    //p.drawLine(boxOffset, resolution - boxOffset, boxOffset, boxOffset - 100);
+
+
+    float fZero = (resolution / (data.tetMesh.maxF - data.tetMesh.minF)) * (0.0 - data.tetMesh.minF);
+    float gZero = (resolution / (data.tetMesh.maxG - data.tetMesh.minG)) * (0.0 - data.tetMesh.minG);
+
+    p.drawLine(fZero, -resolution, fZero, resolution);
+    p.drawLine(-resolution, gZero, resolution, gZero);
+
+
+    // x label
+    p.drawText(resolution / 2 - 30, resolution - boxOffset + 5, QString::fromStdString(data.tetMesh.longnameF));
+
+    p.translate(boxOffset + 60, resolution / 2 + 20);
+    p.rotate(-90);
+
+    // y label
+    p.drawText(0, 0, QString::fromStdString(data.tetMesh.longnameG));
 }
 
 void PlotWidget::drawAxisLabels(QPainter& p)
