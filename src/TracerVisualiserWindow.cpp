@@ -33,7 +33,6 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         {
             this->plotWidget->controlPoints.pop_back();
         }
-        this->plotWidget->recomputeFiber = true;
         this->plotWidget->update();
         this->update();
     }

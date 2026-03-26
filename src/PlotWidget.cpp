@@ -158,23 +158,23 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
         QPolygonF qPolygon(points);
 
 
-        //
-        // Draw a polygon per face
-        //
+
+        std::vector<std::pair<float, int>> sheets; // (area, sheetId)
         for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
         {
             const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
+            sheets.push_back({data.reebSpace2.sheetArea[sheetId], sheetId});
+        }
 
-            //if (!this->sibling->selectedSheetIds.empty() && !this->sibling->selectedSheetIds.contains(sheetId))
-            //{
-                //continue;
-            //}
+        if (sheets.empty()) continue;
 
-            //if (desiredSheetId != -1 && sheetId != desiredSheetId)
-            //{
-                //continue;
-            //}
+        // Big sheets first
+        std::sort(sheets.begin(), sheets.end(), [](const auto& a, const auto& b){ return a.first > b.first; });
 
+        // Front-to-back compositing
+        float r = 0, g = 0, b = 0, transmittance = 1.0f;
+        for (const auto& [area, sheetId] : sheets)
+        {
             float alpha;
 
             if (this->sibling->selectedSheetIds.empty())
@@ -197,7 +197,198 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
             p.setPen(Qt::NoPen);
             p.drawPolygon(qPolygon);
         }
+
+
+
+
+        //
+        // Draw a polygon per face
+        //
+        //for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
+        //{
+            //const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
+
+            ////if (!this->sibling->selectedSheetIds.empty() && !this->sibling->selectedSheetIds.contains(sheetId))
+            ////{
+                ////continue;
+            ////}
+
+            ////if (desiredSheetId != -1 && sheetId != desiredSheetId)
+            ////{
+                ////continue;
+            ////}
+
+            //float alpha;
+
+            //if (this->sibling->selectedSheetIds.empty())
+            //{
+                //alpha = 0.3;
+            //}
+            //else if (this->sibling->selectedSheetIds.contains(sheetId))
+            //{
+                //alpha = 0.7;
+            //}
+            //else
+            //{
+                //alpha = 0.05;
+            //}
+
+            //const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+            //const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+
+            //p.setBrush(QColor::fromRgbF(colorF[0], colorF[1], colorF[2], alpha));
+            //p.setPen(Qt::NoPen);
+            //p.drawPolygon(qPolygon);
+        //}
     }
+
+
+
+
+    // New drawing
+
+    
+    //for (auto faceHandle = data.singularArrangement.arr.faces_begin(); faceHandle != data.singularArrangement.arr.faces_end(); ++faceHandle) 
+    //{
+        //if (faceHandle->is_unbounded()) { continue; }
+
+        //QVector<QPointF> points;
+        //typename Arrangement_2::Ccb_halfedge_const_circulator circ = faceHandle->outer_ccb();
+        //typename Arrangement_2::Ccb_halfedge_const_circulator curr = circ;
+        //do {
+            //typename Arrangement_2::Halfedge_const_handle e = curr;
+            //const float u = CGAL::to_double(e->source()->point().x());
+            //const float v = CGAL::to_double(e->source()->point().y());
+            //points << rescalePoint(u, v);
+        //} while (++curr != circ);
+        //QPolygonF qPolygon(points);
+
+        //// Accumulate blended color
+        //float r = 0, g = 0, b = 0, a = 0;
+        //int count = 0;
+
+        //for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
+        //{
+            //const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
+
+            //float alpha;
+            //// No selection
+            //if (this->sibling->selectedSheetIds.empty())
+                //alpha = 0.8;
+            //// Selected sheets
+            //else if (this->sibling->selectedSheetIds.contains(sheetId))
+                //alpha = 0.7;
+            //// Non-selected sheets
+            //else
+                //alpha = 0.05;
+
+            //const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+            //const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+
+            //r += colorF[0];
+            //g += colorF[1];
+            //b += colorF[2];
+            //a += alpha;
+            //count++;
+        //}
+
+        //if (count == 0) continue;
+
+        //r /= count; g /= count; b /= count; a /= count;
+
+        //p.setBrush(QColor::fromRgbF(r, g, b, a));
+        //p.setPen(Qt::NoPen);
+        //p.drawPolygon(qPolygon);
+    //}
+
+
+
+    // Working better
+
+    for (auto faceHandle = data.singularArrangement.arr.faces_begin(); faceHandle != data.singularArrangement.arr.faces_end(); ++faceHandle) 
+    {
+        if (faceHandle->is_unbounded()) { continue; }
+
+        QVector<QPointF> points;
+        typename Arrangement_2::Ccb_halfedge_const_circulator circ = faceHandle->outer_ccb();
+        typename Arrangement_2::Ccb_halfedge_const_circulator curr = circ;
+        do {
+            typename Arrangement_2::Halfedge_const_handle e = curr;
+            const float u = CGAL::to_double(e->source()->point().x());
+            const float v = CGAL::to_double(e->source()->point().y());
+            points << rescalePoint(u, v);
+        } while (++curr != circ);
+        QPolygonF qPolygon(points);
+
+        // Collect sheets for this polygon
+        std::vector<std::pair<float, int>> sheets; // (area, sheetId)
+        for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
+        {
+            const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
+            sheets.push_back({data.reebSpace2.sheetArea[sheetId], sheetId});
+        }
+
+        if (sheets.empty()) continue;
+
+        // Big sheets first
+        std::sort(sheets.begin(), sheets.end(), [](const auto& a, const auto& b){ return a.first > b.first; });
+
+        // Front-to-back compositing
+        float r = 0, g = 0, b = 0, transmittance = 1.0f;
+        for (const auto& [area, sheetId] : sheets)
+        {
+            float sa;
+
+            // No selection
+            if (this->sibling->selectedSheetIds.empty())
+            {
+                sa = 0.3f;
+            }
+            // Selected sheets
+            else if (this->sibling->selectedSheetIds.contains(sheetId))
+            {
+                sa = 0.7f;
+            }
+            // Background sheets (non-selected)
+            else
+            {
+                sa = 0.02f;
+            }
+
+            const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+            const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+
+            r += colorF[0] * sa * transmittance;
+            g += colorF[1] * sa * transmittance;
+            b += colorF[2] * sa * transmittance;
+            transmittance *= (1.0f - sa);
+        }
+
+        const float a = 1.0f - transmittance;
+        if (a <= 0) continue;
+
+        r /= a; g /= a; b /= a;
+
+        p.setBrush(QColor::fromRgbF(
+            std::clamp(r, 0.0f, 1.0f),
+            std::clamp(g, 0.0f, 1.0f),
+            std::clamp(b, 0.0f, 1.0f),
+            std::clamp(a, 0.0f, 1.0f)
+        ));
+        p.setPen(Qt::NoPen);
+        p.drawPolygon(qPolygon);
+    }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -913,7 +1104,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
     p.restore();
-    drawAxisLabels2(p);
+    drawAxisLabels(p);
 }
 
 
