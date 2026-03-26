@@ -241,9 +241,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             const size_t numberOfSheets = spinBoxAddTopSheets->value();
             this->tracerVisualiserWidget->selectedSheetIds = {};
 
-            for (int i = 0 ; i < std::min(numberOfSheets, data.reebSpace2.sheetOrder.size()) ; i++)
+            for (int i = 0 ; i < std::min(numberOfSheets, data.reebSpace2.orderSheet.size()) ; i++)
             {
-                this->tracerVisualiserWidget->selectedSheetIds.insert(data.reebSpace2.sheetOrder[i]);
+                this->tracerVisualiserWidget->selectedSheetIds.insert(data.reebSpace2.orderSheet[i]);
             }
 
 

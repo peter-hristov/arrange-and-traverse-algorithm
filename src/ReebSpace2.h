@@ -3,6 +3,7 @@
 #include "./CGALTypedefs.h"
 
 #include <queue>
+#include <unordered_map>
 
 #include "./TetMesh.h"
 #include "./Arrangement.h"
@@ -73,8 +74,11 @@ class ReebSpace2
         int numberOfSheets;
         std::map<int, double> sheetArea;
         std::map<int, double> sheetAreaProportion;
+
         // Given a number n, what's the nth biggest sheet
-        std::vector<int> sheetOrder;
+        std::vector<int> orderSheet;
+
+        std::unordered_map<int, int> sheetOrder;
 
         std::map<int, std::vector<std::vector<Halfedge_const_handle>>> sheetBoundaries;
         std::map<int, std::vector<std::vector<std::array<double, 2>>>> sheetEpsilonPolygons;
@@ -154,8 +158,6 @@ class ReebSpace2
 
 
 };
-
-
 
 
 

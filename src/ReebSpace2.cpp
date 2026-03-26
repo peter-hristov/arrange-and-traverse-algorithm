@@ -351,7 +351,8 @@ void ReebSpace2::computeSheets(Arrangement &singularArrangement)
 
     for (int i = 0 ; i < sortedSheets.size() ; i++)
     {
-        this->sheetOrder.push_back(sortedSheets[i].first);
+        this->orderSheet.push_back(sortedSheets[i].first);
+        this->sheetOrder[sortedSheets[i].first] = i;
     }
 
     // Can we get some fibers for each

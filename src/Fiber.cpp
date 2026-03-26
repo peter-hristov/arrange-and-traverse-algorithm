@@ -17,7 +17,7 @@
 
 
 
-std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &surfaceMesh, const std::set<int> &selectedSheetIds)
+std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &surfaceMesh, ReebSpace2 &rs, const std::set<int> &selectedSheetIds)
 {
     std::vector<FiberPoint> allFiberPoints;
 
@@ -25,13 +25,14 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
     {
 
         const int sheetId = surfaceMesh.sheetId[f];
+        const int sheetSortId = rs.sheetOrder.at(sheetId);
 
         // Default triangle colour
         std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
 
         if (sheetId != -1)
         {
-            triangleColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+            triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
         }
 
         if (false == selectedSheetIds.empty() && false == selectedSheetIds.contains(sheetId))
@@ -1788,7 +1789,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
         for (const auto &[componentA, componentB] : correspondence)
         {
             const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
-            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+            const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
+            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
             if (_sheetId != -1 && sheetId != _sheetId)
             {
@@ -2082,6 +2084,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
 
             const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
+            const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
 
             if (_sheetId != -1 && sheetId != _sheetId)
             {
@@ -2091,7 +2094,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             uniqueSheetIds.insert(sheetId);
 
 
-            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
 
 
@@ -2152,7 +2155,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             {
                 const int componentB = fiberGraphs[i].componentRoot.at(plusTriangles[0]);
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentB);
-                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
+                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
                 if (_sheetId != -1 && sheetId != _sheetId)
                 {
@@ -2270,7 +2274,8 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
             {
                 const int componentA = fiberGraphs[i-1].componentRoot.at(minusTriangles[0]);
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
-                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+                const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
+                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
                 if (_sheetId != -1 && sheetId != _sheetId)
                 {
@@ -2500,7 +2505,8 @@ std::vector<FiberPoint> fiber::processFiberGraph2(const TetMesh &tetMesh, Arrang
     for (const auto &[componentId, path] : paths)
     {
         const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
-        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+        const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
         for (int i = 0 ; i < path.size() - 1 ; i++)
         {
@@ -2536,7 +2542,8 @@ std::vector<FiberPoint> fiber::processFiberGraph2(const TetMesh &tetMesh, Arrang
     for (const auto &[componentId, cycle] : cycles)
     {
         const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
-        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+        const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
         for (int i = 0 ; i < cycle.size() ; i++)
         {
@@ -2673,7 +2680,8 @@ std::vector<FiberPoint> fiber::computeFiberFromTriangleSeed(const TetMesh &tetMe
         const int currentSheeId = triangleSheetId[currentTriangleId];
         bfsQueue.pop();
 
-        const std::array<float, 3> sheetColour = fiber::fiberColours[currentSheeId % fiber::fiberColours.size()];
+        const int sheetSortId = reebSpace.sheetOrder.at(currentSheeId);
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
         const std::set<int> triangleUnpacked = tetMesh.triangles[currentTriangleId];
         const std::vector<int> triangleIndices = std::vector<int>(triangleUnpacked.begin(), triangleUnpacked.end());
@@ -3259,7 +3267,8 @@ std::vector<FiberPoint> fiber::processFiberGraph(const TetMesh &tetMesh, Arrange
         }
 
         const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
-        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetId % fiber::fiberColours.size()];
+        const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
+        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
         //std::cout << "Sheet Id is : " << sheetId << std::endl;
 
