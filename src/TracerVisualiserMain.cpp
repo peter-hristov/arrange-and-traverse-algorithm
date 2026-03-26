@@ -45,6 +45,9 @@ int main(int argc, char* argv[])
     bool discardFiberSeeds = false;
     cliApp.add_flag("--discardPreimageGraphs, -d", discardFiberSeeds, "Discard the seeds for generating fibers based on sheets, discard to save a bit of memory (not too much).");
 
+    bool headless = false;
+    cliApp.add_flag("--headless", headless, "Run without the graphical interface.");
+
     float perturbationEpsilon = 0.0f;
     cliApp.add_option("--epsilon, -e", perturbationEpsilon, "Strength of the numerial perturbation in the range [-e, e].");
 
@@ -374,9 +377,15 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
-
+    //io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
+
+
+    if (headless)
+    {
+        return 0;
+    }
+
 
     // Set up QT Application
     QApplication app(argc, argv);

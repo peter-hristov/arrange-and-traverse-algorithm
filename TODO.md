@@ -24,7 +24,7 @@
 
     [ ] Standard categorical colour map for sheets
     [x] Sort by volume when you colour
-    [ ] FIX Optional
+    [x] Draw sheets properly
 
     [ ] (Optional) Multiple control polygos for the FS
 
