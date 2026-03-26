@@ -151,9 +151,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     fakeSlider->setTracking(false);
 
     checkboxShowTraces = new QCheckBox("Show fiber point trace.");
-    this->computeTracedFiberSurfaceButton = new QPushButton("Compute Traced Fiber Surface", this);
+    this->computeTracedFiberSurfaceButton = new QPushButton("Trace FS", this);
     this->computeFiberSurfaceFeatureButton = new QPushButton("Compute Features", this);
-    this->computeFiberSurfaceButton = new QPushButton("Compute Fiber Surface", this);
+    this->computeFiberSurfaceButton = new QPushButton("Compute FS", this);
     this->clearAllButton = new QPushButton("Clear All", this);
 
     this->clearFibersButton = new QPushButton("Clear Fibers", this);
