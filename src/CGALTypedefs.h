@@ -132,12 +132,19 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 #include <CGAL/AABB_traits_2.h>
 #include <CGAL/AABB_segment_primitive_2.h>
 
-
-
 typedef std::vector<Segment_2>::const_iterator Iterator;
 typedef CGAL::AABB_segment_primitive_2<K, Iterator> Primitive;
 typedef CGAL::AABB_traits_2<K, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> TreeAABB;
+
+// Faster Cartesian tree
+typedef std::vector<CartesianSegment>::const_iterator IteratorAABBCartesian;
+typedef CGAL::AABB_segment_primitive_2<CartesianKernel, IteratorAABBCartesian> PrimitiveAABBCartesian;
+typedef CGAL::AABB_traits_2<CartesianKernel, PrimitiveAABBCartesian> TraitsAABBCartesian;
+typedef CGAL::AABB_tree<TraitsAABBCartesian> TreeAABBCartesian;
+
+
+
 
 // For way casting to select a segment
 //

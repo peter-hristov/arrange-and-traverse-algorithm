@@ -49,6 +49,9 @@ class Arrangement
     std::vector<Segment_2> singularSegments;
     TreeAABB treeSingular;
 
+    std::vector<CartesianSegment> allSegmentsCartesian;
+    TreeAABBCartesian treeCartesian;
+
     std::unique_ptr<Point_location> pl;  // nullptr by default
 
     // We only add data->arr, the rest of data is unchanged

@@ -1,5 +1,6 @@
 #include "./Timer.h"
 #include "./Arrangement.h"
+#include "src/CGALTypedefs.h"
 
 
 
@@ -29,6 +30,34 @@ void Arrangement::buildAABBtree(const TetMesh &tetMesh)
 
     this->treeSingular = TreeAABB(this->singularSegments.begin(), this->singularSegments.end());
     this->treeSingular.build();
+
+
+
+
+    //for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
+    //{
+        //const std::array<int, 2> &edge = tetMesh.edges[edgeId];
+        //const int &edgeType = tetMesh.edgeSingularTypes.at(edge);
+
+        ////this->allSegmentsCartesian.push_back(CartesianSegment(this->arrangementPoints[edge[0]], this->arrangementPoints[edge[1]]));
+
+
+        //const double x1 = CGAL::to_double(this->arrangementPoints[edge[0]].x());
+        //const double y1 = CGAL::to_double(this->arrangementPoints[edge[0]].y());
+
+        //const double x2 = CGAL::to_double(this->arrangementPoints[edge[1]].x());
+        //const double y2 = CGAL::to_double(this->arrangementPoints[edge[1]].y());
+
+        //this->allSegmentsCartesian.push_back(CartesianSegment(CartesianPoint(x1, y1), CartesianPoint(x2, y2)));
+    //}
+
+    //this->treeCartesian = TreeAABBCartesian(this->allSegmentsCartesian.begin(), this->allSegmentsCartesian.end());
+    //this->treeCartesian.build();
+
+
+
+
+
 
 }
 
@@ -358,10 +387,12 @@ Point_2 Arrangement::findVisibleVertex(const Face_const_handle activeFace, const
 
 std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(TetMesh &tetMesh, const Segment_2 &controlSegment, const bool shouldSort, const bool shouldTruncate)
 {
-    //Timer::start();
+    Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
     this->tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
-    //Timer::stop("Computing AABB                         :");
+    Timer::stop("Finding intersections via AABB         :");
+
+    std::cerr << "There are " << intersectedSegmentsAABB.size() << " intersections.\n";
 
     std::vector<std::tuple<K::FT, int, int>> intersectedSegments;
     intersectedSegments.reserve(intersectedSegmentsAABB.size());
@@ -371,7 +402,7 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
     const double cx2 = CGAL::to_double(controlSegment.source().x());
     const double cy2 = CGAL::to_double(controlSegment.source().y());
 
-    //Timer::start();
+    Timer::start();
     for (auto id : intersectedSegmentsAABB)
     {
         const Segment_2& s = *id;   // dereference iterator to get the original segment
@@ -394,33 +425,36 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
         //                              |
         //                          s.target()
         //
-        K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
-                controlSegment.target().x(), controlSegment.target().y(),
-                controlSegment.source().x(), controlSegment.source().y(),
-                s.source().x(), s.source().y(),
-                s.target().x(), s.target().y());
+        //K::FT alpha = CGAL::Intersections::internal::s2s2_alpha(
+                //controlSegment.target().x(), controlSegment.target().y(),
+                //controlSegment.source().x(), controlSegment.source().y(),
+                //s.source().x(), s.source().y(),
+                //s.target().x(), s.target().y());
 
 
 
 
 
 
-        //double alpha = CGAL::Intersections::internal::s2s2_alpha(
-                //cx1, cy1, cx2, cy2,
-                //CGAL::to_double(s.source().x()), 
-                //CGAL::to_double(s.source().y()),
-                //CGAL::to_double(s.target().x()), 
-                //CGAL::to_double(s.target().y())
-                //);
+        double alpha = CGAL::Intersections::internal::s2s2_alpha(
+                cx1, cy1, cx2, cy2,
+                CGAL::to_double(s.source().x()), 
+                CGAL::to_double(s.source().y()),
+                CGAL::to_double(s.target().x()), 
+                CGAL::to_double(s.target().y())
+                );
 
         intersectedSegments.emplace_back(alpha, segmentIndex, type);
     }
+    Timer::stop("Preparing the intersections            :");
 
 
+    Timer::start();
     if (shouldSort)
     {
         std::sort(intersectedSegments.begin(), intersectedSegments.end());
     }
+    Timer::stop("Sorting                                :");
 
 
     // Keep the sequence only up until you reach a singualr segment
@@ -456,4 +490,3 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
 
     return intersectedSegments;
 }
-
