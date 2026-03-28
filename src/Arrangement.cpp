@@ -387,12 +387,12 @@ Point_2 Arrangement::findVisibleVertex(const Face_const_handle activeFace, const
 
 std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(TetMesh &tetMesh, const Segment_2 &controlSegment, const bool shouldSort, const bool shouldTruncate)
 {
-    Timer::start();
+    //Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
     this->tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
-    Timer::stop("Finding intersections via AABB         :");
+    //Timer::stop("Finding intersections via AABB         :");
 
-    std::cerr << "There are " << intersectedSegmentsAABB.size() << " intersections.\n";
+    //std::cerr << "There are " << intersectedSegmentsAABB.size() << " intersections.\n";
 
     std::vector<std::tuple<K::FT, int, int>> intersectedSegments;
     intersectedSegments.reserve(intersectedSegmentsAABB.size());
@@ -402,7 +402,7 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
     const double cx2 = CGAL::to_double(controlSegment.source().x());
     const double cy2 = CGAL::to_double(controlSegment.source().y());
 
-    Timer::start();
+    //Timer::start();
     for (auto id : intersectedSegmentsAABB)
     {
         const Segment_2& s = *id;   // dereference iterator to get the original segment
@@ -446,15 +446,15 @@ std::vector<std::tuple<K::FT, int, int>> Arrangement::getIntersectedSegments2(Te
 
         intersectedSegments.emplace_back(alpha, segmentIndex, type);
     }
-    Timer::stop("Preparing the intersections            :");
+    //Timer::stop("Preparing the intersections            :");
 
 
-    Timer::start();
+    //Timer::start();
     if (shouldSort)
     {
         std::sort(intersectedSegments.begin(), intersectedSegments.end());
     }
-    Timer::stop("Sorting                                :");
+    //Timer::stop("Sorting                                :");
 
 
     // Keep the sequence only up until you reach a singualr segment

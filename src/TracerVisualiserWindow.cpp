@@ -108,6 +108,9 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         std::cout << "Saving surfaces to to " << filename << std::endl;
 
         this->plotWidget->saveToFile(filename);
+        this->plotWidget->shouldSaveSheets = true;
+
+        this->plotWidget->update();
     }
 
 }

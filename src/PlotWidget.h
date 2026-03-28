@@ -87,6 +87,9 @@ class PlotWidget : public QWidget
         // Whether the mouse is being dragged over the widget
         bool dragging = false;
 
+        void saveSelectedSheets(QPainter& p);
+        bool shouldSaveSheets = false;
+
         const qreal dragThreshold = 4.0;
 
         // This is the radius of the sphere around the fiber point
