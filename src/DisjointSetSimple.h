@@ -90,6 +90,14 @@ class DisjointSetSimple {
             return parent[x];
         }
 
+        int findConst(const int x) const {
+            int current = x;
+            while (parent[current] != current) {
+                current = parent[current];
+            }
+            return current;
+        }
+
         // Union by rank
         void unify(const int &x, const int &y) 
         {

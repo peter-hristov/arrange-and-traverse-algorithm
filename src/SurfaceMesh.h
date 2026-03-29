@@ -583,6 +583,11 @@ class SurfaceMesh
             // 2. Compute the fiber graph at the alpha in the range
             const std::vector<std::pair<int, int>> fiberSeeds = reebSpace.computeSeedFibersGivenLine(tetMesh, singularArrangement, controlSegment, midPointAlpha, intersectedSegments);
 
+            if (fiberSeeds.empty())
+            {
+                return -1;
+            }
+
             // 3. Determine which fiber component contains a triangle from the tet
             const int tetId = this->tetId[triangle];
 
@@ -642,7 +647,7 @@ class SurfaceMesh
             {
                 if (fg.componentRoot.contains(triangleId))
                 {
-                    return reebSpace.correspondenceGraphDS.find(fg.componentRoot.at(triangleId));
+                    return reebSpace.correspondenceGraphDS.findConst(fg.componentRoot.at(triangleId));
                 }
 
                 //printf("The barycentric coordinate of triangle id %d with midpoint (%f, %f, %f) are (%f, %f, %f, %f).\nThe range value is (%f, %f) and the sheet is %d\n", i, midpoint[0], midpoint[1], midpoint[2], barycentricCoordinates[0], barycentricCoordinates[1], barycentricCoordinates[2], barycentricCoordinates[3], u, v, triangleSheet[i]);
@@ -680,6 +685,7 @@ class SurfaceMesh
                     componentRepresentatives.push_back({face, componentId});
                 }
             }
+
 
             // 3. Compute one flexible fiber per representative triangle
             //

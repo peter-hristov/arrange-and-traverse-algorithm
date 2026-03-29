@@ -70,3 +70,8 @@ target_link_libraries(${PROJECT_NAME}
     OpenMP::OpenMP_CXX
     ttk::vtk::ttkAll
     )
+
+
+# Add this to your CMakeLists.txt
+#target_compile_options(${PROJECT_NAME} PRIVATE -g -O1 -fsanitize=thread)
+#target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=thread)

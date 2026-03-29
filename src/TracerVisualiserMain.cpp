@@ -372,8 +372,24 @@ int main(int argc, char* argv[])
 
     if (false == fiberBenchmarkFile.empty())
     {
+        for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
+        {
+            auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
+            curve.is_vertical();          // forces lazy _is_vertical initialization
+        }
+
+        //Timer::start();
+        ////for (auto v = singularArrangement.arr.vertices_begin(); v != singularArrangement.arr.vertices_end(); ++v) {
+        ////v->point().x().exact();
+        ////v->point().y().exact();
+        ////}
+        //for (auto v = singularArrangement.arr.vertices_begin(); v != singularArrangement.arr.vertices_end(); ++v) {
+        //std::cout << v->point().x().exact() << " " << v->point().y().exact() << "\n";
+        //}        
+        //Timer::stop("Evaluating all exact coordinates             :");
+
         //performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
-        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberBenchmarkFile);
+        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 10000, fiberBenchmarkFile);
         return 0;
     }
 

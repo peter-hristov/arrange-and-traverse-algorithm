@@ -2701,6 +2701,9 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
 
     if (false == CGAL::do_intersect(controlPoint, controlSegment))
     {
+        std::cerr << "The control point is not on the control segment.";
+        return {};
+
         throw std::runtime_error("The control point is not on the control segment.");
     }
 
@@ -2801,6 +2804,7 @@ FiberGraph ReebSpace2::computeFiberGraph3(TetMesh &tetMesh, Arrangement &singula
         // If we are back at the start but we have not foudn the destination segment
         if (currentHalfEdge == activeFace->outer_ccb())
         {
+            return {};
             throw std::runtime_error("Desired half-edge not found!");
         }
 
@@ -3165,6 +3169,7 @@ std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibers(TetMesh &tetMesh,
         if (alpha == desiredAlpha)
         {
             std::cerr << "DEGENERATE CASE DETECTED!!!!!!!!!!!!!";
+            return {};
             throw std::runtime_error("DEGEN CASE DETECTED!!!!!!!!!!!!!.");
         }
 
@@ -3290,13 +3295,15 @@ std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibersGivenLine(TetMesh 
 
     if (false == CGAL::do_intersect(controlPoint, controlSegment))
     {
+        std::cerr << "The control point is not on the control segment.";
+        return {};
+
         throw std::runtime_error("The control point is not on the control segment.");
     }
 
     // 1. Compute the active face
     Face_const_handle activeFace = singularArrangement.getActiveFace(controlPoint);
     if (activeFace->is_unbounded()) { return {}; }
-
     const int activeFaceId = singularArrangement.arrangementFacesIdices[activeFace];
 
     int graphUpdates = 0;
@@ -3395,6 +3402,7 @@ std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibersGivenLine(TetMesh 
         // If we are back at the start but we have not foudn the destination segment
         if (currentHalfEdge == activeFace->outer_ccb())
         {
+            return {};
             throw std::runtime_error("Desired half-edge not found!");
         }
 
@@ -3470,6 +3478,7 @@ std::vector<std::pair<int, int>> ReebSpace2::computeSeedFibersGivenLine(TetMesh 
         if (alpha == desiredAlpha)
         {
             std::cerr << "DEGENERATE CASE DETECTED!!!!!!!!!!!!!";
+            return {};
             throw std::runtime_error("DEGEN CASE DETECTED!!!!!!!!!!!!!.");
         }
 
