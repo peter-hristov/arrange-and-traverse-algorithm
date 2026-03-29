@@ -9,6 +9,15 @@ make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/torus/torus-f
 make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-3-tets-1437480.perturbed.vtu -l ~/Projects/data/reeb-space-test-data/torus/torus-factor-3-tets-1437480.perturbed.rs -b torus-id-1-fiber-benchmark.csv
 
 
+
+make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-4.vtu -l ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-4.rs -b torus-id-4-fiber-benchmark.csv
+make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-3.vtu -l ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-3.rs -b torus-id-3-fiber-benchmark.csv
+
+make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-2.vtu -l ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-2.rs -b torus-id-2-fiber-benchmark.csv
+
+make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-1.vtu -l ~/Projects/data/reeb-space-test-data/torus/scaling-experiment-new/downsample-id-1.rs -b torus-id-1-fiber-benchmark.csv
+
+
 ### Stilbele
 
 make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/stilbene/scaling-experiment/downsample-4.vtu -l ~/Projects/data/reeb-space-test-data/stilbene/scaling-experiment/downsample-4.rs -b sb-id-4-fiber-benchmark.csv

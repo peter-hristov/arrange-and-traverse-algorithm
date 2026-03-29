@@ -38,11 +38,14 @@ namespace performance
             try {
 
                 const auto start = std::chrono::high_resolution_clock::now();
-                FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, {x, y});
+
+                auto fiberSeeds = reebSpace.computeSeedFibers(tetMesh, singularArrangement, {x, y}, {});
+                const std::vector<FiberPoint> fiberNew =  fiber::computeFiberFromTriangleSeed(tetMesh, singularArrangement, reebSpace, {x, y}, fiberSeeds);
+
                 const auto end = std::chrono::high_resolution_clock::now();
                 const double elapsed = std::chrono::duration<double>(end - start).count();
 
-                if (fg.componentRoot.size() > 0)
+                if (fiberSeeds.size() > 0)
                 {
                     timings.push_back(elapsed);
                 }

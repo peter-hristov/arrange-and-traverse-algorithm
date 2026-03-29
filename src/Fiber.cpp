@@ -2448,14 +2448,14 @@ std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &si
 
 
 
-    //Timer::start();
+    Timer::start();
 
     auto fiberSeeds = reebSpace.computeSeedFibers(tetMesh, singularArrangement, controlPoint, selectedSheetIds);
 
 
     const std::vector<FiberPoint> fiberNew =  computeFiberFromTriangleSeed(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
 
-    //Timer::stop("Computing fiber new way                :");
+    Timer::stop("Computing fiber new way                :");
 
 
 

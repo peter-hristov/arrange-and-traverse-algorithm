@@ -187,27 +187,35 @@ int main(int argc, char* argv[])
     {
         Timer::start();
         reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
-        Timer::stop("Computed red/blud intersetions         :");
+        //Timer::stop("Computed red/blud intersetions         :");
 
-        Timer::start();
+        //Timer::start();
         reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
-        Timer::stop("Edge regions plus/minus triangles      :");
+        //Timer::stop("Edge regions plus/minus triangles      :");
 
-        Timer::start();
+        //Timer::start();
         reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
-        Timer::stop("Computed vertex regions                :");
+        //Timer::stop("Computed vertex regions                :");
 
-        Timer::start();
+        //Timer::start();
         reebSpace2.determineVertexRegionSegmentsOrientation(tetMesh, singularArrangement);
-        Timer::stop("Vertex regions plus/minus triangles    :");
+        //Timer::stop("Vertex regions plus/minus triangles    :");
 
-        Timer::start();
+        //Timer::start();
         reebSpace2.determineEdgeCrossingSegmentsOriantation(tetMesh, singularArrangement);
-        Timer::stop("Edge crossing plus/minus triangles     :");
+        //Timer::stop("Edge crossing plus/minus triangles     :");
 
         Timer::start();
         reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
-        Timer::stop("Computed singular traversal            :");
+        //Timer::stop("Computed singular traversal            :");
+        Timer::stop("Computed Reeb space                    :");
+
+        size_t totalBytes = sizeof(reebSpace2.representativeFiberGraphSeeds);
+        for (const auto& inner : reebSpace2.representativeFiberGraphSeeds) {
+            totalBytes += sizeof(inner) + inner.capacity() * sizeof(std::pair<int,int>);
+        }
+        std::cout << "Seed Set Size: " << totalBytes << " bytes ("
+            << totalBytes / 1024.0 / 1024.0 << " MB)\n";
 
         if (false == saveReebSpaceFile.empty())
         {
@@ -388,8 +396,8 @@ int main(int argc, char* argv[])
         //}        
         //Timer::stop("Evaluating all exact coordinates             :");
 
-        //performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
-        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 10000, fiberBenchmarkFile);
+        performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
+        //performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 10000, fiberBenchmarkFile);
         return 0;
     }
 
