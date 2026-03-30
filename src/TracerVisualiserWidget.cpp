@@ -449,15 +449,17 @@ TracerVisualiserWidget::drawScene()
 
     glDisable(GL_LIGHTING);
     glColor3f(0.5, 0.5, 0.5);
-    drawWiredCube(vertices);
+    //drawWiredCube(vertices);
     glEnable(GL_LIGHTING);
 
 
     glColor3f(1, 1, 1);
 
+        glDisable(GL_LIGHTING);
     if (true == this->drawEdges)
     {
-        glColor4f(1, 1, 1, this->edgeOpacity);
+        //glColor4f(1, 1, 1, this->edgeOpacity);
+        glColor3f(0.5, 0.5, 0.5);
 
         // Tet Edges
         glBegin(GL_LINES);
@@ -481,18 +483,18 @@ TracerVisualiserWidget::drawScene()
                             std::swap(aIndex, bIndex);
                         }
 
-                        const int edgeType = data.tetMesh.edgeSingularTypes.at({aIndex, bIndex});
+                        //const int edgeType = data.tetMesh.edgeSingularTypes.at({aIndex, bIndex});
 
-                        if (edgeType == 0)
-                        {
-                            glColor3f(0.6f, 0.85f, 0.85f);
-                        }
-                        else if(edgeType == 2)
-                        {
-                            glColor3f(1.0f, 0.647f, 0.0f);
-                        }
+                        //if (edgeType == 0)
+                        //{
+                            //glColor3f(0.6f, 0.85f, 0.85f);
+                        //}
+                        //else if(edgeType == 2)
+                        //{
+                            //glColor3f(1.0f, 0.647f, 0.0f);
+                        //}
 
-                        if (edgeType !=1)
+                        //if (edgeType !=1)
                         {
                             GLfloat pointA[3], pointB[3];
 
@@ -513,6 +515,7 @@ TracerVisualiserWidget::drawScene()
         }
         glEnd();
     }
+        glEnable(GL_LIGHTING);
 
     glPushMatrix();
     {

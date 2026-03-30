@@ -53,7 +53,7 @@ class TracerVisualiserWindow : public QWidget
     QPushButton *clearAllButton; 
 
 
-    QCheckBox *checkboxShowTraces;
+    QPushButton *buttonShowTraces;
 
     QSpinBox* spinBoxAddSheet;
     QPushButton* buttonAddSheet;

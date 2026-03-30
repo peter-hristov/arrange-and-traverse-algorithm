@@ -1,5 +1,33 @@
 # TODO
 
+
+
+
+Important sheets
+
+    Top Ring:
+        purple, horizontal, 3846
+        brown,  horizontal, 3741
+        gray,   horizontal, 5104
+
+    Connecting chain
+        orange, horizontal, 13188
+        blue,   vertical,   2105
+
+    Bottom ring:
+        red,    vertical,   193219 
+        green,  vertical,   485
+        composite, vertical, 214 320 754 34139 61832
+        
+        
+
+
+
+
+
+
+
+
 [ ] Current
     [x] Save fibers and fiber surfaces.
     [x] Draw fibers and fiber surfaces at the same time.

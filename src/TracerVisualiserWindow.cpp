@@ -4,12 +4,15 @@
 #include <utility>
 #include <QCheckBox>
 #include <QHBoxLayout>
+#include <QGroupBox>
+#include <QPlainTextEdit>
+
 
 
 #include "./TracerVisualiserWindow.h"
 #include "./Data.h"
 #include "./io.h"
-#include "src/ReebSpace2.h"
+#include "./ReebSpace2.h"
 
 using namespace std;
 void
@@ -77,7 +80,8 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
 
     if (event->key() == Qt::Key_C) {
-        checkboxShowTraces->setChecked(!checkboxShowTraces->isChecked());
+        //checkboxShowTraces->setChecked(!checkboxShowTraces->isChecked());
+        this->buttonShowTraces->click();
     }
 
     if (event->key() == Qt::Key_D) {
@@ -112,7 +116,6 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 
         this->plotWidget->update();
     }
-
 }
 
 TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
@@ -152,15 +155,22 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     fakeSlider = new QSlider(Qt::Horizontal);
     fakeSlider->setTracking(false);
 
-    checkboxShowTraces = new QCheckBox("Show fiber point trace.");
-    this->computeTracedFiberSurfaceButton = new QPushButton("Trace FS", this);
-    this->computeFiberSurfaceFeatureButton = new QPushButton("Compute Features", this);
-    this->computeFiberSurfaceButton = new QPushButton("Compute FS", this);
-    this->clearAllButton = new QPushButton("Clear All", this);
+    //this->checkboxShowTraces = new QCheckBox("Trace Fiber.");
 
-    this->clearFibersButton = new QPushButton("Clear Fibers", this);
-    this->clearFiberSurfaceButton = new QPushButton("Clear FS", this);
-    this->clearSelectedSheetsButton = new QPushButton("Clear Sheets", this);
+
+    this->buttonShowTraces = new QPushButton("Trace Fiber", this);
+    buttonShowTraces->setCheckable(true);
+    buttonShowTraces->setChecked(false);
+
+    this->computeTracedFiberSurfaceButton = new QPushButton("Trace FS", this);
+    this->computeFiberSurfaceFeatureButton = new QPushButton("Features", this);
+    this->computeFiberSurfaceButton = new QPushButton("FS", this);
+
+    this->clearAllButton = new QPushButton("All", this);
+
+    this->clearFibersButton = new QPushButton("Fibers", this);
+    this->clearFiberSurfaceButton = new QPushButton("FS", this);
+    this->clearSelectedSheetsButton = new QPushButton("Sheets", this);
 
     //this->buttonAddNewControlPolygon = new QPushButton("Add FSCP", this);
 
@@ -169,11 +179,11 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     this->spinBoxAddSheet = new QSpinBox(this);
     spinBoxAddSheet->setRange(1, FiberGraph::componentCount);
 
-    this->buttonAddSheet = new QPushButton("Add sheet", this);
+    this->buttonAddSheet = new QPushButton("Add", this);
 
     this->spinBoxAddTopSheets = new QSpinBox(this);
     spinBoxAddTopSheets->setRange(1, 100);
-    this->buttonAddTopSheets = new QPushButton("Add Top sheets", this);
+    this->buttonAddTopSheets = new QPushButton("Add", this);
 
     //
     // Layouts
@@ -181,49 +191,140 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     optionsLayout = new QGridLayout();
     optionsLayout2 = new QGridLayout();
 
-    auto rowOneLayout = new QGridLayout();
-    rowOneLayout->addWidget(checkboxShowFibers,0, 0);
-    //rowOneLayout->addWidget(vertexOpacitySlider, 0, 1);
-    rowOneLayout->addWidget(checkboxShowFiberSurfaces,1, 0);
-    rowOneLayout->addWidget(checkboxShowFeatures,2, 0);
-    //rowOneLayout->addWidget(edgeOpacitySlider, 1, 1);
-    //rowOneLayout->addWidget(checkboxShowFaces,2, 0);
-    //rowOneLayout->addWidget(faceOpacitySlider, 2, 1);
-
-    optionsLayout->addLayout(rowOneLayout, 0, 0);
-
-
-    optionsLayout2->addWidget(clearFibersButton, 0, 0);
-    optionsLayout2->addWidget(clearFiberSurfaceButton, 0, 1);
-    optionsLayout2->addWidget(clearSelectedSheetsButton, 0, 2);
-    optionsLayout2->addWidget(clearAllButton, 0, 3);
+    QGroupBox* visibilityGroup = new QGroupBox("Visibility");
+    auto rowOneLayout = new QGridLayout(visibilityGroup);
+    rowOneLayout->setContentsMargins(4, 4, 4, 4);
+    rowOneLayout->setSpacing(4);
+    rowOneLayout->addWidget(checkboxShowFibers,        0, 0);
+    rowOneLayout->addWidget(vertexOpacitySlider,       0, 1);
+    rowOneLayout->addWidget(checkboxShowFiberSurfaces, 1, 0);
+    rowOneLayout->addWidget(edgeOpacitySlider,         1, 1);
+    rowOneLayout->addWidget(checkboxShowFeatures,      2, 0);
+    rowOneLayout->addWidget(fakeSlider,                2, 1);
+    optionsLayout->addWidget(visibilityGroup, 0, 1);
 
 
 
-    optionsLayout2->addWidget(checkboxShowTraces, 1, 0);
-    optionsLayout2->addWidget(computeFiberSurfaceButton, 1, 1);
-    optionsLayout2->addWidget(computeFiberSurfaceFeatureButton, 1, 2);
-    optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 1, 3);
-    //optionsLayout2->addWidget(buttonAddNewControlPolygon, 1, 4);
+    // --- Clear group box (2x2) ---
+    QGroupBox* clearGroup = new QGroupBox("Clear");
+    QGridLayout* clearGrid = new QGridLayout(clearGroup);
+    clearGrid->addWidget(clearFibersButton,        0, 0);
+    clearGrid->addWidget(clearFiberSurfaceButton,  0, 1);
+    clearGrid->addWidget(clearSelectedSheetsButton,1, 0);
+    clearGrid->addWidget(clearAllButton,           1, 1);
 
-    //optionsLayout2->addWidget(fakeSlider, 1, 1);
+    optionsLayout2->addWidget(clearGroup, 0, 0);
 
-    optionsLayout2->addWidget(spinBoxAddSheet, 2, 0);
-    optionsLayout2->addWidget(buttonAddSheet, 2, 1);
 
-    optionsLayout2->addWidget(spinBoxAddTopSheets, 2, 2);
-    optionsLayout2->addWidget(buttonAddTopSheets, 2, 3);
+
+
+
+
+
+
+    // --- Compute group box (2x2) ---
+    QGroupBox* computeGroup = new QGroupBox("Compute");
+    QGridLayout* computeGrid = new QGridLayout(computeGroup);
+    computeGrid->addWidget(computeFiberSurfaceButton,        0, 0);
+    computeGrid->addWidget(computeFiberSurfaceFeatureButton, 0, 1);
+    computeGrid->addWidget(computeTracedFiberSurfaceButton,  1, 0);
+    //computeGrid->addWidget(checkboxShowTraces,               1, 1);
+    computeGrid->addWidget(buttonShowTraces,               1, 1);
+
+
+    optionsLayout2->addWidget(computeGroup, 0, 1);
+
+    //optionsLayout2->addWidget(clearFibersButton, 0, 0);
+    //optionsLayout2->addWidget(clearFiberSurfaceButton, 0, 1);
+    //optionsLayout2->addWidget(clearSelectedSheetsButton, 0, 2);
+    //optionsLayout2->addWidget(clearAllButton, 0, 3);
+
+
+
+    //optionsLayout2->addWidget(checkboxShowTraces, 1, 0);
+    //optionsLayout2->addWidget(computeFiberSurfaceButton, 1, 1);
+    //optionsLayout2->addWidget(computeFiberSurfaceFeatureButton, 1, 2);
+    //optionsLayout2->addWidget(computeTracedFiberSurfaceButton, 1, 3);
+    ////optionsLayout2->addWidget(buttonAddNewControlPolygon, 1, 4);
+
+    ////optionsLayout2->addWidget(fakeSlider, 1, 1);
+
+
+
+
+    //optionsLayout2->addWidget(spinBoxAddSheet, 1, 0);
+    //optionsLayout2->addWidget(buttonAddSheet, 1, 1);
+    //optionsLayout2->addWidget(spinBoxAddTopSheets, 1, 2);
+    //optionsLayout2->addWidget(buttonAddTopSheets, 1, 3);
+
+    QGroupBox* addSheetsGroup = new QGroupBox("Select Sheets");
+    QGridLayout* addSheetsGrid = new QGridLayout(addSheetsGroup);
+    addSheetsGrid->setContentsMargins(4, 4, 4, 4);
+    addSheetsGrid->setSpacing(4);
+
+    addSheetsGrid->addWidget(new QLabel("By ID:"), 0, 0);
+    addSheetsGrid->addWidget(spinBoxAddSheet,       0, 1);
+    addSheetsGrid->addWidget(buttonAddSheet,        0, 2);
+
+    addSheetsGrid->addWidget(new QLabel("Top N:"), 1, 0);
+    addSheetsGrid->addWidget(spinBoxAddTopSheets,   1, 1);
+    addSheetsGrid->addWidget(buttonAddTopSheets,    1, 2);
+
+    optionsLayout2->addWidget(addSheetsGroup, 0, 2);
+
+
+    QGroupBox* infoGroup = new QGroupBox("Information");
+    QVBoxLayout* infoLayout = new QVBoxLayout(infoGroup);
+    infoLayout->setContentsMargins(4, 4, 4, 4);
+    infoLayout->setSpacing(2);
+
+    QPlainTextEdit* infoBox = new QPlainTextEdit();
+    infoBox->setReadOnly(true);
+    infoLayout->addWidget(infoBox);
+
+    infoGroup->setFixedHeight(visibilityGroup->sizeHint().height());
+    optionsLayout->addWidget(infoGroup, 0, 0);
+
+
+
+
 
 
     // Set up layout
     windowLayout = new QGridLayout(this);
-    windowLayout->addWidget(tracerVisualiserWidget, 0, 0);
-    windowLayout->addWidget(plotWidget, 0, 1);
+    QGroupBox* domainGroup = new QGroupBox("Domain View");
+    QGroupBox* rangeGroup = new QGroupBox("Range View");
+
+    QVBoxLayout* domainLayout = new QVBoxLayout(domainGroup);
+    QVBoxLayout* rangeLayout = new QVBoxLayout(rangeGroup);
+
+    domainLayout->addWidget(tracerVisualiserWidget);
+    rangeLayout->addWidget(plotWidget);
+
+    windowLayout->addWidget(domainGroup, 0, 0);
+    windowLayout->addWidget(rangeGroup, 0, 1);
 
     windowLayout->addLayout(optionsLayout, 1, 0);
     windowLayout->addLayout(optionsLayout2, 1, 1);
 
-    connect(spinBoxAddSheet, &QSpinBox::editingFinished, buttonAddSheet, &QPushButton::click);
+    // After setting up windowLayout, fix column widths
+    windowLayout->setColumnStretch(0, 1);  // left view gets 1 part
+    windowLayout->setColumnStretch(1, 1);  // right view gets 1 part
+
+    windowLayout->setRowStretch(0, 1);  // views row takes all extra space
+    windowLayout->setRowStretch(1, 0);  // options row stays minimum height
+
+
+
+
+
+
+
+
+
+
+    //connect(spinBoxAddSheet, &QSpinBox::editingFinished, buttonAddSheet, &QPushButton::click);
+    //connect(spinBoxAddSheet, &QSpinBox::editingFinished, buttonAddSheet, &QPushButton::click);
 
 
     connect(buttonAddSheet, &QPushButton::clicked, this, [this]() {
@@ -238,6 +339,9 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
                 this->tracerVisualiserWidget->update();
             }
             });
+
+
+
 
     connect(buttonAddTopSheets, &QPushButton::clicked, this, [this]() {
             const size_t numberOfSheets = spinBoxAddTopSheets->value();
@@ -356,8 +460,19 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             //this->tracerVisualiserWidget->update();
             //});
 
-    connect(checkboxShowTraces, &QCheckBox::toggled, [=](bool checked) {
+    //connect(checkboxShowTraces, &QCheckBox::toggled, [=](bool checked) {
 
+            //this->plotWidget->fiberPointsTraces.clear();
+            //this->plotWidget->fiberPointsTraces.shrink_to_fit();
+            //this->plotWidget->update();
+
+            //this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
+            //this->tracerVisualiserWidget->updateFiber({});
+            //this->tracerVisualiserWidget->update();
+            //});
+
+
+    connect(this->buttonShowTraces, &QPushButton::clicked, this, [this]() {
             this->plotWidget->fiberPointsTraces.clear();
             this->plotWidget->fiberPointsTraces.shrink_to_fit();
             this->plotWidget->update();
