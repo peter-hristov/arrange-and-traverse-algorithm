@@ -675,26 +675,29 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
 
 
-    std::map<int, std::vector<std::vector<Halfedge_const_handle>>> sheetBoundaries;
+    //std::map<int, std::vector<std::vector<Halfedge_const_handle>>> sheetBoundaries;
 
-    for (const auto &[sheetId, sheetBoundaries] : data.reebSpace2.sheetBoundaries)
-    {
-        for (const auto &sheetBoundary : sheetBoundaries)
-        {
-            for(const Halfedge_const_handle &he : sheetBoundary)
-            {
-                const float u1 = CGAL::to_double(he->source()->point().x());
-                const float v1 = CGAL::to_double(he->source()->point().y());
+    //for (const auto &[sheetId, sheetBoundaries] : data.reebSpace2.sheetBoundaries)
+    //{
+        //for (const auto &sheetBoundary : sheetBoundaries)
+        //{
+            //for(const Halfedge_const_handle &he : sheetBoundary)
+            //{
+                //const float u1 = CGAL::to_double(he->source()->point().x());
+                //const float v1 = CGAL::to_double(he->source()->point().y());
 
-                const float u2 = CGAL::to_double(he->target()->point().x());
-                const float v2 = CGAL::to_double(he->target()->point().y());
+                //const float u2 = CGAL::to_double(he->target()->point().x());
+                //const float v2 = CGAL::to_double(he->target()->point().y());
 
-                p.setPen(QPen(Qt::black, 3.0, Qt::SolidLine));
-                p.setRenderHint(QPainter::Antialiasing, true);
-                p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
-            }
-        }
-    }
+                //p.setPen(QPen(Qt::black, 2.0, Qt::SolidLine));
+                //p.setRenderHint(QPainter::Antialiasing, true);
+                //p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
+            //}
+
+        //}
+
+
+    //}
 
 
 

@@ -449,7 +449,7 @@ TracerVisualiserWidget::drawScene()
 
     glDisable(GL_LIGHTING);
     glColor3f(0.5, 0.5, 0.5);
-    //drawWiredCube(vertices);
+    drawWiredCube(vertices);
     glEnable(GL_LIGHTING);
 
 
