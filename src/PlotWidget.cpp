@@ -163,13 +163,12 @@ void PlotWidget::saveSelectedSheets(QPainter &p)
         for (const int componentId : data.reebSpace2.correspondenceGraph[faceHandle->data()])
         {
             const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
-
-
             const bool isSelected = this->sibling->selectedSheetIds.contains(sheetId);
 
             if (isSelected)
             {
-                const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+                //const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+                const int sheetSortId = sheetId;
                 const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
                 QColor color = QColor::fromRgbF(colorF[0], colorF[1], colorF[2]);
 
@@ -429,7 +428,8 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
                 sa = 0.02f;
             }
 
-            const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+            //const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+            const int sheetSortId = sheetId;
             const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
 
             r += colorF[0] * sa * transmittance;
@@ -950,11 +950,27 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
     if (this->recomputeFiberSurface == true && controlPoints.size() >= 2)
     {
+        //controlPointsInternal = {
+            //{-0.127277 ,  -0.0514286},
+            //{0.135573 ,  -0.0428571 }
+        //};
+
+        //QVector<QPointF> controlPointsTransformedNew;
+
+        //for (int j = 0 ; j < controlPointsInternal.size() ; j++)
+        //{
+            //controlPointsTransformedNew.push_back(rescalePoint(controlPointsInternal[j][0], controlPointsInternal[j][1]));
+        //}
+
+        //p.setPen(QPen(Qt::black, 5.0));
+        //p.drawPolygon(QPolygonF(controlPointsTransformedNew));
+
+
 
         std::cout << "The control polygon is :\n";
         for (int i = 0 ; i < controlPointsInternal.size() ; i++)
         {
-            qDebug() << controlPointsInternal[i][0] << ", " << controlPointsInternal[i][1];
+            qDebug() << "{" << controlPointsInternal[i][0] << ", " << controlPointsInternal[i][1] << "},";
         }
 
         // TTK FS
@@ -968,9 +984,12 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         //Start point : -0.021533425147216016, 0.17978634037260727 end point -0.026869776102463102, -0.17316282244046066
         //controlPointsInternal = {{-0.021533425147216016, 0.17978634037260727}, {-0.026869776102463102, -0.17316282244046066}};
+        //
+        //0.540906	-0.764372
+        //0.702105	-0.026474
+        //-0.14258	0.23093
+        //-0.88409	-0.527
 
-
-        //controlPointsInternal = {{0.0, 0.2}, {0.0, -0.2}};
 
 
         // ET diagonal
@@ -983,7 +1002,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         //this->data.surfaceMeshes.shrink_to_fit();
 
         std::vector<FiberPoint> fibersAll;
-        if (controlPointsTransformed.size() == 2)
+        if (controlPointsInternal.size() == 2)
         {
             auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[0], controlPointsInternal[1]}, desiredSheetId);
 
@@ -1222,6 +1241,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
     p.restore();
     drawAxisLabels2(p);
+    //drawAxisLabels(p);
 }
 
 

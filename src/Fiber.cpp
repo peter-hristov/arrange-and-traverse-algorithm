@@ -25,7 +25,9 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
     {
 
         const int sheetId = surfaceMesh.sheetId[f];
-        const int sheetSortId = rs.sheetOrder.at(sheetId);
+
+        const int sheetSortId = sheetId;
+        //const int sheetSortId = rs.sheetOrder.at(sheetId);
 
         // Default triangle colour
         std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
@@ -87,14 +89,19 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     //Timer::stop("Computed Alpha intersections           :");
 
 
-    //Timer::start();
+    Timer::start();
     SurfaceMesh surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
-    //Timer::stop("Computing fiber surfaces with TTK      :");
+    Timer::stop("Computing fiber surfaces with TTK      :");
 
-    //Timer::start();
+    std::cerr << "Initial number of T : " << surfaceMesh.mesh.number_of_faces() << std::endl;
+
+    Timer::start();
 
     std::vector<double> intersectionAlpha;
     intersectionAlpha.reserve(intersectedSegments.size());
+
+    int countRegular = 0;
+    int countSingular = 0;
 
     for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
     {
@@ -102,23 +109,31 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
 
         if (edgeType == 2)
         {
+            countSingular++;
             intersectionAlpha.emplace_back(CGAL::to_double(alpha));
+        }
+        else
+        {
+            countRegular++;
         }
     }
 
-    surfaceMesh.subdivideMesh(intersectionAlpha);
-    //Timer::stop("Subdivided mesh                        :");
 
+    surfaceMesh.subdivideMesh(intersectionAlpha);
+    Timer::stop("Subdivided mesh                        :");
+
+    std::cerr << "The control segment intersected " << countRegular << " regular and " << countSingular << " singular segments.\n";
+    std::cerr << "Subdivided number of T : " << surfaceMesh.mesh.number_of_faces() << std::endl;
 
     //Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     //surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
     //Timer::stop("Computing triangle sheets              :");
 
-    //Timer::start();
+    Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
-    //Timer::stop("Computing triangle sheets 2            :");
+    Timer::stop("Computing triangle sheets 2            :");
 
     //std::cout << "Remeshed number of triangles : " << surfaceMesh.mesh.number_of_faces() << std::endl;
     //printf("Intersected %ld regular and %ld indefinite segments.\n", intersectedSegments.size(), intersectionAlpha.size());

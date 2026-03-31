@@ -253,6 +253,12 @@ int main(int argc, char* argv[])
     Timer::stop("Postprocessing                         :");
 
 
+    // Populate this array otherwise omp has a data race when computining fiber labelings in parallel
+    for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
+    {
+        auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
+        curve.is_vertical();          // forces lazy _is_vertical initialization
+    }
 
 
 

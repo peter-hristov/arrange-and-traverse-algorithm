@@ -119,7 +119,10 @@ namespace fiber
         {0.773f, 0.690f, 0.835f}, // light purple
         {0.769f, 0.612f, 0.580f}, // light brown
         {0.969f, 0.714f, 0.824f}, // light pink
+        {0.969f, 0.714f, 0.824f}, // light pink
         {0.780f, 0.780f, 0.780f}, // light gray
+        {0.859f, 0.859f, 0.553f}, // light olive
+        {0.859f, 0.859f, 0.553f}, // light olive
         {0.859f, 0.859f, 0.553f}, // light olive
         {0.620f, 0.855f, 0.898f}  // light cyan
     };
