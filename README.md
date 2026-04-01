@@ -1,6 +1,6 @@
 # Introduction
 
-Welcome to the RS explorer project folder. The following build instructions have been tested on Ubuntu 22.04 and Ubuntu 24.04. For other Linux distrbutions almost the same steps should work. This project has been build on top the github source code for the arrange and traverse algorithm[1].
+Welcome to the RS explorer project folder. The following build instructions have been tested on Ubuntu 22.04 and Ubuntu 24.04. For other Linux distrbutions almost the same steps should work. This project has been build on top the GitHub source code for the arrange and traverse algorithm [1].
 
 
 This application has the following dependencies:
@@ -9,8 +9,8 @@ This application has the following dependencies:
     CGAL v6.0.1
 
 # Building 
-You could install all the dependencies on your own, or use the build script we provide. Our script clones vtk, ttk and cgal into the ./libraries folder and then compiles and intall them in the folder ./libraries/install. 
-The ttk lbraris linked to the vtk install in ./libraries/install.
+You could install all the dependencies on your own, or use the build script we provide. Our script clones vtk, ttk and cgal into the ./libraries folder and then compiles and install them in the folder ./libraries/install. 
+The ttk library linked to the vtk install in ./libraries/install.
 To run the build script with 4 cores:
 
 ``` 
@@ -23,7 +23,7 @@ bash build.sh <n>
 
 ```
 
-Our build script also build the RS Visualiser application. If you have simillar version of the dependencies you can build the RS visualiser youself by with cmake:
+Our build script also build the RS Visualiser application. If you have similar version of the dependencies you can build the RS visualiser yourself by with cmake:
 
 ```
 cmake -DCMAKE_PREFIX_PATH="<path_to_cgal_install>;<path_to_vtk_install>;<path_to_ttk_install>" -DCMAKE_BUILD_TYPE=Release ..

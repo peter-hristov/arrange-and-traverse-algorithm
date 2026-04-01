@@ -107,7 +107,6 @@ namespace fiber
         {0.580f, 0.404f, 0.741f}, // purple
         {0.549f, 0.337f, 0.294f}, // brown
         {0.890f, 0.467f, 0.761f}, // pink
-        // To swap out gray for ET
         //{0.121f, 0.466f, 0.705f}, // blue
         {0.498f, 0.498f, 0.498f}, // gray
         {0.737f, 0.741f, 0.133f}, // olive
