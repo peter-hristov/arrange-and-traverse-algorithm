@@ -61,7 +61,7 @@ std::vector<std::vector<std::array<double, 2>>> ReebSpace2::computeSheetControlP
         sheetBoundaryPolygons.push_back(poly);
     }
 
-    const double offset = 0.0005;
+    const double offset = 0.0055;
 
     for (int i = 0 ; i < sheetBoundaryPolygons.size() ; i++)
     {

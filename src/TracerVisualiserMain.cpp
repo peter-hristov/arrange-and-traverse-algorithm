@@ -253,6 +253,11 @@ int main(int argc, char* argv[])
     Timer::stop("Postprocessing                         :");
 
 
+    for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
+    {
+        auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
+        curve.is_vertical();          // forces lazy _is_vertical initialization
+    }
 
 
 
