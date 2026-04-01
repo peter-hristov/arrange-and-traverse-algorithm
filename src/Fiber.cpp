@@ -23,22 +23,28 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
 
     for (auto f : surfaceMesh.mesh.faces())
     {
-
         const int sheetId = surfaceMesh.sheetId[f];
-        const int sheetSortId = rs.sheetOrder.at(sheetId);
 
-        // Default triangle colour
-        std::array<float, 3> triangleColour{1.0, 1.0, 0.0};
-
-        if (sheetId != -1)
-        {
-            triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
-        }
-
+        // Skip if this sheet is not selected
         if (false == selectedSheetIds.empty() && false == selectedSheetIds.contains(sheetId))
         {
             continue;
         }
+
+        std::array<float, 3> triangleColour;
+
+        // If we have not manages to find the sheetID, set a default colour
+        if (sheetId == -1)
+        {
+            triangleColour = {1.0, 1.0, 0.0};
+
+        }
+        else 
+        {
+            const int sheetSortId = rs.sheetOrder.at(sheetId);
+            triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+        }
+
 
         for (auto v : vertices_around_face(surfaceMesh.mesh.halfedge(f), surfaceMesh.mesh))
         {

@@ -666,31 +666,54 @@ class SurfaceMesh
             //std::size_t numComponents2 = computeConnectedComponentsBFS(this->componentId);
 
 
-            // 2. Get a representative triangle per component
+            // 2. Get a number of representative triangles per component (in case just one doesn't work)
             //
-            std::set<int> usedComponents;
-            std::vector<std::pair<CGALMesh::Face_index, int>> componentRepresentatives;
+            std::vector<std::vector<CGALMesh::Face_index>> componentRepresentatives(numComponents2);
+
             for (auto face : mesh.faces())
             {
                 const int componentId = this->componentId[face];
 
-                if (false == usedComponents.contains(componentId))
+                if (componentRepresentatives[componentId].size() < 100)
                 {
-                    usedComponents.insert(componentId);
-                    componentRepresentatives.push_back({face, componentId});
+                    componentRepresentatives[componentId].push_back(face);
                 }
             }
 
             // 3. Compute one flexible fiber per representative triangle
             //
-            std::vector<int> componentSheets(componentRepresentatives.size());
+            std::vector<int> componentSheets(componentRepresentatives.size(), -1);
 
 #pragma omp parallel for schedule(dynamic)
-            for (auto &[face, componentId] : componentRepresentatives)
+            for (int componentId = 0 ; componentId < componentRepresentatives.size() ; componentId++)
             {
-                //componentSheets[componentId] = this->computeTriangleSheetId2(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
-                componentSheets[componentId] = this->computeTriangleSheetId3(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
+                if (componentRepresentatives[componentId].empty())
+                {
+                    //std::cerr << "Component " << componentId << " has not been assigned a representative triangle.\n";
+                }
+
+                for (CGALMesh::Face_index face : componentRepresentatives[componentId])
+                {
+                    try
+                    {
+                        componentSheets[componentId] = this->computeTriangleSheetId3(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
+
+                        if (componentSheets[componentId] != -1)
+                        {
+                            break;
+                        }
+                    }
+                    catch (...) { }
+
+                    //std::cerr << "Could not compute fiber fabeling for representative triangle trying another ...\n";
+                }
+
+                if (componentSheets[componentId] == -1)
+                {
+                    //std::cerr << "Could not label component " << componentId << " ...\n";
+                }
             }
+
 
             // 4. Set up the sheetIds of each triangle based on the connected component
             //

@@ -253,6 +253,7 @@ int main(int argc, char* argv[])
     Timer::stop("Postprocessing                         :");
 
 
+    // Another part of postprocessing to make sure we can do openmp for the fiber labeling of 
     for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
     {
         auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
