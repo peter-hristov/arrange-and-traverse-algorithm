@@ -496,7 +496,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     });
 
     connect(this->edgeOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->featureOpacity = static_cast<double>(this->edgeOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->fsOpacity = static_cast<double>(this->edgeOpacitySlider->value()) / 100.0;
         this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
