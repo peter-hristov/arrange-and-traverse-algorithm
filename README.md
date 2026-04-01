@@ -1,108 +1,87 @@
-# Dependencies
+# Introduction
 
-See the ./build.sh script for instructions on how to build and install the dependencies locally.
-
-# Compile
-
-## Without TTK
-
-Build version
-```
-cmake -DCGAL_DIR=/home/peter/Projects/libraries/cgal/build -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/VTK-9.4.1/install" -DCMAKE_EXPORT_COMPILE_COMMANDS=On ..
-
-```
-
-Release version
-```
-cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/home/peter/Projects/libraries/VTK-9.4.1/install" -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DCMAKE_BUILD_TYPE=Release ..
-```
+Welcome to the RS explorer project folder. The following build instructions have been tested on Ubuntu 22.04 and Ubuntu 24.04. For other Linux distrbutions almost the same steps should work. This project has been build on top the github source code for the arrange and traverse algorithm[1].
 
 
+This application has the following dependencies:
+    VTK  v9.4.1
+    TTK  v1.3.0
+    CGAL v6.0.1
 
-## With TTK
-```
-cmake -DCMAKE_PREFIX_PATH="/home/peter/Projects/libraries/cgal-6.0.1/install;/home/peter/Projects/libraries/ttk-dev/install;/home/peter/Projects/libraries/VTK-9.4.1/install" -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DCMAKE_BUILD_TYPE=Release ..
+# Building 
+You could install all the dependencies on your own, or use the build script we provide. Our script clones vtk, ttk and cgal into the ./libraries folder and then compiles and intall them in the folder ./libraries/install. 
+The ttk lbraris linked to the vtk install in ./libraries/install.
+To run the build script with 4 cores:
+
+``` 
+bash build.sh 4
 ```
 
+For using <n> cores run:
+```
+bash build.sh <n>
 
-# Run
+```
 
-cd ./build
+Our build script also build the RS Visualiser application. If you have simillar version of the dependencies you can build the RS visualiser youself by with cmake:
 
-./fv99 -f ../data/three-sheet-toy.txt
+```
+cmake -DCMAKE_PREFIX_PATH="<path_to_cgal_install>;<path_to_vtk_install>;<path_to_ttk_install>" -DCMAKE_BUILD_TYPE=Release ..
+```
 
+# Running
 
-# Testing
+To run our application we have provided a number of tests datasets. The simples one is three-sheet-toy.vtu. It has been used in previous Reeb space papers [1,2]. Run with:
 
-# Data Sets with disconnected Singular sets in the range
-~/Projects/data/reeb-space-test-data/ttk/downsample-2-384800.vtu
-~/Projects/data/reeb-space-test-data/nana/hpc/downsamples/step_01080.cropped.1.1540000.vtu
+```
+./build/rsX -f ./data/three-sheet-toy.vtu
+```
 
-# Test
+To explore other features of our application run:
 
-make -j 8 && ./fv99 -f ../data/three-sheet-toy.txt
-make -j 8 && ./fv99 -f ~/Projects/data/reeb-space-test-data/data.vtu
-make -j 8 && ./fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-50-tets-320.vtu
-make -j 8 && ./fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu
+```
+./build/rsX -h
+```
 
+We have also provided two of the datasets we have used in the paper, torus and ethanediol, as well as their downsampled version, which are faster to compute. Refer to Table A1 in the paper for computation times and memory usage.
 
-# Big Unit Test
-bash ./unitTest.sh ./build/fv99 -f ./data/three-sheet-toy.txt -u
-bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/data.vtu -u
+You have the option to save a compute Reeb space, so that you can load it on a rerun, which is much faster than recomputing. For example.
 
-bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-20-300.vtu -u
-bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-18-400.vtu -u
-bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-15-875.vtu -u
-bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-12-1440.vtu -u
-bash ./unitTest.sh ./build/fv99 -e 0.0 -f ~/Projects/data/reeb-space-test-data/ttk/downsample-10-2800.vtu -u
+Save a Reeb space:
+```
+./build/rsX -f ./data/torus/downsample-id-1.vtu -s ./data/torus/downsample-id-1.rs
+```
 
-bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-40-tets-625.vtu  -u
-bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-30-tets-1080.vtu -u
-bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-20-tets-2560.vtu -u
-bash ./unitTest.sh ./build/fv99 -e 0.1 -f ~/Projects/data/reeb-space-test-data/torus/torus-factor-15-tets-10985.vtu -u
+Load a Reeb space
+```
+./build/rsX -f ./data/torus/downsample-id-1.vtu -l ./data/torus/downsample-id-1.rs
+```
 
-bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.40.90.vtu -u
-bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.30.240.vtu -u
-bash ./unitTest.sh ./build/fv99 -f ~/Projects/data/reeb-space-test-data/isabel/isabel1.20.720.vtu -u
+Note that the .rs file extension is just a matter of convention.
 
+# Controls
 
+## Domain view
+Left click and drag             - rotate camera
+Right click                     - select a colour from the segmented fiber surface and select the sheet that corresponds to it
 
+## Range view
+Left click                      - compute labeled fiber, draw the mouse to compute multiple (enable Trace fiber from the bottom controls to leave a trace)
+Right click                     - add a point to the fiber surface control polygon
+Backspace                       - remove the last point added to the fiber surface control polygon
+Shift + left click              - select all sheets at that point in the range
 
-Center
-0.0138284 0.116638
-
-Bottom Left
--0.007111 0.10477
-
-Top Right
-0.037295 0.125989
-
-x \in [-0.007111, 0.037295]
-y \in [0.10477, 0.125989]
-
-
-on ds2
-
-# Initial time
-5.06785305
-
-# Without the postprocessing mesh operations
-2.01741007
-
-# Without validity checks
-0.29354516
-
-# Automatic non-triangle triangulation (simillar time to the FS)
-0.06
+## Bottom panels
+The information shows the selected sheets.
+The visibility panel allows the user to show/hide the rendered geometry as well as set opacity.
+The clear panel clear rendered geometry.
+The compute panels computes things like fiber surfaces (FS), sheet-features, fiber surface from a fiber trace and the option to trace fibers continuously.
+The sheet selection panel allows the selection of sheets by ID or by top <n>.
 
 
+Happy Reeb space exploring!
 
-Vertical line, ds2, nana
-# Initial Time
-
-# Less overhead in looups
-0.49
-
-# Optimised lookup
-0.48
+1. https://github.com/peter-hristov/arrange-and-traverse-algorithm
+2. Hristov, P., Sakurai, D., Carr, H., Hotz, I. and Masood, T.B., 2025, August. Arrange and Traverse Algorithm for Computation of Reeb Spaces of Piecewise Linear Maps. In Computer Graphics Forum (Vol. 44, No. 5, p. e70206).
+3. Tierny, J. and Carr, H., 2016. Jacobi fiber surfaces for bivariate Reeb space computation. IEEE Transactions on Visualization and Computer Graphics, 23(1), pp.960-969.
 

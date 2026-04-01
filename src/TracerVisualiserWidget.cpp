@@ -110,7 +110,7 @@ TracerVisualiserWidget::generateDisplayList()
 
                 if (this->enableLighting)
                 {
-                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], this->featureOpacity, 1.0);
 
                     GLfloat vertices[3][3] = {
                         {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
@@ -157,7 +157,7 @@ TracerVisualiserWidget::generateDisplayList()
 
                 if (this->enableLighting)
                 {
-                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], fsOpacity, 1.0);
 
                     GLfloat vertices[3][3] = {
                         {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
@@ -201,7 +201,9 @@ TracerVisualiserWidget::generateDisplayList()
             {
                 if (this->enableLighting)
                 {
-                    glColor3fv(faceFiber.colour.data());
+                    //glColor3fv(faceFiber.colour.data());
+                    glColor4f(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], this->fiberOpcity);
+
                 }
                 else
                 {
@@ -550,7 +552,7 @@ TracerVisualiserWidget::drawScene()
             {
                 const auto &vertex = this->data.tetMesh.vertexDomainCoordinates[i];
 
-                glColor4f(1, 1, 1, this->vertexOpacity);
+                //glColor4f(1, 1, 1, this->vertexOpacity);
                 glPushMatrix();
                 {
                     glTranslatef(vertex[0], vertex[1], vertex[2]);
@@ -567,7 +569,7 @@ TracerVisualiserWidget::drawScene()
     // Tet Faces
     if (true == drawFaces)
     {
-        glColor4f(1, 1, 1, this->faceOpacity);
+        //glColor4f(1, 1, 1, this->faceOpacity);
 
         int centerVertexId = this->data.tetMesh.vertexDomainCoordinates.size() - 1;
 

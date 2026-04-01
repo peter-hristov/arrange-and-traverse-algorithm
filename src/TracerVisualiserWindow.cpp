@@ -144,16 +144,16 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
 
     vertexOpacitySlider = new QSlider(Qt::Horizontal);
-    vertexOpacitySlider->setValue(this->tracerVisualiserWidget->vertexOpacity * 100);
+    vertexOpacitySlider->setValue(this->tracerVisualiserWidget->fiberOpcity * 100);
 
     edgeOpacitySlider = new QSlider(Qt::Horizontal);
-    edgeOpacitySlider->setValue(this->tracerVisualiserWidget->edgeOpacity * 100);
+    edgeOpacitySlider->setValue(this->tracerVisualiserWidget->fsOpacity * 100);
 
     faceOpacitySlider = new QSlider(Qt::Horizontal);
-    faceOpacitySlider->setValue(this->tracerVisualiserWidget->faceOpacity * 100);
+    faceOpacitySlider->setValue(this->tracerVisualiserWidget->featureOpacity * 100);
 
-    fakeSlider = new QSlider(Qt::Horizontal);
-    fakeSlider->setTracking(false);
+    //fakeSlider = new QSlider(Qt::Horizontal);
+    //fakeSlider->setTracking(false);
 
     //this->checkboxShowTraces = new QCheckBox("Trace Fiber.");
 
@@ -200,7 +200,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     rowOneLayout->addWidget(checkboxShowFiberSurfaces, 1, 0);
     rowOneLayout->addWidget(edgeOpacitySlider,         1, 1);
     rowOneLayout->addWidget(checkboxShowFeatures,      2, 0);
-    rowOneLayout->addWidget(fakeSlider,                2, 1);
+    rowOneLayout->addWidget(faceOpacitySlider,                2, 1);
     optionsLayout->addWidget(visibilityGroup, 0, 1);
 
 
@@ -484,17 +484,20 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             });
 
     connect(this->vertexOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->vertexOpacity = static_cast<double>(this->vertexOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->fiberOpcity = static_cast<double>(this->vertexOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
 
     connect(this->faceOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->faceOpacity = static_cast<double>(this->faceOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->featureOpacity = static_cast<double>(this->faceOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
 
     connect(this->edgeOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->edgeOpacity = static_cast<double>(this->edgeOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->featureOpacity = static_cast<double>(this->edgeOpacitySlider->value()) / 100.0;
+        this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
 }
