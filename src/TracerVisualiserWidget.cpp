@@ -727,11 +727,16 @@ TracerVisualiserWidget::mousePressEvent(QMouseEvent* event)
             for (const int id : this->selectedSheetIds)
             {
                 //std::cout << "Sheet " << id << " has area " << data.reebSpace2.sheetArea[id] << " which is a ratio of : " << 100.0 * data.reebSpace2.sheetArea[id] <<  std::endl;
-                printf("Sheet %d had area %.2f (which is %.2f%%).\n", id, data.reebSpace2.sheetArea[id], 100.0 * data.reebSpace2.sheetArea[id]);
+                printf("Sheet %d had area %.2f (which is %.2f%%).\n", id, data.reebSpace2.sheetArea[id], 100.0 * data.reebSpace2.sheetAreaProportion[id]);
             }
 
             static_cast<PlotWidget*>(this->sibling)->staticReebSpaceCache = nullptr;
             this->sibling->update();
+
+            if (auto *window = qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())) {
+                window->updateSelectedSheets(this->selectedSheetIds);
+            }
+
             update();
         }
     }

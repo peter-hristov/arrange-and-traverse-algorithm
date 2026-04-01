@@ -56,4 +56,6 @@ class Data
 
     vtkSmartPointer<vtkPolyData> molecule;
 
+    bool zeroAxis;
+
 };

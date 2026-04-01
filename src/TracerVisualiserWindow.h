@@ -7,6 +7,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QPushButton>
+#include <QPlainTextEdit>
 
 
 #include "./Data.h"
@@ -62,4 +63,8 @@ class TracerVisualiserWindow : public QWidget
     QPushButton* buttonAddTopSheets;
 
     QPushButton* buttonAddNewControlPolygon;
+
+    QPlainTextEdit* infoBox;
+
+    void updateSelectedSheets(const std::set<int>& ids);
 };

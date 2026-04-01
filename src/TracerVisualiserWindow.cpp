@@ -278,15 +278,12 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     infoLayout->setContentsMargins(4, 4, 4, 4);
     infoLayout->setSpacing(2);
 
-    QPlainTextEdit* infoBox = new QPlainTextEdit();
-    infoBox->setReadOnly(true);
+    infoBox = new QPlainTextEdit();
+    infoBox->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     infoLayout->addWidget(infoBox);
 
     infoGroup->setFixedHeight(visibilityGroup->sizeHint().height());
     optionsLayout->addWidget(infoGroup, 0, 0);
-
-
-
 
 
 
@@ -338,6 +335,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
                 this->plotWidget->update();
                 this->tracerVisualiserWidget->update();
             }
+            this->updateSelectedSheets(this->tracerVisualiserWidget->selectedSheetIds);
             });
 
 
@@ -357,6 +355,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->update();
             this->tracerVisualiserWidget->update();
 
+            this->updateSelectedSheets(this->tracerVisualiserWidget->selectedSheetIds);
             });
 
 
@@ -389,6 +388,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
             this->plotWidget->update();
             this->tracerVisualiserWidget->update();
+            this->updateSelectedSheets({});
             });
 
     connect(this->clearAllButton, &QPushButton::clicked, this, [this]() {
@@ -396,6 +396,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->clearFibersButton->click();
             this->clearFiberSurfaceButton->click();
             this->clearSelectedSheetsButton->click();
+            this->updateSelectedSheets({});
 
             //this->plotWidget->fiberPointsTraces.clear();
             //this->plotWidget->fiberPointsTraces.shrink_to_fit();
@@ -503,4 +504,23 @@ TracerVisualiserWindow::~TracerVisualiserWindow()
     delete plotWidget;
     delete windowLayout;
     delete tracerVisualiserWidget;
+}
+
+void TracerVisualiserWindow::updateSelectedSheets(const std::set<int>& selectedSheetIds)
+{
+    if (selectedSheetIds.empty())
+    {
+        infoBox->setPlainText("");
+        return;
+    }
+
+    std::ostringstream info;
+    info << "Selected sheets: ";
+    for (const int id : selectedSheetIds)
+    {
+        info << id << " (area " << std::fixed << std::setprecision(2) << 100.0 * data.reebSpace2.sheetAreaProportion[id] << ")  ";
+    }
+    infoBox->setPlainText(QString::fromStdString(info.str()));
+
+    this->update();
 }

@@ -847,6 +847,11 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         controlPointSheetSelection.reset();
 
+
+        if (auto *window = qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())) {
+            window->updateSelectedSheets(this->sibling->selectedSheetIds);
+        }
+
         this->staticReebSpaceCache = nullptr;
         this->update();
     }
@@ -1252,11 +1257,14 @@ void PlotWidget::drawAxisLabels2(QPainter& p)
     //p.drawLine(boxOffset, resolution - boxOffset, boxOffset, boxOffset - 100);
 
 
-    float fZero = (resolution / (data.tetMesh.maxF - data.tetMesh.minF)) * (0.0 - data.tetMesh.minF);
-    float gZero = (resolution / (data.tetMesh.maxG - data.tetMesh.minG)) * (0.0 - data.tetMesh.minG);
+    if (this->data.zeroAxis)
+    {
+        float fZero = (resolution / (data.tetMesh.maxF - data.tetMesh.minF)) * (0.0 - data.tetMesh.minF);
+        float gZero = (resolution / (data.tetMesh.maxG - data.tetMesh.minG)) * (0.0 - data.tetMesh.minG);
 
-    p.drawLine(fZero, -resolution, fZero, resolution);
-    p.drawLine(-resolution, gZero, resolution, gZero);
+        p.drawLine(fZero, -resolution, fZero, resolution);
+        p.drawLine(-resolution, gZero, resolution, gZero);
+    }
 
 
     // x label

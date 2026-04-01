@@ -48,6 +48,9 @@ int main(int argc, char* argv[])
     bool headless = false;
     cliApp.add_flag("--headless", headless, "Run without the graphical interface.");
 
+    bool addZeroAxis = false;
+    cliApp.add_flag("--zeroAxis", addZeroAxis, "Add the 0-0 axis to the fiber surface.");
+
     float perturbationEpsilon = 0.0f;
     cliApp.add_option("--epsilon, -e", perturbationEpsilon, "Strength of the numerial perturbation in the range [-e, e].");
 
@@ -399,6 +402,7 @@ int main(int argc, char* argv[])
 
     // Package all my data for visualisation
     Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
+    data.zeroAxis = addZeroAxis;
 
 
     if (false == moleculeFilename.empty())
