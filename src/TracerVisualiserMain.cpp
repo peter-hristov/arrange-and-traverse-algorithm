@@ -412,7 +412,7 @@ int main(int argc, char* argv[])
 
     // Create the widget
     TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);
-    window->setWindowTitle("Fiber Visualiser");
+    window->setWindowTitle("RS Explorer");
 
     // Make the window full screen by default
     //window->showMaximized();
