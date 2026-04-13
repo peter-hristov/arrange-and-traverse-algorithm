@@ -135,7 +135,6 @@ bool SurfaceMesh::bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement
 
 int SurfaceMesh::findFiberPointComponent(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const std::vector<int> &tetTriangleIds, const Segment_2 &controlSegment, const double pointAlpha)
 {
-
     const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - pointAlpha, controlSegment[1], pointAlpha);
     const CartesianPoint controlPointCartesian(CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y()));
 
@@ -161,7 +160,7 @@ int SurfaceMesh::findFiberPointComponent(const TetMesh &tetMesh, const Arrangeme
 
 
 
-int SurfaceMesh::computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+int SurfaceMesh::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
 {
     // 1. Compute the edgePara at the center of the triangle
     double midPointAlpha = 0.0;
@@ -203,7 +202,7 @@ int SurfaceMesh::computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularA
 
 
 
-void SurfaceMesh::computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+void SurfaceMesh::labelFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
 {
     auto sheetIdMap = this->sheetId();
     auto componentIdMap = this->componentId();
@@ -245,7 +244,7 @@ void SurfaceMesh::computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularA
         {
             try
             {
-                componentSheets[componentId] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
+                componentSheets[componentId] = this->labelTriangle(tetMesh, singularArrangement, reebSpace, face, intersectedSegments, controlSegment);
 
                 if (componentSheets[componentId] != -1)
                 {
@@ -623,83 +622,166 @@ std::unordered_set<CGALMesh::Edge_index> SurfaceMesh::getActiveEdges(const std::
 
 SurfaceMesh::SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId)
 {
-            // Unpack the points
-            std::vector<CartesianPoint_3> points;
-            for (auto& p : vertexCoordinates)
-            {
-                points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
-            }
+    // Unpack the points
+    std::vector<CartesianPoint_3> points;
+    for (auto& p : vertexCoordinates)
+    {
+        points.push_back(CartesianPoint_3(p[0],p[1],p[2]));
+    }
 
-            auto polygons = triangles;
+    auto polygons = triangles;
 
-            // Assume that the mesh is already cleaned up
-            //
-            // Merge duplicate vertices
-            //std::vector<std::size_t> old_to_new;
-            //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons,
-            //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
-            //old_to_new.begin(), boost::identity_property_map(), std::size_t(0)
-            //))
-            //);
-
-
-            //// Merge duplicate polygons
-            //std::vector<std::size_t> old_to_new2;
-            //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons,
-            //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
-            //old_to_new2.begin(), boost::identity_property_map(), std::size_t(0)
-            //))
-            //);
+    // Assume that the mesh is already cleaned up
+    //
+    // Merge duplicate vertices
+    //std::vector<std::size_t> old_to_new;
+    //CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup(points, polygons,
+    //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
+    //old_to_new.begin(), boost::identity_property_map(), std::size_t(0)
+    //))
+    //);
 
 
-            // Orient triangles
-            CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
+    //// Merge duplicate polygons
+    //std::vector<std::size_t> old_to_new2;
+    //CGAL::Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup(points, polygons,
+    //CGAL::parameters::vertex_to_vertex_map(boost::make_iterator_property_map(
+    //old_to_new2.begin(), boost::identity_property_map(), std::size_t(0)
+    //))
+    //);
 
-            // 3. Build Surface_mesh
-            CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, this->mesh);
 
-            auto resultEdgeParam = this->mesh.add_property_map<CGALMesh::Vertex_index,double>(this->EDGE_PARAM_KEY, -1.0);
+    // Orient triangles
+    CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
 
-            if (false == resultEdgeParam.second)
-            {
-                throw std::runtime_error("EdgeParam property could not be added to the mesh.");
-            }
+    // 3. Build Surface_mesh
+    CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, this->mesh);
 
-            for (std::size_t i = 0; i < vertexEdgePara.size(); ++i)
-            {
-                resultEdgeParam.first[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
-            }
+    auto resultEdgeParam = this->mesh.add_property_map<CGALMesh::Vertex_index,double>(this->EDGE_PARAM_KEY, -1.0);
 
-            auto resultTetId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->TET_ID_KEY, -1);
+    if (false == resultEdgeParam.second)
+    {
+        throw std::runtime_error("EdgeParam property could not be added to the mesh.");
+    }
 
-            if (false == resultTetId.second)
-            {
-                throw std::runtime_error("TetId property could not be added to the mesh.");
-            }
+    for (std::size_t i = 0; i < vertexEdgePara.size(); ++i)
+    {
+        resultEdgeParam.first[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
+    }
 
-            for (std::size_t i = 0; i < tetId.size(); ++i)
-            {
-                resultTetId.first[CGALMesh::Face_index(i)] = tetId[i];
-            }
+    auto resultTetId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->TET_ID_KEY, -1);
 
-            auto resultSheetId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->SHEET_ID_KEY, -1);
+    if (false == resultTetId.second)
+    {
+        throw std::runtime_error("TetId property could not be added to the mesh.");
+    }
 
-            if (false == resultSheetId.second)
-            {
-                throw std::runtime_error("SheetId property could not be added to the mesh.");
-            }
+    for (std::size_t i = 0; i < tetId.size(); ++i)
+    {
+        resultTetId.first[CGALMesh::Face_index(i)] = tetId[i];
+    }
 
-            auto resultComponentId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->COMPONENT_ID_KEY, -1);
+    auto resultSheetId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->SHEET_ID_KEY, -1);
 
-            if (false == resultComponentId.second)
-            {
-                throw std::runtime_error("ComponentId property could not be added to the mesh.");
-            }
+    if (false == resultSheetId.second)
+    {
+        throw std::runtime_error("SheetId property could not be added to the mesh.");
+    }
 
-            auto resultIsImpassable = this->mesh.add_property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY, false);
+    auto resultComponentId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->COMPONENT_ID_KEY, -1);
 
-            if (false == resultIsImpassable.second)
-            {
-                throw std::runtime_error("isImpassable property could not be added to the mesh.");
-            }
-        }
+    if (false == resultComponentId.second)
+    {
+        throw std::runtime_error("ComponentId property could not be added to the mesh.");
+    }
+
+    auto resultIsImpassable = this->mesh.add_property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY, false);
+
+    if (false == resultIsImpassable.second)
+    {
+        throw std::runtime_error("isImpassable property could not be added to the mesh.");
+    }
+}
+
+SurfaceMesh::SurfaceMesh() 
+{
+    mesh.add_property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY,    -1.0);
+    mesh.add_property_map<CGALMesh::Face_index,   int>   (TET_ID_KEY,        -1);
+    mesh.add_property_map<CGALMesh::Face_index,   int>   (SHEET_ID_KEY,      -1);
+    mesh.add_property_map<CGALMesh::Face_index,   int>   (COMPONENT_ID_KEY,  -1);
+    mesh.add_property_map<CGALMesh::Edge_index,   bool>  (IMPASSABLE_KEY,    false);
+}
+
+
+// Helpers to get the maps of the mesh
+CGALMesh::Property_map<CGALMesh::Vertex_index, double> SurfaceMesh::edgeParam()
+{
+    auto r = mesh.property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY);
+    if (!r.has_value()) throw std::runtime_error("edgeParam not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::tetId()
+{
+    auto r = mesh.property_map<CGALMesh::Face_index, int>(TET_ID_KEY);
+    if (!r.has_value()) throw std::runtime_error("tetId not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::sheetId()
+{
+    auto r = mesh.property_map<CGALMesh::Face_index, int>(SHEET_ID_KEY);
+    if (!r.has_value()) throw std::runtime_error("sheetId not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::componentId()
+{
+    auto r = mesh.property_map<CGALMesh::Face_index, int>(COMPONENT_ID_KEY);
+    if (!r.has_value()) throw std::runtime_error("componentId not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Edge_index,   bool> SurfaceMesh::isImpassable()
+{
+    auto r = mesh.property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY);
+    if (!r.has_value()) throw std::runtime_error("isImpassable not initialized");
+    return r.value();
+}
+
+
+CGALMesh::Property_map<CGALMesh::Vertex_index, double> SurfaceMesh::edgeParam() const
+{
+    auto r = mesh.property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY);
+    if (!r.has_value()) throw std::runtime_error("edgeParam not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::tetId() const
+{
+    auto r = mesh.property_map<CGALMesh::Face_index, int>(TET_ID_KEY);
+    if (!r.has_value()) throw std::runtime_error("tetId not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::sheetId() const
+{
+    auto r = mesh.property_map<CGALMesh::Face_index, int>(SHEET_ID_KEY);
+    if (!r.has_value()) throw std::runtime_error("sheetId not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::componentId() const
+{
+    auto r = mesh.property_map<CGALMesh::Face_index, int>(COMPONENT_ID_KEY);
+    if (!r.has_value()) throw std::runtime_error("componentId not initialized");
+    return r.value();
+}
+
+CGALMesh::Property_map<CGALMesh::Edge_index,   bool> SurfaceMesh::isImpassable() const
+{
+    auto r = mesh.property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY);
+    if (!r.has_value()) throw std::runtime_error("isImpassable not initialized");
+    return r.value();
+}
+
