@@ -20,10 +20,11 @@
 std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &surfaceMesh, ReebSpace2 &rs, const std::set<int> &selectedSheetIds)
 {
     std::vector<FiberPoint> allFiberPoints;
+    const auto sheetIdMap = surfaceMesh.sheetId();
 
     for (auto f : surfaceMesh.mesh.faces())
     {
-        const int sheetId = surfaceMesh.sheetId[f];
+        const int sheetId = sheetIdMap[f];
 
         // Skip if this sheet is not selected
         if (false == selectedSheetIds.empty() && false == selectedSheetIds.contains(sheetId))

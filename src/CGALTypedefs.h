@@ -175,7 +175,18 @@ typedef CGAL::Surface_mesh<CartesianPoint_3> CGALMesh;
 
 
 // Polygon mesh processing utilities
-#include <CGAL/Polygon_mesh_processing/repair.h>      // merge_duplicate_points_in_polygon_soup
+#include <CGAL/enum.h>
+
 #include <CGAL/Polygon_mesh_processing/connected_components.h> // optional for built-in connected components
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h> // convert soup -> Surface_mesh
+
+#include <CGAL/Polygon_mesh_processing/repair.h>      // merge_duplicate_points_in_polygon_soup
+#include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
 #include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
+
+#include <CGAL/Polygon_mesh_processing/border.h>
+#include <CGAL/Polygon_mesh_processing/orientation.h>
+#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
+
+
+

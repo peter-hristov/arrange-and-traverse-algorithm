@@ -2,8 +2,6 @@
 
 #include "./CGALTypedefs.h"
 
-#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
-#include <CGAL/enum.h>
 #include <gmp.h>
 #include <iostream>
 #include <stack>
@@ -17,139 +15,39 @@
 #include "./Arrangement.h"
 #include "./FiberGraph.h"
 
-#include <CGAL/Polygon_mesh_processing/connected_components.h>
-#include <CGAL/Polygon_mesh_processing/border.h>
-#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
-#include <CGAL/Polygon_mesh_processing/orientation.h>
-
-#include <CGAL/Polygon_mesh_processing/repair.h>
-#include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
-
 // TODO Copy and move constructors
 class SurfaceMesh
 {
     public:
         CGALMesh mesh;
-        CGALMesh::Property_map<CGALMesh::Vertex_index, double> edgeParam;
 
-        CGALMesh::Property_map<CGALMesh::Face_index, int> tetId;
-        CGALMesh::Property_map<CGALMesh::Face_index, int> sheetId;
-        CGALMesh::Property_map<CGALMesh::Face_index, int> componentId;
+        // Named keys for the maps defined on the simplices of the mesh
 
-        CGALMesh::Property_map<CGALMesh::Edge_index, bool> isImpassable;
+        // The edge param from TTK, based on "P. Klacansky, J. Tierny, H. Carr and Z. Geng, "Fast and Exact Fiber Surfaces for Tetrahedral Meshes," in IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 7, pp. 1782-1795, 1 July 2017, doi: 10.1109/TVCG.2016.2570215)"
+        static constexpr const char* EDGE_PARAM_KEY    = "v:edgeParam";
+
+        // Which tet this triangle is in
+        static constexpr const char* TET_ID_KEY        = "f:tetId";
+
+        // The sheet label of this triangle after segmentation
+        static constexpr const char* SHEET_ID_KEY      = "f:sheetId";
+
+        // Whether the edge is a singular fiber which segments the fiber surfaces
+        static constexpr const char* IMPASSABLE_KEY    = "e:isImpassable";
+
+        // Which connected components this triangle is in with respect to the impassable edges
+        static constexpr const char* COMPONENT_ID_KEY  = "f:componentId";
 
         const double epsilon = 1e-10;
 
-        SurfaceMesh()
-        {
 
-        }
-        void bind_property_maps()
-        {
-            bool created;
-
-            std::tie(edgeParam, created) = mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
-            std::tie(tetId, created)      = mesh.add_property_map<CGALMesh::Face_index,int>("f:tetId", -1);
-            std::tie(sheetId, created)    = mesh.add_property_map<CGALMesh::Face_index,int>("f:sheetId", -1);
-            std::tie(componentId, created)= mesh.add_property_map<CGALMesh::Face_index,int>("f:componentId", -1);
-            std::tie(isImpassable, created)= mesh.add_property_map<CGALMesh::Edge_index,bool>("e:isImpassable", false);
-        }
-
-        // --- Copy constructor ---
-        SurfaceMesh(const SurfaceMesh& other)
-            : mesh(other.mesh)
-        {
-            bind_property_maps();
-        }
-
-        // --- Move constructor ---
-        SurfaceMesh(SurfaceMesh&& other) noexcept
-            : mesh(std::move(other.mesh))
-            {
-                bind_property_maps();
-            }
-
-        // --- Copy assignment ---
-        SurfaceMesh& operator=(const SurfaceMesh& other)
-        {
-            if (this != &other)
-            {
-                mesh = other.mesh;
-                bind_property_maps();
-            }
-            return *this;
-        }
-
-        // --- Move assignment ---
-        SurfaceMesh& operator=(SurfaceMesh&& other) noexcept
-        {
-            if (this != &other)
-            {
-                mesh = std::move(other.mesh);
-                bind_property_maps();
-            }
-            return *this;
-        }
-
-        // --- Destructor ---
-        ~SurfaceMesh() = default;
-
-        void print()
-        {
-            std::cout << "Vertices:\n";
-            for (auto v : mesh.vertices())
-            {
-                const auto &p = mesh.point(v);
-                double e = edgeParam[v];
-                std::cout << "  Vertex " << v << ": ("
-                    << p[0] << ", " << p[1] << ", " << p[2]
-                    << "), edgeParam = " << e << "\n";
-            }
-
-            std::cout << "\nFaces:\n";
-            for (auto f : mesh.faces())
-            {
-                std::cout << "  Face " << f << ": [";
-                bool first = true;
-                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
-                {
-                    if (!first) std::cout << ", ";
-                    std::cout << v;
-                    first = false;
-                }
-                std::cout << "], tetId = " << tetId[f]
-                    << ", sheetId = " << sheetId[f] << "\n";
-            }
-
-        }
-
-        void printSheetHistogram(ReebSpace2 &reebSpace)
-        {
-            std::set<int> sheetIds;
-            for (auto f : mesh.faces())
-            {
-                sheetIds.insert(this->sheetId[f]);
-            }
-
-
-            std::vector<std::tuple<double, double, int>> sheetsAndAreas;
-            sheetsAndAreas.reserve(sheetIds.size());
-
-            for (const int id : sheetIds)
-            {
-                const std::tuple<double, double, int> sheetAndArea = {reebSpace.sheetArea.at(id), reebSpace.sheetAreaProportion.at(id), id};
-                sheetsAndAreas.emplace_back(sheetAndArea);
-            }
-
-            std::sort(sheetsAndAreas.begin(), sheetsAndAreas.end(), std::greater<>());
-
-            std::cout << "\nThe fiber surface has the following histogram of intersected sheets.\n";
-            printf("%-10s %-8s %-12s %-8s %-12s\n", "Sheet ID", "|", "Area", "|", "Percentage");
-            printf("----------------------------------------------------\n");
-            for (const auto &[area, areaProportion, id] : sheetsAndAreas)
-            {
-                printf("%-10d %-8s %-12.4f %-8s %.4f%%\n", id, "|", area, "|", areaProportion);
-            }
+        SurfaceMesh() 
+        { 
+            mesh.add_property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY,    -1.0);
+            mesh.add_property_map<CGALMesh::Face_index,   int>   (TET_ID_KEY,        -1);
+            mesh.add_property_map<CGALMesh::Face_index,   int>   (SHEET_ID_KEY,      -1);
+            mesh.add_property_map<CGALMesh::Face_index,   int>   (COMPONENT_ID_KEY,  -1);
+            mesh.add_property_map<CGALMesh::Edge_index,   bool>  (IMPASSABLE_KEY,    false);
         }
 
         // Create mesh from a from a triangle soup
@@ -190,65 +88,188 @@ class SurfaceMesh
             // 3. Build Surface_mesh
             CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, this->mesh);
 
-            bool created;
-            std::tie(this->edgeParam, created) = this->mesh.add_property_map<CGALMesh::Vertex_index,double>("v:edgeParam", -1.0);
+            auto resultEdgeParam = this->mesh.add_property_map<CGALMesh::Vertex_index,double>(this->EDGE_PARAM_KEY, -1.0);
 
-            if (false == created)
+            if (false == resultEdgeParam.second)
             {
                 throw std::runtime_error("EdgeParam property could not be added to the mesh.");
             }
 
             for (std::size_t i = 0; i < vertexEdgePara.size(); ++i)
             {
-                this->edgeParam[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
+                resultEdgeParam.first[CGALMesh::Vertex_index(i)] = vertexEdgePara[i];
             }
 
+            auto resultTetId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->TET_ID_KEY, -1);
 
-            std::tie(this->tetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:tetId", -1);
-
-            if (false == created)
+            if (false == resultTetId.second)
             {
                 throw std::runtime_error("TetId property could not be added to the mesh.");
             }
 
             for (std::size_t i = 0; i < tetId.size(); ++i)
             {
-                this->tetId[CGALMesh::Face_index(i)] = tetId[i];
+                resultTetId.first[CGALMesh::Face_index(i)] = tetId[i];
             }
 
-            std::tie(this->sheetId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:sheetId", -1);
+            auto resultSheetId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->SHEET_ID_KEY, -1);
 
-            if (false == created)
+            if (false == resultSheetId.second)
             {
                 throw std::runtime_error("SheetId property could not be added to the mesh.");
             }
 
-            std::tie(this->componentId, created) = this->mesh.add_property_map<CGALMesh::Face_index, int>("f:componentId", -1);
+            auto resultComponentId = this->mesh.add_property_map<CGALMesh::Face_index, int>(this->COMPONENT_ID_KEY, -1);
 
-            if (false == created)
+            if (false == resultComponentId.second)
             {
                 throw std::runtime_error("ComponentId property could not be added to the mesh.");
             }
 
-            std::tie(this->isImpassable, created) = this->mesh.add_property_map<CGALMesh::Edge_index, bool>("f:isImpassable", false);
+            auto resultIsImpassable = this->mesh.add_property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY, false);
 
-            if (false == created)
+            if (false == resultIsImpassable.second)
             {
                 throw std::runtime_error("isImpassable property could not be added to the mesh.");
             }
-
-
         }
 
 
+        // Helpers to get the maps of the mesh
+        auto edgeParam()
+        {
+            auto r = mesh.property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY);
+            if (!r.has_value()) throw std::runtime_error("edgeParam not initialized");
+            return r.value();
+        }
+
+        auto tetId()
+        {
+            auto r = mesh.property_map<CGALMesh::Face_index, int>(TET_ID_KEY);
+            if (!r.has_value()) throw std::runtime_error("tetId not initialized");
+            return r.value();
+        }
+
+        auto sheetId()
+        {
+            auto r = mesh.property_map<CGALMesh::Face_index, int>(SHEET_ID_KEY);
+            if (!r.has_value()) throw std::runtime_error("sheetId not initialized");
+            return r.value();
+        }
+
+        auto componentId()
+        {
+            auto r = mesh.property_map<CGALMesh::Face_index, int>(COMPONENT_ID_KEY);
+            if (!r.has_value()) throw std::runtime_error("componentId not initialized");
+            return r.value();
+        }
+
+        auto isImpassable()
+        {
+            auto r = mesh.property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY);
+            if (!r.has_value()) throw std::runtime_error("isImpassable not initialized");
+            return r.value();
+        }
+
+        auto edgeParam() const
+        {
+            auto r = mesh.property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY);
+            if (!r.has_value()) throw std::runtime_error("edgeParam not initialized");
+            return r.value();
+        }
+
+        auto tetId() const
+        {
+            auto r = mesh.property_map<CGALMesh::Face_index, int>(TET_ID_KEY);
+            if (!r.has_value()) throw std::runtime_error("tetId not initialized");
+            return r.value();
+        }
+
+        auto sheetId() const
+        {
+            auto r = mesh.property_map<CGALMesh::Face_index, int>(SHEET_ID_KEY);
+            if (!r.has_value()) throw std::runtime_error("sheetId not initialized");
+            return r.value();
+        }
+
+        auto componentId() const
+        {
+            auto r = mesh.property_map<CGALMesh::Face_index, int>(COMPONENT_ID_KEY);
+            if (!r.has_value()) throw std::runtime_error("componentId not initialized");
+            return r.value();
+        }
+
+        auto isImpassable() const
+        {
+            auto r = mesh.property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY);
+            if (!r.has_value()) throw std::runtime_error("isImpassable not initialized");
+            return r.value();
+        }
+
+        void print()
+        {
+            const auto edgeParamMap = this->edgeParam();
+            const auto tetIdMap = this->tetId();
+            const auto sheetIdMap = this->sheetId();
+
+            std::cout << "Vertices:\n";
+            for (auto v : mesh.vertices())
+            {
+                const auto &p = mesh.point(v);
+                double e = edgeParamMap[v];
+                std::cout << "  Vertex " << v << ": ("
+                    << p[0] << ", " << p[1] << ", " << p[2]
+                    << "), edgeParam = " << e << "\n";
+            }
+
+            std::cout << "\nFaces:\n";
+            for (auto f : mesh.faces())
+            {
+                std::cout << "  Face " << f << ": [";
+                bool first = true;
+                for (auto v : vertices_around_face(mesh.halfedge(f), mesh))
+                {
+                    if (!first) std::cout << ", ";
+                    std::cout << v;
+                    first = false;
+                }
+                std::cout << "], tetId = " << tetIdMap[f]
+                    << ", sheetId = " << sheetIdMap[f] << "\n";
+            }
+        }
+
+        void printSheetHistogram(ReebSpace2 &reebSpace)
+        {
+            const auto sheetIdMap = this->sheetId();
+
+            std::set<int> sheetIds;
+            for (auto f : mesh.faces())
+            {
+                sheetIds.insert(sheetIdMap[f]);
+            }
+
+            std::vector<std::tuple<double, double, int>> sheetsAndAreas;
+            sheetsAndAreas.reserve(sheetIds.size());
+
+            for (const int id : sheetIds)
+            {
+                const std::tuple<double, double, int> sheetAndArea = {reebSpace.sheetArea.at(id), reebSpace.sheetAreaProportion.at(id), id};
+                sheetsAndAreas.emplace_back(sheetAndArea);
+            }
+
+            std::sort(sheetsAndAreas.begin(), sheetsAndAreas.end(), std::greater<>());
+
+            std::cout << "\nThe fiber surface has the following histogram of intersected sheets.\n";
+            printf("%-10s %-8s %-12s %-8s %-12s\n", "Sheet ID", "|", "Area", "|", "Percentage");
+            printf("----------------------------------------------------\n");
+            for (const auto &[area, areaProportion, id] : sheetsAndAreas)
+            {
+                printf("%-10d %-8s %-12.4f %-8s %.4f%%\n", id, "|", area, "|", areaProportion);
+            }
+        }
 
 
-
-
-
-
-
-        // Generated by chat gpt
+        // Generated by chat gpt, depricated
         std::array<double, 4> computeBarycentricCoordinates(const TetMesh &tetMesh, const int &tetId, const std::array<double, 3> &point3)
         {
             // Unpack tetrahedron vertices
@@ -329,7 +350,7 @@ class SurfaceMesh
 
         int computeTriangleSheetId(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle)
         {
-            const int tetId = this->tetId[triangle];
+            const int tetId = this->tetId()[triangle];
 
             const std::array<double, 3> midpoint = this->triangleMidpoint(triangle);
             const std::array<double, 4> barycentricCoordinates = this->computeBarycentricCoordinates(tetMesh, tetId, midpoint);
@@ -401,6 +422,8 @@ class SurfaceMesh
         // Back for debuggin connected component compututaion, otherwise CGAL's CGAL::Polygon_mesh_processing::connected_components
         std::size_t computeConnectedComponentsBFS(CGALMesh::Property_map<CGALMesh::Face_index, int>& componentMap)
         {
+            auto isImpassableMap = this->isImpassable();
+
             const CGALMesh& mesh = this->mesh;
 
             // Initialize all faces as unvisited (-1)
@@ -433,7 +456,7 @@ class SurfaceMesh
                     {
                         // Skip if this edge is impassable
                         auto e = mesh.edge(h);
-                        if (this->isImpassable[e]) continue;
+                        if (isImpassableMap[e]) continue;
 
                         // Get the opposite face
                         auto opp = mesh.opposite(h);
@@ -460,11 +483,14 @@ class SurfaceMesh
 
         void computeTriangleSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace)
         {
+            auto sheetIdMap = this->sheetId();
+            auto componentIdMap = this->componentId();
+            auto isImpassableMap = this->isImpassable();
 
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
                     this->mesh,
-                    this->componentId,
-                    CGAL::parameters::edge_is_constrained_map(this->isImpassable)
+                    componentIdMap,
+                    CGAL::parameters::edge_is_constrained_map(isImpassableMap)
                     );
 
             //std::size_t numComponents2 = computeConnectedComponentsBFS(this->componentId);
@@ -476,7 +502,7 @@ class SurfaceMesh
             std::vector<std::pair<CGALMesh::Face_index, int>> componentRepresentatives;
             for (auto face : mesh.faces())
             {
-                const int componentId = this->componentId[face];
+                const int componentId = componentIdMap[face];
 
                 if (false == usedComponents.contains(componentId))
                 {
@@ -500,8 +526,8 @@ class SurfaceMesh
             //
             for (auto face : mesh.faces())
             {
-                const int componentId = this->componentId[face];
-                this->sheetId[face] =  componentSheets[componentId];
+                const int componentId = componentIdMap[face];
+                sheetIdMap[face] =  componentSheets[componentId];
 
 
 
@@ -576,7 +602,7 @@ class SurfaceMesh
             double midPointAlpha = 0.0;
             for (const auto v : mesh.vertices_around_face(mesh.halfedge(triangle))) 
             {
-                midPointAlpha += this->edgeParam[v];
+                midPointAlpha += this->edgeParam()[v];
             }
             midPointAlpha /= 3.0;
 
@@ -584,7 +610,7 @@ class SurfaceMesh
             const std::vector<std::pair<int, int>> fiberSeeds = reebSpace.computeSeedFibersGivenLine(tetMesh, singularArrangement, controlSegment, midPointAlpha, intersectedSegments);
 
             // 3. Determine which fiber component contains a triangle from the tet
-            const int tetId = this->tetId[triangle];
+            const int tetId = this->tetId()[triangle];
 
             const int a = tetMesh.tetrahedra[tetId][0];
             const int b = tetMesh.tetrahedra[tetId][1];
@@ -616,7 +642,7 @@ class SurfaceMesh
             double midPointAlpha = 0.0;
             for (const auto v : mesh.vertices_around_face(mesh.halfedge(triangle))) 
             {
-                midPointAlpha += this->edgeParam[v];
+                midPointAlpha += this->edgeParam()[v];
             }
             midPointAlpha /= 3.0;
 
@@ -624,7 +650,7 @@ class SurfaceMesh
             const FiberGraph fg = reebSpace.computeFiberGraph3(tetMesh, singularArrangement, controlSegment, midPointAlpha, intersectedSegments);
 
             // 3. Determine which fiber component contains a triangle from the tet
-            const int tetId = this->tetId[triangle];
+            const int tetId = this->tetId()[triangle];
 
             const int a = tetMesh.tetrahedra[tetId][0];
             const int b = tetMesh.tetrahedra[tetId][1];
@@ -656,11 +682,14 @@ class SurfaceMesh
 
         void computeTriangleSheets2(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
         {
+            auto sheetIdMap = this->sheetId();
+            auto componentIdMap = this->componentId();
+            auto isImpassableMap = this->isImpassable();
 
             std::size_t numComponents2 = CGAL::Polygon_mesh_processing::connected_components(
                     this->mesh,
-                    this->componentId,
-                    CGAL::parameters::edge_is_constrained_map(this->isImpassable)
+                    componentIdMap,
+                    CGAL::parameters::edge_is_constrained_map(isImpassableMap)
                     );
 
             //std::size_t numComponents2 = computeConnectedComponentsBFS(this->componentId);
@@ -672,7 +701,7 @@ class SurfaceMesh
 
             for (auto face : mesh.faces())
             {
-                const int componentId = this->componentId[face];
+                const int componentId = componentIdMap[face];
 
                 if (componentRepresentatives[componentId].size() < 100)
                 {
@@ -719,9 +748,8 @@ class SurfaceMesh
             //
             for (auto face : mesh.faces())
             {
-                const int componentId = this->componentId[face];
-                this->sheetId[face] =  componentSheets[componentId];
-
+                const int componentId = componentIdMap[face];
+                sheetIdMap[face] =  componentSheets[componentId];
 
                 //this->sheetId[face] = this->computeTriangleSheetId(tetMesh, singularArrangement, reebSpace, face);
 
@@ -747,8 +775,10 @@ class SurfaceMesh
         // Helper: interpolate two points and scalar values
         CartesianPoint_3 interpolate_vertex(CGALMesh::Vertex_index v0, CGALMesh::Vertex_index v1, double isovalue)
         {
-            const double e0 = edgeParam[v0];
-            const double e1 = edgeParam[v1];
+            const auto edgeParamMap = this->edgeParam();
+
+            const double e0 = edgeParamMap[v0];
+            const double e1 = edgeParamMap[v1];
 
             const double t = (isovalue - e0) / (e1 - e0);
 
@@ -766,6 +796,8 @@ class SurfaceMesh
 
         std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALMesh::Vertex_index>> getVertexColours(CGALMesh &cgalMesh, const double isovalue)
         {
+            const auto edgeParamMap = this->edgeParam();
+
             auto [vertexColour, created] = cgalMesh.add_property_map<CGALMesh::Vertex_index, int>("v:colour", -2);
             if (!created)
                 throw std::runtime_error("Could not make mesh colour array.");
@@ -774,7 +806,7 @@ class SurfaceMesh
 
             for (auto v : cgalMesh.vertices())
             {
-                const double e = edgeParam[v];
+                const double e = edgeParamMap[v];
                 const double diff = e - isovalue;
 
                 if (std::abs(diff) <= this->epsilon)
@@ -805,6 +837,12 @@ class SurfaceMesh
 
         void subdivideMeshOnce(const double isovalue)
         {
+            auto edgeParamMap = this->edgeParam();
+            auto tetIdMap = this->tetId();
+            auto sheetIdMap = this->sheetId();
+            auto componentIdMap = this->componentId();
+            auto isImpassableMap = this->isImpassable();
+
             // 1. Compute the colours of all the vertices
             //
             auto [vertexColour, grayVertices] = getVertexColours(this->mesh, isovalue);
@@ -845,8 +883,8 @@ class SurfaceMesh
 
                 const auto v0 = this->mesh.source(h);
                 const auto v1 = this->mesh.target(h);
-                const double val0 = edgeParam[v0];
-                const double val1 = edgeParam[v1];
+                const double val0 = edgeParamMap[v0];
+                const double val1 = edgeParamMap[v1];
 
                 const CartesianPoint_3 edgeVertex = interpolate_vertex(v0, v1, isovalue);
                 const auto hNew = CGAL::Euler::split_edge(h, mesh);
@@ -854,13 +892,13 @@ class SurfaceMesh
 
                 // Copy over the vertex values for the new points
                 mesh.point(vNew) = edgeVertex;
-                edgeParam[vNew] = isovalue;
+                edgeParamMap[vNew] = isovalue;
                 vertexColour[vNew] = 0;
 
                 // Make whether this is impassable
-                const auto isEdgeImpassable = this->isImpassable[e];
-                this->isImpassable[mesh.edge(hNew)] = isEdgeImpassable;
-                this->isImpassable[mesh.edge(mesh.next(hNew))] = isEdgeImpassable;
+                const auto isEdgeImpassable = isImpassableMap[e];
+                isImpassableMap[mesh.edge(hNew)] = isEdgeImpassable;
+                isImpassableMap[mesh.edge(mesh.next(hNew))] = isEdgeImpassable;
 
                 // Save the adjacent faces that now need splitting
                 if (mesh.face(hNew) != CGALMesh::null_face())
@@ -879,7 +917,7 @@ class SurfaceMesh
 
             for (const auto f : facesToSplit)
             {
-                const int faceTetId = this->tetId[f];
+                const int faceTetId = tetIdMap[f];
 
                 if (mesh.degree(f) == 3)
                 {
@@ -907,14 +945,14 @@ class SurfaceMesh
                 const auto newH = CGAL::Euler::split_face(h0, h1, this->mesh);
 
                 // Make the new edge impassable
-                this->isImpassable[mesh.edge(newH)] = true;
+                isImpassableMap[mesh.edge(newH)] = true;
 
                 // Write tet array
                 const auto newF0 = mesh.face(newH);
                 const auto newF1 = mesh.face(mesh.opposite(newH));
 
-                this->tetId[newF0] = faceTetId;
-                this->tetId[newF1] = faceTetId;
+                tetIdMap[newF0] = faceTetId;
+                tetIdMap[newF1] = faceTetId;
 
                 // Save non-triangle faces to later triangulation
                 if (mesh.degree(newF0) > 3)
@@ -925,7 +963,6 @@ class SurfaceMesh
                 {
                     facesToTriangulate.insert(newF1);
                 }
-
             }
 
 
@@ -936,6 +973,8 @@ class SurfaceMesh
 
         void triangulateMesh()
         {
+            auto tetIdMap = this->tetId();
+
             // This visitor sets the tetId to the triangulated faces to that of their parent
             struct Visitor : CGAL::Polygon_mesh_processing::Triangulate_faces::Default_visitor<CGALMesh>
             {
@@ -947,14 +986,14 @@ class SurfaceMesh
 
             for (const auto f : mesh.faces())
             {
-                const int faceTetId = this->tetId[f];
+                const int faceTetId = tetIdMap[f];
 
                 if (mesh.degree(f) == 3)
                 {
                     continue;
                 }
 
-                Visitor visitor(faceTetId, this->tetId);
+                Visitor visitor(faceTetId, tetIdMap);
 
                 CGAL::Polygon_mesh_processing::triangulate_face(f, mesh, CGAL::parameters::visitor(visitor));
             }

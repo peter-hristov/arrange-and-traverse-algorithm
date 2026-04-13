@@ -75,13 +75,12 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
 
     if (!scalarEdgeParam)
     {
-        std::cerr << "No point scalar data found.\n";
-        return {};
+        throw std::runtime_error("No EdgeParameterization array found on point data.");
     }
+
     if (!scalarTetId)
     {
-        std::cerr << "No cell scalar data found.\n";
-        return {};
+        throw std::runtime_error("No TetIds array found on cell data.");
     }
 
     //std::cout << "Before Number of points: " << polyData->GetPoints()->GetNumberOfPoints() << "\n";
@@ -339,6 +338,11 @@ CGALMesh io::readCGALMesh(const std::string& filename)
 vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh)
 {
     const CGALMesh& mesh = surfMesh.mesh;
+    auto edgeParamMap = surfMesh.edgeParam();
+    auto tetIdMap = surfMesh.tetId();
+    auto sheetIdMap = surfMesh.sheetId();
+    auto componentIdMap = surfMesh.componentId();
+    auto isImpassableMap = surfMesh.isImpassable();
 
     // -------------------------------------------------------------------------
     // 1. Points
@@ -364,7 +368,7 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh
                               CGAL::to_double(pt.y()),
                               CGAL::to_double(pt.z()));
 
-        double ep = surfMesh.edgeParam[v];
+        double ep = edgeParamMap[v];
         vtkEdgeParam->SetValue(pid, ep);
 
         vertexMap[v] = pid++;
@@ -404,9 +408,9 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh
 
         vtkCells->InsertNextCell(static_cast<vtkIdType>(ids.size()), ids.data());
 
-        int tid = surfMesh.tetId[f];
-        int sid = surfMesh.sheetId[f];
-        int cid = surfMesh.componentId[f];
+        int tid = tetIdMap[f];
+        int sid = sheetIdMap[f];
+        int cid = componentIdMap[f];
         std::array<float, 3> triangleColour = fiber::fiberColours[sid % fiber::fiberColours.size()];
 
         vtkTetId->InsertNextValue(tid);
@@ -430,7 +434,7 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh
     vtkIdType eid = 0;
     for (auto e : mesh.edges())
     {
-        bool val = surfMesh.isImpassable[e];
+        bool val = isImpassableMap[e];
         vtkImpassable->SetValue(eid++, val);
     }
 
@@ -481,6 +485,7 @@ void io::saveFiberSurface(std::vector<SurfaceMesh>& surfMeshes, const std::strin
 void io::writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::string& filename)
 {
     const CGALMesh& mesh = surfMesh.mesh;
+    auto isImpassableMap = surfMesh.isImpassable();
 
     // Points
     auto pts = vtkSmartPointer<vtkPoints>::New();
@@ -504,7 +509,7 @@ void io::writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::strin
 
     for (auto e : mesh.edges())
     {
-        if (!surfMesh.isImpassable[e]) continue;
+        if (!isImpassableMap[e]) continue;
 
         auto h = mesh.halfedge(e);
         vtkIdType v0 = vertexMap.at(mesh.source(h));
