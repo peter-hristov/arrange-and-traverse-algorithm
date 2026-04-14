@@ -50,9 +50,6 @@ namespace io
 
     void saveOriginalMesh(const std::string, vtkSmartPointer<vtkUnstructuredGrid>);
 
-
-    void saveFiberPointsAsTriangleSoup(const std::vector<FiberPoint>& fiberPoints, const std::string& filename);
-
     std::vector<FiberPoint> generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints);
     void generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string);
 

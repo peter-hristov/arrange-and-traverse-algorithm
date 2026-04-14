@@ -22,7 +22,7 @@ class SurfaceMesh
         CGALMesh mesh;
 
         // Used to decide which vertices are black/gray/white in the segmentation
-        const double epsilon = 1e-10;
+        static constexpr double epsilon = 0.001;
 
         //
         // Named keys for the maps defined on the simplices of the mesh

@@ -78,11 +78,11 @@ class TracerVisualiserWidget : public QOpenGLWidget
     GLfloat isovalueMult = -1.0;
 
     std::vector<FiberPoint> faceFibers;
-    std::vector<FiberPoint> faceFiberSurface;
+    //std::vector<FiberPoint> faceFiberSurface;
     std::vector<FiberPoint> faceFiberSurfaceFeatures;
 
     void updateFiber(const std::vector<FiberPoint>&);
-    void updateFiberSurface(const std::vector<FiberPoint>&);
+    void updateFiberSurface();
     void updateFiberSurfaceFeatures(const std::vector<FiberPoint>&);
 
     void clearFiber();

@@ -15,6 +15,7 @@
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWidget.h"
 #include "./TracerVisualiserWindow.h"
+#include "./Fiber.h"
 
 #include <vtkPointData.h>
 #include <vtkFloatArray.h>
@@ -147,40 +148,51 @@ TracerVisualiserWidget::generateDisplayList()
         glBegin(GL_TRIANGLES);
         {
             //for(const auto &faceFiber : this->faceFibers)
-            for(int i = 0 ; i < this->faceFiberSurface.size() ; i+=3)
+            for (const auto fiberSurface : this->data.surfaceMeshes)
             {
-                const auto &faceFiber = this->faceFiberSurface[i];
-                const auto &faceFiber2 = this->faceFiberSurface[i+1];
-                const auto &faceFiber3 = this->faceFiberSurface[i+2];
-
-
-
-                if (this->enableLighting)
+                const auto sheetIdMap = fiberSurface.sheetId();
+                for (const auto triangle : fiberSurface.mesh.faces())
                 {
-                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], fsOpacity, 1.0);
 
-                    GLfloat vertices[3][3] = {
-                        {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
-                        {faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
-                        {faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
+                    // Get the vertex coordinates
+                    std::vector<std::array<GLfloat, 3>> vertices;
+                    for (auto vertex : fiberSurface.mesh.vertices_around_face(fiberSurface.mesh.halfedge(triangle))) 
+                    {
+                        auto& p = fiberSurface.mesh.point(vertex);
+                        vertices.push_back({static_cast<GLfloat>(p.x()), static_cast<GLfloat>(p.y()), static_cast<GLfloat>(p.z())});
+                    }
 
-                    };
+                    // Get the colour
+                    const int sheetId = sheetIdMap[triangle];
+                    std::array<float, 3> triangleColour;
+                    if (sheetId == -1)
+                    {
+                        triangleColour = {1.0, 1.0, 0.0};
+                    }
+                    else
+                    {
+                        const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+                        triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+                    }
 
-                    std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
 
+                    // Set colour and compute normal
+                    if (this->enableLighting)
+                    {
+                        setMaterial(triangleColour[0], triangleColour[1], triangleColour[2], fsOpacity, 1.0);
+                        std::array<GLfloat, 3> normal = this->computeTriangleNormal(vertices[0].data(), vertices[1].data(), vertices[2].data());
+                        glNormal3fv(normal.data());
+                    }
+                    else
+                    {
+                        glColor3f(triangleColour[0], triangleColour[1], triangleColour[2]);
+                    }
 
-                    // Set normal for OpenGL
-                    glNormal3fv(normal.data());
+                    // Push out the vertices
+                    glVertex3fv(vertices[0].data());
+                    glVertex3fv(vertices[1].data());
+                    glVertex3fv(vertices[2].data());
                 }
-                else
-                {
-                    glColor3fv(faceFiber.colour.data());
-
-                }
-
-                glVertex3fv(faceFiber.point.data());
-                glVertex3fv(faceFiber2.point.data());
-                glVertex3fv(faceFiber3.point.data());
 
             }
         }
@@ -821,11 +833,9 @@ void TracerVisualiserWidget::updateFiber(const std::vector<FiberPoint> &newFiber
     this->update();
 }
 
-void TracerVisualiserWidget::updateFiberSurface(const std::vector<FiberPoint> &newFiberPoints)
+void TracerVisualiserWidget::updateFiberSurface()
 {
-    this->faceFiberSurface = newFiberPoints;
     this->buildAABBTree();
-
     this->generateDisplayList();
     this->update();
 }
@@ -848,7 +858,8 @@ void TracerVisualiserWidget::clearFiber()
 
 void TracerVisualiserWidget::clearFiberSurface()
 {
-    this->faceFiberSurface = {};
+    this->data.surfaceMeshes.clear();
+    this->data.surfaceMeshes.shrink_to_fit();
     this->generateDisplayList();
     this->update();
 }
@@ -941,33 +952,24 @@ void TracerVisualiserWidget::buildAABBTree()
     pickingTriangles.clear();
     pickingSheetIds.clear();
 
-    for (int i = 0; i + 2 < faceFiberSurface.size(); i += 3)
+    for (const auto fiberSurface : this->data.surfaceMeshes)
     {
-        const auto& v0 = faceFiberSurface[i].point;
-        const auto& v1 = faceFiberSurface[i+1].point;
-        const auto& v2 = faceFiberSurface[i+2].point;
+        const auto sheetIdMap = fiberSurface.sheetId();
+        for (const auto triangle : fiberSurface.mesh.faces())
+        {
+            // Get the vertex coordinates
+            std::vector<CartesianPoint_3> vertices;
+            for (auto vertex : fiberSurface.mesh.vertices_around_face(fiberSurface.mesh.halfedge(triangle))) 
+            {
+                vertices.push_back(fiberSurface.mesh.point(vertex));
+            }
 
-        pickingTriangles.emplace_back(
-            CartesianPoint_3(v0[0], v0[1], v0[2]),
-            CartesianPoint_3(v1[0], v1[1], v1[2]),
-            CartesianPoint_3(v2[0], v2[1], v2[2])
-        );
-        pickingSheetIds.push_back(faceFiberSurface[i].sheetId);
-    }
+            // Push a triangle
+            pickingTriangles.emplace_back(vertices[0], vertices[1], vertices[2]);
 
-    for (int i = 0; i + 2 < faceFiberSurfaceFeatures.size(); i += 3)
-    {
-        const auto& v0 = faceFiberSurfaceFeatures[i].point;
-        const auto& v1 = faceFiberSurfaceFeatures[i+1].point;
-        const auto& v2 = faceFiberSurfaceFeatures[i+2].point;
-
-        pickingTriangles.emplace_back(
-            CartesianPoint_3(v0[0], v0[1], v0[2]),
-            CartesianPoint_3(v1[0], v1[1], v1[2]),
-            CartesianPoint_3(v2[0], v2[1], v2[2])
-        );
-        pickingSheetIds.push_back(faceFiberSurfaceFeatures[i].sheetId);
-
+            const int sheetId = sheetIdMap[triangle];
+            pickingSheetIds.push_back(sheetId);
+        }
     }
 
     aabbTriangleTree.rebuild(pickingTriangles.begin(), pickingTriangles.end());
@@ -976,6 +978,7 @@ void TracerVisualiserWidget::buildAABBTree()
     //qDebug() << "AABB tree built with" << pickingTriangles.size() << "triangles";
 }
 
+// Claud generated code
 int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
 {
     makeCurrent(); // <-- add this

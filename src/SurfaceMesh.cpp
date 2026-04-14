@@ -318,7 +318,7 @@ std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALM
         const double e = edgeParamMap[v];
         const double diff = e - isovalue;
 
-        if (std::abs(diff) <= this->epsilon)
+        if (std::abs(diff) <= SurfaceMesh::epsilon)
         {
             vertexColour[v] = 0;       // on the isovalue
             grayVertices.push_back(v);
