@@ -16,6 +16,7 @@
 #include "./TracerVisualiserWidget.h"
 #include "./TracerVisualiserWindow.h"
 #include "./Fiber.h"
+#include "./Timer.h"
 
 #include <vtkPointData.h>
 #include <vtkFloatArray.h>
@@ -835,7 +836,10 @@ void TracerVisualiserWidget::updateFiber(const std::vector<FiberPoint> &newFiber
 
 void TracerVisualiserWidget::updateFiberSurface()
 {
+    Timer::start();
     this->buildAABBTree();
+    Timer::stop("Computed FS AABB                       :");
+
     this->generateDisplayList();
     this->update();
 }
@@ -951,6 +955,7 @@ void TracerVisualiserWidget::buildAABBTree()
 {
     aabbTriangleTrees.clear();
     aabbTriangleTrees.reserve(this->data.surfaceMeshes.size());
+
     for (const auto& fiberSurface : this->data.surfaceMeshes)
     {
         aabbTriangleTrees.emplace_back(
@@ -958,14 +963,15 @@ void TracerVisualiserWidget::buildAABBTree()
                 faces(fiberSurface.mesh).second,
                 fiberSurface.mesh
                 );
+
         aabbTriangleTrees.back().accelerate_distance_queries();
     }
-    //qDebug() << "AABB tree built with" << pickingTriangles.size() << "triangles";
 }
 
 // Claud generated code
 int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
 {
+    Timer::start();
     if (aabbTriangleTrees.empty()) return -1;
 
     makeCurrent();
@@ -1002,13 +1008,14 @@ int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
                 double dist = CGAL::squared_distance(origin, *p);
                 if (dist < bestDist)
                 {
-                    std::cerr << "Chaing closest best\n";
                     bestDist = dist;
                     bestSheetId = this->data.surfaceMeshes[m].sheetId()[hit->second];
                 }
             }
         }
     }
+    Timer::stop("Search takes                           :");
+
     return bestSheetId;
 }
 

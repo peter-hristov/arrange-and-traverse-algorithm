@@ -959,11 +959,13 @@ void PlotWidget::paintEvent(QPaintEvent*)
         this->data.surfaceMeshes.clear();
         this->data.surfaceMeshes.reserve(controlPointsInternal.size());
 
+        Timer::start();
         for (int i = 0 ; i < controlPointsInternal.size() - 1; i++)
         {
             auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]}, desiredSheetId);
             this->data.surfaceMeshes.emplace_back(std::move(mesh));
         }
+        Timer::stop("Computed labeled FS                    :");
 
         this->recomputeFiberSurface = false;
         sibling->updateFiberSurface();
