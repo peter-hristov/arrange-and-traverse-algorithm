@@ -100,12 +100,12 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 
         filename = "./output/fiber-surface.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
-        io::saveFiberSurface(this->data.surfaceMeshes, filename);
+        io::saveFiberSurface(this->data.fiberSurfaces, filename);
         //io::saveFiberPointsAsTriangleSoup(this->tracerVisualiserWidget->faceFiberSurface, filename);
 
         filename = "./output/fiber-surface-features.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
-        io::saveFiberSurface(this->data.surfaceMeshesFeatures, filename);
+        io::saveFiberSurface(this->data.featureSurfaces, filename);
         //io::saveFiberPointsAsTriangleSoup(this->tracerVisualiserWidget->faceFiberSurfaceFeatures, filename);
 
         filename = "./output/reeb-space.png";
@@ -450,7 +450,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             });
 
     connect(checkboxShowFeatures, &QCheckBox::toggled, [=](bool checked) {
-            this->tracerVisualiserWidget->drawFiberSurfaceFeatures = checked;
+            this->tracerVisualiserWidget->drawFeatureSurfaces = checked;
             this->tracerVisualiserWidget->generateDisplayList();
             this->tracerVisualiserWidget->update();
             });

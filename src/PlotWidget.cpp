@@ -874,34 +874,15 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
     if (this->recomputeFiber == true)
     {
-
-
-
-        //p.drawLine(fiberPoint.x(), fiberPoint.y(), fiberPoint.x(), fiberPoint.y() + 1000);
-
-        //const Point_2 endPoint(controlPoint[0], controlPoint[1] + tetMesh.maxG + 10.0);
-
         this->recomputeFiber = false;
 
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
-
-        //const double u = -0.0734849;
-        //const double v = -0.0625043;
-
-        //qDebug() << "Computing fiber (" << u << ", " << v << ")";
-
-        //const std::vector<FiberPoint> fiber = fiber::computeFiber(data.tetMesh, data.arrangement, data.reebSpace, {u, v}, -1);
-        //const std::vector<FiberPoint> fiber = fiber::computeFiberFromFiberGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
         
-        const std::vector<FiberPoint> fiber = fiber::computeFiberSAT(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->sibling->selectedSheetIds);
+        const std::vector<FiberPoint> fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->sibling->selectedSheetIds);
 
         sibling->updateFiber(fiber);
     }
-    
-
-
-    //if (this->recomputeFiber == true && controlPointsTransformed.size() >= 2)
 
 
 
@@ -949,23 +930,20 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // ----------------------------------------------------------------
     if (this->recomputeFiberSurface == true && controlPoints.size() >= 2)
     {
-
         std::cout << "The control polygon is :\n";
         for (int i = 0 ; i < controlPointsInternal.size() ; i++)
         {
             qDebug() << controlPointsInternal[i][0] << ", " << controlPointsInternal[i][1];
         }
 
-        this->data.surfaceMeshes.clear();
-        this->data.surfaceMeshes.reserve(controlPointsInternal.size());
+        this->data.fiberSurfaces.clear();
+        this->data.fiberSurfaces.reserve(controlPointsInternal.size());
 
-        Timer::start();
         for (int i = 0 ; i < controlPointsInternal.size() - 1; i++)
         {
-            auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]});
-            this->data.surfaceMeshes.emplace_back(std::move(mesh));
+            const auto segmentedFiberSurface = fiber::computeSegmentedFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]});
+            this->data.fiberSurfaces.emplace_back(std::move(segmentedFiberSurface));
         }
-        Timer::stop("Computed labeled FS                    :");
 
         this->recomputeFiberSurface = false;
         sibling->updateFiberSurface();
@@ -1033,9 +1011,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         // 
         // Draw polygons and calculate expectes size
 
-        this->data.surfaceMeshesFeatures.clear();  // add this
-        this->data.surfaceMeshesFeatures.shrink_to_fit();  // add this
-        this->data.surfaceMeshesFeatures.reserve(expectedSize);  // add this
+        this->data.featureSurfaces.clear();  // add this
+        this->data.featureSurfaces.reserve(expectedSize);  // add this
 
         LoadingBar bar(40, "Computing features fiber surfaces...");
         int computedFS = 0;
@@ -1047,8 +1024,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
             {
                 for (int i = 0 ; i < sheetPolygon.size(); i++)
                 {
-                    auto surfaceMesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {sheetPolygon[i], sheetPolygon[(i+1) % sheetPolygon.size()]}, {desiredSheetId});
-                    this->data.surfaceMeshesFeatures.push_back(std::move(surfaceMesh));
+                    const auto segmentedFiberSurface = fiber::computeSegmentedFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {sheetPolygon[i], sheetPolygon[(i+1) % sheetPolygon.size()]}, {desiredSheetId});
+                    this->data.featureSurfaces.push_back(std::move(segmentedFiberSurface));
 
                     bar.update((100 * ++computedFS) / expectedSize);
                 }

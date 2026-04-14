@@ -51,8 +51,8 @@ class Data
         reebSpace2(rs2)
     {}
 
-    std::vector<SurfaceMesh> surfaceMeshes;
-    std::vector<SurfaceMesh> surfaceMeshesFeatures;
+    std::vector<SurfaceMesh> fiberSurfaces;
+    std::vector<SurfaceMesh> featureSurfaces;
 
     vtkSmartPointer<vtkPolyData> molecule;
 

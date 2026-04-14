@@ -1,15 +1,13 @@
 #include "./CGALTypedefs.h"
 
 #include "./Fiber.h"
-#include "./DisjointSet.h"
-#include "./FiberPoint.h"
-#include "./FiberGraph.h"
-#include "./Timer.h"
-#include "./ReebSpace2.h"
-#include "./SurfaceMesh.h"
-#include "./TetMesh.h"
-#include "./FiberLabeling.h"
+
 #include "./io.h"
+#include "./Timer.h"
+
+#include "./FiberPoint.h"
+#include "./SurfaceMesh.h"
+#include "./FiberLabeling.h"
 
 #include <queue>
 #include <unistd.h>
@@ -17,8 +15,7 @@
 #include <unordered_set>
 
 
-
-SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, const std::set<int> &selectedSheets)
+SurfaceMesh fiber::computeSegmentedFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, const std::set<int> &selectedSheets)
 {
     const Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
     const Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
@@ -64,14 +61,13 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     return surfaceMesh;
 }
 
-std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
+std::vector<FiberPoint> fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
-    const auto fiberSeeds = fiber::labeling::computeSeedFibers(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
-    const std::vector<FiberPoint> fiberNew = computeFiberFromTriangleSeed(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
-    return fiberNew;
+    const std::vector<std::pair<int, int>> fiberSeeds = fiber::labeling::computeSeedFibers(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
+    return growSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
 }
 
-std::vector<FiberPoint> fiber::computeFiberFromTriangleSeed(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
+std::vector<FiberPoint> fiber::growSeedSet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
 {
     Face_const_handle activeFace = arrangement.getActiveFace(fiberPoint);
     const int activeFaceId = arrangement.arrangementFacesIdices[activeFace];

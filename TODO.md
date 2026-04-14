@@ -1,9 +1,9 @@
 ### Big Refactor
-[ ] Refactor the labeled fiber and fiber surfaces stuff
+[ ] Refactor grow fiber from seeds
 
 ### Current 
-[ ] Refactor fiber labeling
 
 ### Done
+[x] Refactor fiber labeling
 [x] Refactor Mesh class and scalar field access
 [x] Refactor rendering to use the meshes directly

@@ -89,7 +89,7 @@ TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GL
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
-void TracerVisualiserWidget::renderFiberSurface(std::vector<SurfaceMesh> &fiberSurfaces)
+void TracerVisualiserWidget::renderSurface(std::vector<SurfaceMesh> &fiberSurfaces)
 {
     glBegin(GL_TRIANGLES);
     {
@@ -154,14 +154,14 @@ TracerVisualiserWidget::generateDisplayList()
 
     //setMaterial(1, 0, 0, 1.0, 0.0);
 
-    if (this->drawFiberSurfaceFeatures)
+    if (this->drawFeatureSurfaces)
     {
-        this->renderFiberSurface(this->data.surfaceMeshesFeatures);
+        this->renderSurface(this->data.featureSurfaces);
     }
 
     if (this->drawFiberSurfaces)
     {
-        this->renderFiberSurface(this->data.surfaceMeshes);
+        this->renderSurface(this->data.fiberSurfaces);
     }
 
     if (this->drawFibers)
@@ -792,9 +792,7 @@ void TracerVisualiserWidget::updateFiber(const std::vector<FiberPoint> &newFiber
 
 void TracerVisualiserWidget::updateFiberSurface()
 {
-    Timer::start();
     this->buildAABBTree();
-    Timer::stop("Computed FS AABB                       :");
 
     this->generateDisplayList();
     this->update();
@@ -815,15 +813,16 @@ void TracerVisualiserWidget::clearFiber()
 
 void TracerVisualiserWidget::clearFiberSurface()
 {
-    this->data.surfaceMeshes.clear();
-    this->data.surfaceMeshes.shrink_to_fit();
+    this->data.fiberSurfaces.clear();
+    this->data.fiberSurfaces.shrink_to_fit();
     this->generateDisplayList();
     this->update();
 }
 
 void TracerVisualiserWidget::clearFiberSurfaceSheets()
 {
-    this->faceFiberSurfaceFeatures = {};
+    this->data.featureSurfaces.clear();
+    this->data.featureSurfaces.shrink_to_fit();
     this->generateDisplayList();
     this->update();
 }
@@ -907,9 +906,9 @@ void TracerVisualiserWidget::renderMolecule()
 void TracerVisualiserWidget::buildAABBTree()
 {
     aabbTriangleTrees.clear();
-    aabbTriangleTrees.reserve(this->data.surfaceMeshes.size());
+    aabbTriangleTrees.reserve(this->data.fiberSurfaces.size());
 
-    for (const auto& fiberSurface : this->data.surfaceMeshes)
+    for (const auto& fiberSurface : this->data.fiberSurfaces)
     {
         aabbTriangleTrees.emplace_back(
                 faces(fiberSurface.mesh).first,
@@ -962,7 +961,7 @@ int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
                 if (dist < bestDist)
                 {
                     bestDist = dist;
-                    bestSheetId = this->data.surfaceMeshes[m].sheetId()[hit->second];
+                    bestSheetId = this->data.fiberSurfaces[m].sheetId()[hit->second];
                 }
             }
         }
