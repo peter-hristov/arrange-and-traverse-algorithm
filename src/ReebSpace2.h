@@ -140,17 +140,6 @@ class ReebSpace2
         void computeSheetBoundaries(Arrangement &singularArrangement);
         std::vector<std::vector<std::array<double, 2>>> computeSheetControlPolygons(const int);
 
-
-        FiberGraph computeFiberGraph(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
-        int computeFiberGraphReverse(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, std::set<int> initialTriangles);
-
-        FiberGraph computeFiberGraph2(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint);
-        FiberGraph computeFiberGraph3(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
-
-
-        std::vector<std::pair<int, int>> computeSeedFibers(TetMesh &tetMesh, Arrangement &singularArrangement, std::array<double, 2> controlPoint, const std::set<int> &);
-        std::vector<std::pair<int, int>> computeSeedFibersGivenLine(TetMesh &tetMesh, Arrangement &singularArrangement, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &);
-
         // Unit Tests, mostly depricated
         void unitTest(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement);
         bool unitTestCompareFiberGraphs(const TetMesh &tetMesh, Arrangement &singularArrangement, Arrangement &regularArrangement, ReebSpace &rs);

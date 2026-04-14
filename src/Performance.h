@@ -36,15 +36,14 @@ namespace performance
             const double y = distG(gen);
 
             const auto start = std::chrono::high_resolution_clock::now();
-            FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, {x, y});
             const auto end = std::chrono::high_resolution_clock::now();
             const double elapsed = std::chrono::duration<double>(end - start).count();
 
 
-            if (fg.componentRoot.size() > 0)
-            {
-                timings.push_back(elapsed);
-            }
+            //if (fg.componentRoot.size() > 0)
+            //{
+                //timings.push_back(elapsed);
+            //}
 
             if (iterations++ > samples * 1000)
             {

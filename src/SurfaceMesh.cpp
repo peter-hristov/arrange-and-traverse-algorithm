@@ -1,5 +1,5 @@
 #include "SurfaceMesh.h"
-
+#include "FiberLabeling.h"
 
 void SurfaceMesh::print()
 {
@@ -73,33 +73,6 @@ void SurfaceMesh::remesh(const std::vector<double> &isovalues)
     this->triangulate();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 bool SurfaceMesh::bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint, std::vector<bool> &visited)
 {
     std::queue<int> bfsQueue;
@@ -171,7 +144,7 @@ int SurfaceMesh::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangemen
     midPointAlpha /= 3.0;
 
     // 2. Compute the fiber graph at the alpha in the range
-    const std::vector<std::pair<int, int>> fiberSeeds = reebSpace.computeSeedFibersGivenLine(tetMesh, singularArrangement, controlSegment, midPointAlpha, intersectedSegments);
+    const std::vector<std::pair<int, int>> fiberSeeds = fiber::labeling::computeSeedFibersGivenLine(tetMesh, singularArrangement, reebSpace, controlSegment, midPointAlpha, intersectedSegments);
 
     // 3. Determine which fiber component contains a triangle from the tet
     const int tetId = this->tetId()[triangle];

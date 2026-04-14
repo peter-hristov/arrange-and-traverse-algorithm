@@ -8,6 +8,7 @@
 #include "./ReebSpace2.h"
 #include "./SurfaceMesh.h"
 #include "./TetMesh.h"
+#include "./FiberLabeling.h"
 #include "./io.h"
 
 #include <queue>
@@ -1628,7 +1629,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
         const std::array<double, 2> fiberPointDouble = { CGAL::to_double(fiberPoint.x()), CGAL::to_double(fiberPoint.y()) };
 
         // Compute the fiber graph and its paths and cycles
-        fiberGraphs[i] = reebSpace.computeFiberGraph(tetMesh, singularArrangement, fiberPointDouble);
+        fiberGraphs[i] = fiber::labeling::computeFiberGraph(tetMesh, singularArrangement, reebSpace, fiberPointDouble);
         pathsAndCycles[i] = fiber::buildFiberGraphPathsAndCycles(tetMesh, reebSpace, fiberGraphs[i]);
 
 
@@ -2427,62 +2428,12 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     return result;
 }
 
-
-
-
-
-
-
-
 std::vector<FiberPoint> fiber::computeFiberSAT(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
-
-
-    //Timer::start();
-    //FiberGraph fg1 = reebSpace.computeFiberGraph(tetMesh, singularArrangement, controlPoint);
-    //Timer::stop("Computing fiber graph                  :");
-
-    //std::cout << std::endl;
-
-    //Timer::start();
-
-    //FiberGraph fg = reebSpace.computeFiberGraph2(tetMesh, singularArrangement, controlPoint);
-    //const std::vector<FiberPoint> fiber2 = fiber::processFiberGraph2(tetMesh, singularArrangement, reebSpace, controlPoint, fg, {});
-
-    //Timer::stop("Computing fiber old way                :");
-
-
-
-    //Timer::start();
-
-    auto fiberSeeds = reebSpace.computeSeedFibers(tetMesh, singularArrangement, controlPoint, selectedSheetIds);
-
-
-    const std::vector<FiberPoint> fiberNew =  computeFiberFromTriangleSeed(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
-
-    //Timer::stop("Computing fiber new way                :");
-
-
-
-    //std::cout << std::endl;
-
-
-
-
+    const auto fiberSeeds = fiber::labeling::computeSeedFibers(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
+    const std::vector<FiberPoint> fiberNew = computeFiberFromTriangleSeed(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
     return fiberNew;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 std::vector<FiberPoint> fiber::processFiberGraph2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets)
@@ -3469,6 +3420,3 @@ std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> fibe
 
     return {paths, cycles};
 }
-
-
-
