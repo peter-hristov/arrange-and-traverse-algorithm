@@ -119,15 +119,26 @@ typedef CGAL::Polygon_2<CartesianKernel> CartesianPolygon_2;
 
 
 
+#include <CGAL/Surface_mesh.h>
+typedef CGAL::Surface_mesh<CartesianPoint_3> CGALMesh;
 
+// Polygon mesh processing utilities
+#include <CGAL/enum.h>
+
+#include <CGAL/Polygon_mesh_processing/connected_components.h> // optional for built-in connected components
+#include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h> // convert soup -> Surface_mesh
+
+#include <CGAL/Polygon_mesh_processing/repair.h>      // merge_duplicate_points_in_polygon_soup
+#include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
+#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
+
+#include <CGAL/Polygon_mesh_processing/border.h>
+#include <CGAL/Polygon_mesh_processing/orientation.h>
+#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 
 
 
 // For the AABB Tree
-//#include <CGAL/AABB_tree.h>
-//#include <CGAL/AABB_traits.h>
-//#include <CGAL/AABB_segment_primitive.h>
-
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits_2.h>
 #include <CGAL/AABB_segment_primitive_2.h>
@@ -149,44 +160,8 @@ typedef CGAL::AABB_tree<TraitsAABBCartesian> TreeAABBCartesian;
 // For way casting to select a segment
 //
 #include <CGAL/AABB_traits.h>
-#include <CGAL/AABB_triangle_primitive.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
 
-using IteratorTriangleTree  = std::vector<CartesianTriangle_3>::iterator;
-using PrimitiveTriangleTree = CGAL::AABB_triangle_primitive<CartesianKernel, IteratorTriangleTree>;
-using TraitsTriangleTree    = CGAL::AABB_traits<CartesianKernel, PrimitiveTriangleTree>;
-using TriangleTree  = CGAL::AABB_tree<TraitsTriangleTree>;
-
-
-//typedef K::Segment_3 Segment_3;
-//typedef K::Point_3 Point_3;
-
-//using PrimitiveAABB = CGAL::AABB_segment_primitive<K, std::vector<Segment_2>::iterator>;
-//using TraitsAABB = CGAL::AABB_traits<K, PrimitiveAABB>;
-//using TreeAABB = CGAL::AABB_tree<TraitsAABB>;
-
-#include <CGAL/Surface_mesh.h>
-
-typedef CGAL::Surface_mesh<CartesianPoint_3> CGALMesh;
-//typedef CGALMesh::Vertex_index Vertex_index;
-//typedef CGALMesh::Face_index Face_index;
-//typedef CGALMesh::Vertex_index vertex_descriptor;
-//typedef CGALMesh::Face_index face_descriptor;
-
-
-
-// Polygon mesh processing utilities
-#include <CGAL/enum.h>
-
-#include <CGAL/Polygon_mesh_processing/connected_components.h> // optional for built-in connected components
-#include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h> // convert soup -> Surface_mesh
-
-#include <CGAL/Polygon_mesh_processing/repair.h>      // merge_duplicate_points_in_polygon_soup
-#include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
-#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
-
-#include <CGAL/Polygon_mesh_processing/border.h>
-#include <CGAL/Polygon_mesh_processing/orientation.h>
-#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
-
-
-
+typedef CGAL::AABB_face_graph_triangle_primitive<CGALMesh> PrimitiveTriangleTree;
+typedef CGAL::AABB_traits<CartesianKernel, PrimitiveTriangleTree> TraitsTriangleTree;
+typedef CGAL::AABB_tree<TraitsTriangleTree> TriangleTree;

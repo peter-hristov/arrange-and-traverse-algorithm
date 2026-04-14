@@ -949,53 +949,35 @@ void TracerVisualiserWidget::renderMolecule()
 
 void TracerVisualiserWidget::buildAABBTree()
 {
-    pickingTriangles.clear();
-    pickingSheetIds.clear();
-
-    for (const auto fiberSurface : this->data.surfaceMeshes)
+    aabbTriangleTrees.clear();
+    aabbTriangleTrees.reserve(this->data.surfaceMeshes.size());
+    for (const auto& fiberSurface : this->data.surfaceMeshes)
     {
-        const auto sheetIdMap = fiberSurface.sheetId();
-        for (const auto triangle : fiberSurface.mesh.faces())
-        {
-            // Get the vertex coordinates
-            std::vector<CartesianPoint_3> vertices;
-            for (auto vertex : fiberSurface.mesh.vertices_around_face(fiberSurface.mesh.halfedge(triangle))) 
-            {
-                vertices.push_back(fiberSurface.mesh.point(vertex));
-            }
-
-            // Push a triangle
-            pickingTriangles.emplace_back(vertices[0], vertices[1], vertices[2]);
-
-            const int sheetId = sheetIdMap[triangle];
-            pickingSheetIds.push_back(sheetId);
-        }
+        aabbTriangleTrees.emplace_back(
+                faces(fiberSurface.mesh).first,
+                faces(fiberSurface.mesh).second,
+                fiberSurface.mesh
+                );
+        aabbTriangleTrees.back().accelerate_distance_queries();
     }
-
-    aabbTriangleTree.rebuild(pickingTriangles.begin(), pickingTriangles.end());
-    aabbTriangleTree.accelerate_distance_queries();
-
     //qDebug() << "AABB tree built with" << pickingTriangles.size() << "triangles";
 }
 
 // Claud generated code
 int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
 {
-    makeCurrent(); // <-- add this
+    if (aabbTriangleTrees.empty()) return -1;
 
-    if (pickingTriangles.empty()) return -1;
+    makeCurrent();
 
-    // Grab matrices from OpenGL state
     GLint    viewport[4];
     GLdouble mv[16], proj[16];
     glGetIntegerv(GL_VIEWPORT,        viewport);
     glGetDoublev(GL_MODELVIEW_MATRIX,  mv);
     glGetDoublev(GL_PROJECTION_MATRIX, proj);
 
-    // Flip Y: OpenGL origin is bottom-left, Qt is top-left
     double winY = viewport[3] - mouseY;
 
-    // Unproject near and far plane points to get ray
     GLdouble nx, ny, nz, fx, fy, fz;
     gluUnProject(mouseX, winY, 0.0, mv, proj, viewport, &nx, &ny, &nz);
     gluUnProject(mouseX, winY, 1.0, mv, proj, viewport, &fx, &fy, &fz);
@@ -1004,10 +986,29 @@ int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
     CartesianPoint_3 target(fx, fy, fz);
     CartesianKernel::Ray_3 ray(origin, target);
 
-    auto hit = aabbTriangleTree.first_intersected_primitive(ray);
-    if (!hit) return -1;
+    double bestDist = std::numeric_limits<double>::max();
+    int bestSheetId = -1;
 
-    int idx = std::distance(pickingTriangles.begin(), *hit);
-    return pickingSheetIds[idx];
+    // Find the closest one from all the meshes
+    for (int m = 0; m < aabbTriangleTrees.size(); ++m)
+    {
+        auto hit = aabbTriangleTrees[m].first_intersection(ray);
+        if (hit)
+        {
+            // intersection point is in hit->first
+            const CartesianPoint_3* p = std::get_if<CartesianPoint_3>(&(hit->first));
+            if (p)
+            {
+                double dist = CGAL::squared_distance(origin, *p);
+                if (dist < bestDist)
+                {
+                    std::cerr << "Chaing closest best\n";
+                    bestDist = dist;
+                    bestSheetId = this->data.surfaceMeshes[m].sheetId()[hit->second];
+                }
+            }
+        }
+    }
+    return bestSheetId;
 }
 

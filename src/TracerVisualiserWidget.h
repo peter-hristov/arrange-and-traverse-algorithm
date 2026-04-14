@@ -144,7 +144,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     std::vector<CartesianTriangle_3> pickingTriangles;
     std::vector<int>                 pickingSheetIds;
 
-    TriangleTree aabbTriangleTree;
+    std::vector<TriangleTree> aabbTriangleTrees;
 
     void buildAABBTree();
 
