@@ -63,14 +63,14 @@ void SurfaceMesh::printSheetHistogram(ReebSpace2 &reebSpace)
     }
 }
 
-void SurfaceMesh::subdivideMesh(const std::vector<double> &isovalues)
+void SurfaceMesh::remesh(const std::vector<double> &isovalues)
 {
     for (int i = 0 ; i < isovalues.size() ; i++)
     {
-        this->subdivideMeshOnce(isovalues[i]);
+        this->remeshOnce(isovalues[i]);
     }
 
-    this->triangulateMesh();
+    this->triangulate();
 }
 
 
@@ -274,7 +274,7 @@ void SurfaceMesh::labelFiberSurface(TetMesh &tetMesh, Arrangement &singularArran
 
 
 
-CartesianPoint_3 SurfaceMesh::interpolate_vertex(CGALMesh::Vertex_index v0, CGALMesh::Vertex_index v1, double isovalue)
+CartesianPoint_3 SurfaceMesh::interpolateVertex(CGALMesh::Vertex_index v0, CGALMesh::Vertex_index v1, double isovalue)
 {
     const auto edgeParamMap = this->edgeParam();
 
@@ -332,7 +332,7 @@ std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALM
     return {vertexColour, grayVertices};
 }
 
-void SurfaceMesh::subdivideMeshOnce(const double isovalue)
+void SurfaceMesh::remeshOnce(const double isovalue)
 {
 
     auto edgeParamMap = this->edgeParam();
@@ -384,7 +384,7 @@ void SurfaceMesh::subdivideMeshOnce(const double isovalue)
         const double val0 = edgeParamMap[v0];
         const double val1 = edgeParamMap[v1];
 
-        const CartesianPoint_3 edgeVertex = interpolate_vertex(v0, v1, isovalue);
+        const CartesianPoint_3 edgeVertex = interpolateVertex(v0, v1, isovalue);
         const auto hNew = CGAL::Euler::split_edge(h, mesh);
         const auto vNew = mesh.target(hNew);
 
@@ -470,7 +470,7 @@ void SurfaceMesh::subdivideMeshOnce(const double isovalue)
 }
 
 
-void SurfaceMesh::triangulateMesh()
+void SurfaceMesh::triangulate()
 {
     auto tetIdMap = this->tetId();
 
@@ -612,8 +612,6 @@ std::unordered_set<CGALMesh::Edge_index> SurfaceMesh::getActiveEdges(const std::
         }
     }
 
-    //std::cerr << "Segfault?2\n";
-
     // At the end, clean up:
     this->mesh.remove_property_map(visited);
 
@@ -631,7 +629,7 @@ SurfaceMesh::SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordin
 
     auto polygons = triangles;
 
-    // Assume that the mesh is already cleaned up
+    // We assume that the mesh is already cleaned up, otherwuse this can be used, but its doesn't work now, fix if you need it, merging points makes issues with adding the maps to the vertices and faces
     //
     // Merge duplicate vertices
     //std::vector<std::size_t> old_to_new;

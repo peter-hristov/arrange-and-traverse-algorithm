@@ -113,7 +113,7 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
         }
     }
 
-    surfaceMesh.subdivideMesh(intersectionAlpha);
+    surfaceMesh.remesh(intersectionAlpha);
     //Timer::stop("Subdivided mesh                        :");
 
 
