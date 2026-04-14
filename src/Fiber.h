@@ -11,28 +11,10 @@
 
 namespace fiber
 {
-    std::vector<FiberPoint> computeFiberFromFiberGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint);
-
-    std::vector<FiberPoint> computeFiber(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const std::array<double, 2> &fiberPoint, const int reebSheetIdOnly);
-
-
     std::vector<FiberPoint> computeFiberSAT(TetMesh &, Arrangement &, ReebSpace2 &, std::array<double, 2>, const std::set<int> &);
     std::vector<FiberPoint> computeFiberFromTriangleSeed(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds);
 
-    std::vector<FiberPoint> processFiberGraph(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets);
-    std::vector<FiberPoint> processFiberGraph2(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, FiberGraph &pg, const std::set<int> activeSheets);
-
-    std::vector<FiberPoint> computeFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
-
     SurfaceMesh computeFiberSurfaceSingularSegment(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> &, const std::set<int> &selectedSheets = {});
-
-    std::vector<FiberPoint> computeFiberPointsFromSurfaceMesh(SurfaceMesh &, ReebSpace2 &, const std::set<int> &);
-
-
-    std::vector<int> extractPath(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited);
-    std::vector<int> extractCycle(const int &start, const std::unordered_map<int, std::vector<int>> &fgAdj, std::vector<bool> &visited);
-    std::pair<std::map<int, std::vector<int>>, std::map<int, std::vector<int>>> buildFiberGraphPathsAndCycles(const TetMesh &tetMesh, ReebSpace2 &reebSpace, FiberGraph fg);
-
 
 
     // Helper functions

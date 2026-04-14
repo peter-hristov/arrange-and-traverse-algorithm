@@ -41,6 +41,8 @@ set(SOURCES
     ./src/TetMesh.cpp
     ./src/ReebSpace2.cpp
     ./src/Fiber.cpp
+    ./src/FiberLabeling.cpp
+    ./src/FiberStitching.cpp
     ./src/Arrangement.cpp
     ./src/ReebSpace.cpp
     ./src/PlotWidget.cpp
@@ -48,7 +50,6 @@ set(SOURCES
     ./src/TracerVisualiserWidget.cpp
     ./src/TracerVisualiserWindow.cpp
     ./src/SurfaceMesh.cpp
-    ./src/FiberLabeling.cpp
     ./src/ArcBall/Ball.cpp
     ./src/ArcBall/BallAux.cpp
     ./src/ArcBall/BallMath.cpp

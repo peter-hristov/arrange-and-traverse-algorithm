@@ -1088,60 +1088,60 @@ void io::saveFibers(const std::vector<FiberPoint> &fiberPoints, const std::strin
 
 std::vector<FiberPoint> io::generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints)
 {
-    CartesianPolygon_2 &polygon = reebSpace.sheetPolygon.at(sheetId);
+    //CartesianPolygon_2 &polygon = reebSpace.sheetPolygon.at(sheetId);
 
-    if (polygon.size() == 0)
-    {
-        return {};
-    }
+    //if (polygon.size() == 0)
+    //{
+        //return {};
+    //}
 
-    // Compute the controid so that we can pull all verties towards it
-    CartesianPoint centroid = CGAL::centroid(polygon.vertices_begin(), polygon.vertices_end());
+    //// Compute the controid so that we can pull all verties towards it
+    //CartesianPoint centroid = CGAL::centroid(polygon.vertices_begin(), polygon.vertices_end());
 
-    // If need only one, get it at the center
-    if (numberOfFiberPoints == 1)
-    {
-        const std::array<double, 2> fiberPoint = {(double)centroid.x(), (double)centroid.y()};
-        const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
-        printf("The fiber size is %d\n", fiber.size());
-        return fiber;
-    }
+    //// If need only one, get it at the center
+    //if (numberOfFiberPoints == 1)
+    //{
+        //const std::array<double, 2> fiberPoint = {(double)centroid.x(), (double)centroid.y()};
+        //const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
+        //printf("The fiber size is %d\n", fiber.size());
+        //return fiber;
+    //}
 
-    std::vector<std::array<double, 2>> fiberPoints;
+    //std::vector<std::array<double, 2>> fiberPoints;
 
 
-    // If we need more, sample along the boundary
-    for (const CartesianPoint &point : polygon) 
-    {
-        // Get point from CGAL (and convert to double )
-        double u = point.x();
-        double v = point.y();
+    //// If we need more, sample along the boundary
+    //for (const CartesianPoint &point : polygon) 
+    //{
+        //// Get point from CGAL (and convert to double )
+        //double u = point.x();
+        //double v = point.y();
 
-        // Interpolate closer to the centroid to make sure we are in the sheet ( if the sheet is "convex enough")
-        const double alpha = 0.2;
-        u = (1 - alpha) * u + alpha * centroid.x();
-        v = (1 - alpha) * v + alpha * centroid.y();
+        //// Interpolate closer to the centroid to make sure we are in the sheet ( if the sheet is "convex enough")
+        //const double alpha = 0.2;
+        //u = (1 - alpha) * u + alpha * centroid.x();
+        //v = (1 - alpha) * v + alpha * centroid.y();
 
-        fiberPoints.push_back({u, v});
-    }
+        //fiberPoints.push_back({u, v});
+    //}
 
-    std::vector<FiberPoint> sheetFibers;
+    //std::vector<FiberPoint> sheetFibers;
 
-    // Calculate step size we only want some of the fiber points, not all
-    double step = static_cast<double>(fiberPoints.size() - 1) / (numberOfFiberPoints - 1);
+    //// Calculate step size we only want some of the fiber points, not all
+    //double step = static_cast<double>(fiberPoints.size() - 1) / (numberOfFiberPoints - 1);
 
-    for (int i = 0; i < numberOfFiberPoints; ++i) 
-    {
-        int index = static_cast<int>(i * step);
+    //for (int i = 0; i < numberOfFiberPoints; ++i) 
+    //{
+        //int index = static_cast<int>(i * step);
 
-        const std::array<double, 2> fiberPoint = {fiberPoints[index][0], fiberPoints[index][1]};
-        const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
+        //const std::array<double, 2> fiberPoint = {fiberPoints[index][0], fiberPoints[index][1]};
+        //const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
 
-        printf("The fiber size is %d\n", fiber.size());
-        sheetFibers.insert(sheetFibers.end(), fiber.begin(), fiber.end());
-    }
+        //printf("The fiber size is %d\n", fiber.size());
+        //sheetFibers.insert(sheetFibers.end(), fiber.begin(), fiber.end());
+    //}
 
-    return sheetFibers;
+    //return sheetFibers;
 }
 
 void io::generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string folderPath)
