@@ -63,7 +63,7 @@ SurfaceMesh fiber::computeSegmentedFiberSurface(TetMesh &tetMesh, Arrangement &s
 
 std::vector<FiberPoint> fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
-    const std::vector<std::pair<int, int>> fiberSeeds = fiber::labeling::computeSeedFibers(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
+    const std::vector<std::pair<int, int>> fiberSeeds = fiber::labeling::computeFiberSeeds(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
     return growSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, fiberSeeds);
 }
 
