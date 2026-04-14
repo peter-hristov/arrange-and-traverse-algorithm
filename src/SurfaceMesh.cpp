@@ -618,6 +618,33 @@ std::unordered_set<CGALMesh::Edge_index> SurfaceMesh::getActiveEdges(const std::
     return activeEdges;
 }
 
+
+void SurfaceMesh::filterTriangles(const std::set<int> &selectedSheets)
+{
+    if (selectedSheets.empty()) { return; }
+
+    const auto sheetIdMap = this->sheetId();
+
+    std::vector<CGALMesh::Face_index> facesToRemove;
+    for (const auto f : mesh.faces())
+    {
+        const int sheetId = sheetIdMap[f];
+
+        if (false == selectedSheets.contains(sheetId))
+        {
+            facesToRemove.push_back(f);
+        }
+    }
+
+    for (auto fd : facesToRemove)
+    {
+        mesh.remove_face(fd);
+    }
+
+    mesh.collect_garbage();
+}
+
+
 SurfaceMesh::SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId)
 {
     // Unpack the points

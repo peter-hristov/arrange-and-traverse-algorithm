@@ -962,7 +962,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         Timer::start();
         for (int i = 0 ; i < controlPointsInternal.size() - 1; i++)
         {
-            auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]}, desiredSheetId);
+            auto mesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]});
             this->data.surfaceMeshes.emplace_back(std::move(mesh));
         }
         Timer::stop("Computed labeled FS                    :");
@@ -970,28 +970,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
         this->recomputeFiberSurface = false;
         sibling->updateFiberSurface();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1044,75 +1022,34 @@ void PlotWidget::paintEvent(QPaintEvent*)
             }
         }
 
-
-
         // 
         // Draw polygons and calculate expectes size
 
-        //this->data.surfaceMeshesFeatures.clear();  // add this
-        //this->data.surfaceMeshesFeatures.shrink_to_fit();  // add this
-        //this->data.surfaceMeshesFeatures.reserve(expectedSize);  // add this
+        this->data.surfaceMeshesFeatures.clear();  // add this
+        this->data.surfaceMeshesFeatures.shrink_to_fit();  // add this
+        this->data.surfaceMeshesFeatures.reserve(expectedSize);  // add this
 
         LoadingBar bar(40, "Computing features fiber surfaces...");
         int computedFS = 0;
         for (const int desiredSheetId : this->sibling->selectedSheetIds)
         {
-            //qDebug() << "Computing feature for sheet " << desiredSheetId;
-
-            //const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.computeSheetControlPolygons(desiredSheetId);
-
             const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.sheetEpsilonPolygons.at(desiredSheetId);
 
             for (const auto &sheetPolygon : sheetPolygons)
             {
-                std::vector<std::array<double, 2>> controlPointsInternal = sheetPolygon;
-
-                for (int i = 0 ; i < controlPointsInternal.size(); i++)
+                for (int i = 0 ; i < sheetPolygon.size(); i++)
                 {
-                    auto surfaceMesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, desiredSheetId);
-                    const std::vector<FiberPoint> fibers = fiber::computeFiberPointsFromSurfaceMesh(surfaceMesh, data.reebSpace2, {desiredSheetId});
+                    auto surfaceMesh = fiber::computeFiberSurfaceSingularSegment(data.tetMesh, data.singularArrangement, data.reebSpace2, {sheetPolygon[i], sheetPolygon[(i+1) % sheetPolygon.size()]}, {desiredSheetId});
+                    this->data.surfaceMeshesFeatures.push_back(std::move(surfaceMesh));
 
-                    //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
-                            //data.tetMesh, 
-                            //data.singularArrangement, 
-                            //data.reebSpace2, 
-                            //{controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, 
-                            //desiredSheetId
-                            //);
-
-                    fibersAll.insert(
-                            fibersAll.end(), 
-                            std::make_move_iterator(fibers.begin()), 
-                            std::make_move_iterator(fibers.end())
-                            );
-
-                    computedFS++;
-
-                    bar.update((100 * computedFS) / expectedSize);
-
-                    //const std::vector<FiberPoint> fibers = fiber::computeFiberSurface(
-                    //data.tetMesh, 
-                    //data.singularArrangement, 
-                    //data.reebSpace2, 
-                    //{controlPointsInternal[i], controlPointsInternal[(i+1) % controlPointsInternal.size()]}, 
-                    //desiredSheetId
-                    //);
-
-                    //fibersAll.insert(
-                    //fibersAll.end(), 
-                    //std::make_move_iterator(fibers.begin()), 
-                    //std::make_move_iterator(fibers.end())
-                    //);
-
+                    bar.update((100 * ++computedFS) / expectedSize);
                 }
-
             }
-
             // Update the fiber
         }
 
         this->recomputeFiberSurfaceFeature = false;
-        sibling->updateFiberSurfaceFeatures(fibersAll);
+        sibling->updateFiberSurfaceFeatures();
     }
 
 

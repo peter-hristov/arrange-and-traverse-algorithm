@@ -113,7 +113,7 @@ namespace performance
             const std::vector<std::array<double, 2>> controlPoints{{x1, y1}, {x2, y2}};
 
             const auto start = std::chrono::high_resolution_clock::now();
-            SurfaceMesh sfMesh  = fiber::computeFiberSurfaceSingularSegment(tetMesh, singularArrangement, reebSpace, controlPoints, -1);
+            SurfaceMesh sfMesh  = fiber::computeFiberSurfaceSingularSegment(tetMesh, singularArrangement, reebSpace, controlPoints);
             const auto end = std::chrono::high_resolution_clock::now();
             const double elapsed = std::chrono::duration<double>(end - start).count();
 

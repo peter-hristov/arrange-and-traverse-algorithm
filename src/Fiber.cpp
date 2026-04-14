@@ -65,7 +65,7 @@ std::vector<FiberPoint> fiber::computeFiberPointsFromSurfaceMesh(SurfaceMesh &su
 
 }
 
-SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, int _sheetId)
+SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, const std::set<int> &selectedSheets)
 {
     //const Point_2 startPoint(0.479988 , 0.215557);
     //const Point_2 endPoint(0.259815, 0.116635);
@@ -122,6 +122,9 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     surfaceMesh.labelFiberSurface(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
     //Timer::stop("Computing triangle sheets 2            :");
 
+    //Timer::start();
+    surfaceMesh.filterTriangles(selectedSheets);
+    //Timer::stop("Filtering out triangles                :");
 
     //std::cout << "Remeshed number of triangles : " << surfaceMesh.mesh.number_of_faces() << std::endl;
     //printf("Intersected %ld regular and %ld indefinite segments.\n", intersectedSegments.size(), intersectionAlpha.size());

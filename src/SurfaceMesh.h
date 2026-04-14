@@ -119,4 +119,6 @@ class SurfaceMesh
         // Label the triangles of a fiber surface based on their corresponding Reeb space sheet (do only after remeshing)
         void labelFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment);
 
+        void filterTriangles(const std::set<int>&);
+
 };

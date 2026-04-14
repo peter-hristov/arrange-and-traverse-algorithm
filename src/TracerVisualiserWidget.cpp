@@ -89,6 +89,61 @@ TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GL
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
+void TracerVisualiserWidget::renderFiberSurface(std::vector<SurfaceMesh> &fiberSurfaces)
+{
+    glBegin(GL_TRIANGLES);
+    {
+        for (const auto fiberSurface : fiberSurfaces)
+        {
+            const auto sheetIdMap = fiberSurface.sheetId();
+            for (const auto triangle : fiberSurface.mesh.faces())
+            {
+
+                // Get the vertex coordinates
+                std::vector<std::array<GLfloat, 3>> vertices;
+                for (auto vertex : fiberSurface.mesh.vertices_around_face(fiberSurface.mesh.halfedge(triangle))) 
+                {
+                    auto& p = fiberSurface.mesh.point(vertex);
+                    vertices.push_back({static_cast<GLfloat>(p.x()), static_cast<GLfloat>(p.y()), static_cast<GLfloat>(p.z())});
+                }
+
+                // Get the colour
+                const int sheetId = sheetIdMap[triangle];
+                std::array<float, 3> triangleColour;
+                if (sheetId == -1)
+                {
+                    triangleColour = {1.0, 1.0, 0.0};
+                }
+                else
+                {
+                    const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+                    triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+                }
+
+
+                // Set colour and compute normal
+                if (this->enableLighting)
+                {
+                    setMaterial(triangleColour[0], triangleColour[1], triangleColour[2], fsOpacity, 1.0);
+                    std::array<GLfloat, 3> normal = this->computeTriangleNormal(vertices[0].data(), vertices[1].data(), vertices[2].data());
+                    glNormal3fv(normal.data());
+                }
+                else
+                {
+                    glColor3f(triangleColour[0], triangleColour[1], triangleColour[2]);
+                }
+
+                // Push out the vertices
+                glVertex3fv(vertices[0].data());
+                glVertex3fv(vertices[1].data());
+                glVertex3fv(vertices[2].data());
+            }
+        }
+    }
+    glEnd();
+
+}
+
 // Draw fibers
 void
 TracerVisualiserWidget::generateDisplayList()
@@ -101,108 +156,13 @@ TracerVisualiserWidget::generateDisplayList()
 
     if (this->drawFiberSurfaceFeatures)
     {
-        glBegin(GL_TRIANGLES);
-        {
-            //for(const auto &faceFiber : this->faceFibers)
-            for(int i = 0 ; i < this->faceFiberSurfaceFeatures.size() ; i+=3)
-            {
-                const auto &faceFiber = this->faceFiberSurfaceFeatures[i];
-                const auto &faceFiber2 = this->faceFiberSurfaceFeatures[i+1];
-                const auto &faceFiber3 = this->faceFiberSurfaceFeatures[i+2];
-
-                if (this->enableLighting)
-                {
-                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], this->featureOpacity, 1.0);
-
-                    GLfloat vertices[3][3] = {
-                        {faceFiber.point[0], faceFiber.point[1], faceFiber.point[2]}, 
-                        {faceFiber2.point[0], faceFiber2.point[1], faceFiber2.point[2]}, 
-                        {faceFiber3.point[0], faceFiber3.point[1], faceFiber3.point[2]}, 
-
-                    };
-
-                    std::array<GLfloat, 3> normal = this->computeTriangleNormal(faceFiber.point.data(), faceFiber2.point.data(), faceFiber3.point.data());
-
-
-                    // Set normal for OpenGL
-                    glNormal3fv(normal.data());
-                }
-                else
-                {
-                    glColor3fv(faceFiber.colour.data());
-
-                }
-
-                glVertex3fv(faceFiber.point.data());
-                glVertex3fv(faceFiber2.point.data());
-                glVertex3fv(faceFiber3.point.data());
-
-            }
-        }
-        glEnd();
-
+        this->renderFiberSurface(this->data.surfaceMeshesFeatures);
     }
-
 
     if (this->drawFiberSurfaces)
     {
-        glBegin(GL_TRIANGLES);
-        {
-            //for(const auto &faceFiber : this->faceFibers)
-            for (const auto fiberSurface : this->data.surfaceMeshes)
-            {
-                const auto sheetIdMap = fiberSurface.sheetId();
-                for (const auto triangle : fiberSurface.mesh.faces())
-                {
-
-                    // Get the vertex coordinates
-                    std::vector<std::array<GLfloat, 3>> vertices;
-                    for (auto vertex : fiberSurface.mesh.vertices_around_face(fiberSurface.mesh.halfedge(triangle))) 
-                    {
-                        auto& p = fiberSurface.mesh.point(vertex);
-                        vertices.push_back({static_cast<GLfloat>(p.x()), static_cast<GLfloat>(p.y()), static_cast<GLfloat>(p.z())});
-                    }
-
-                    // Get the colour
-                    const int sheetId = sheetIdMap[triangle];
-                    std::array<float, 3> triangleColour;
-                    if (sheetId == -1)
-                    {
-                        triangleColour = {1.0, 1.0, 0.0};
-                    }
-                    else
-                    {
-                        const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
-                        triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
-                    }
-
-
-                    // Set colour and compute normal
-                    if (this->enableLighting)
-                    {
-                        setMaterial(triangleColour[0], triangleColour[1], triangleColour[2], fsOpacity, 1.0);
-                        std::array<GLfloat, 3> normal = this->computeTriangleNormal(vertices[0].data(), vertices[1].data(), vertices[2].data());
-                        glNormal3fv(normal.data());
-                    }
-                    else
-                    {
-                        glColor3f(triangleColour[0], triangleColour[1], triangleColour[2]);
-                    }
-
-                    // Push out the vertices
-                    glVertex3fv(vertices[0].data());
-                    glVertex3fv(vertices[1].data());
-                    glVertex3fv(vertices[2].data());
-                }
-
-            }
-        }
-        glEnd();
-
+        this->renderFiberSurface(this->data.surfaceMeshes);
     }
-
-
-
 
     if (this->drawFibers)
     {
@@ -231,9 +191,6 @@ TracerVisualiserWidget::generateDisplayList()
 
     }
 
-
-
-
     // Draw fiber endpoints (in every tet)
     //for(const auto &faceFiber : this->faceFibers)
     //{
@@ -247,7 +204,6 @@ TracerVisualiserWidget::generateDisplayList()
             //delete sphere;
         //}
         //glPopMatrix();
-
     //}
 
     glEndList();
@@ -844,11 +800,8 @@ void TracerVisualiserWidget::updateFiberSurface()
     this->update();
 }
 
-void TracerVisualiserWidget::updateFiberSurfaceFeatures(const std::vector<FiberPoint> &newFiberPoints)
+void TracerVisualiserWidget::updateFiberSurfaceFeatures()
 {
-    this->faceFiberSurfaceFeatures = newFiberPoints;
-    this->buildAABBTree();
-
     this->generateDisplayList();
     this->update();
 }

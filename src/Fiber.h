@@ -24,7 +24,7 @@ namespace fiber
 
     std::vector<FiberPoint> computeFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
 
-    SurfaceMesh computeFiberSurfaceSingularSegment(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> & , int);
+    SurfaceMesh computeFiberSurfaceSingularSegment(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> &, const std::set<int> &selectedSheets = {});
 
     std::vector<FiberPoint> computeFiberPointsFromSurfaceMesh(SurfaceMesh &, ReebSpace2 &, const std::set<int> &);
 
