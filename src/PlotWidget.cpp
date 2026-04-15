@@ -25,15 +25,15 @@
 #include <utility>
 
 
-#include "./PlotWidget.h"
-#include "./Timer.h"
 #include "./io.h"
+#include "./Timer.h"
 #include "./Fiber.h"
+#include "./ColourTable.h"
+#include "./PlotWidget.h"
+#include "./FiberSurface.h"
+#include "./LoadingBar.hpp"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
-#include "./SurfaceMesh.h"
-
-#include "./LoadingBar.hpp"
 
 using namespace std;
 
@@ -51,19 +51,7 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
     paddedMaxF = data.tetMesh.maxF + paddingScalingFactor * (data.tetMesh.maxF - data.tetMesh.minF);
     paddedMinG = data.tetMesh.minG - paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
     paddedMaxG = data.tetMesh.maxG + paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
-
-    // min -0.0140185 ,  0.106133 
-    // max 0.0405787 ,  0.125916
-
-    //paddedMinF = -0.0180185;
-    //paddedMinG = 0.106133;
-
-    //paddedMaxF = 0.0405787;
-    //paddedMaxG = 0.125916;
 }
-
-
-
 
 void PlotWidget::mousePressEvent(QMouseEvent* event)
 {
@@ -170,7 +158,8 @@ void PlotWidget::saveSelectedSheets(QPainter &p)
             if (isSelected)
             {
                 const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
-                const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+                const array<float, 3> colorF = colours::getColour(sheetSortId);
+
                 QColor color = QColor::fromRgbF(colorF[0], colorF[1], colorF[2]);
 
                 QPainter sp(&sheetPixmaps[sheetId]);
@@ -430,7 +419,7 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
             }
 
             const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
-            const array<float, 3> colorF = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+            const array<float, 3> colorF = colours::getColour(sheetSortId);
 
             r += colorF[0] * sa * transmittance;
             g += colorF[1] * sa * transmittance;
@@ -941,7 +930,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         for (int i = 0 ; i < controlPointsInternal.size() - 1; i++)
         {
-            const auto segmentedFiberSurface = fiber::computeSegmentedFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]});
+            const auto segmentedFiberSurface = FiberSurface::constructSegmentedFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {controlPointsInternal[i], controlPointsInternal[(i+1)]});
             this->data.fiberSurfaces.emplace_back(std::move(segmentedFiberSurface));
         }
 
@@ -1024,7 +1013,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
             {
                 for (int i = 0 ; i < sheetPolygon.size(); i++)
                 {
-                    const auto segmentedFiberSurface = fiber::computeSegmentedFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {sheetPolygon[i], sheetPolygon[(i+1) % sheetPolygon.size()]}, {desiredSheetId});
+                    const auto segmentedFiberSurface = FiberSurface::constructSegmentedFiberSurface(data.tetMesh, data.singularArrangement, data.reebSpace2, {sheetPolygon[i], sheetPolygon[(i+1) % sheetPolygon.size()]}, {desiredSheetId});
                     this->data.featureSurfaces.push_back(std::move(segmentedFiberSurface));
 
                     bar.update((100 * ++computedFS) / expectedSize);

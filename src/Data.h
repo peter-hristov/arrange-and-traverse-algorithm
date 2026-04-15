@@ -1,34 +1,16 @@
 #pragma once
 
-#include <GL/gl.h>
-#include <unordered_map>
-#ifdef __APPLE__
-#include <OpenGL/glu.h>
-#include <OpenGL/gl.h>
-#else
-#include <GL/glu.h>
-#include <GL/gl.h>
-#endif
-
-#include <cassert>
-#include <cmath>
-#include <iostream>
-#include <map>
-#include <string>
 #include <vector>
 
-#include <qpoint.h>
-#include <qvector.h>
+#include <vtkPolyData.h>
+#include <vtkSmartPointer.h>
 
-#include "./FiberPoint.h"
 #include "./TetMesh.h"
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
-#include "./SurfaceMesh.h"
+#include "./FiberSurface.h"
 
-#include <vtkPolyData.h>
-#include <vtkSmartPointer.h>
 
 class Data
 {
@@ -38,9 +20,11 @@ class Data
     // For not, just pass by reference
 
     TetMesh &tetMesh;
+
     Arrangement &arrangement;
-    Arrangement &singularArrangement;
     ReebSpace &reebSpace;
+
+    Arrangement &singularArrangement;
     ReebSpace2 &reebSpace2;
 
     Data(TetMesh& tm, Arrangement& a, Arrangement& sa, ReebSpace& rs, ReebSpace2 &rs2)
@@ -51,8 +35,8 @@ class Data
         reebSpace2(rs2)
     {}
 
-    std::vector<SurfaceMesh> fiberSurfaces;
-    std::vector<SurfaceMesh> featureSurfaces;
+    std::vector<FiberSurface> fiberSurfaces;
+    std::vector<FiberSurface> featureSurfaces;
 
     vtkSmartPointer<vtkPolyData> molecule;
 

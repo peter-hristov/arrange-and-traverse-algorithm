@@ -37,15 +37,12 @@
 #include<ttkFiberSurface.h>
 #include<ttkRangePolygon.h>
 
-
-
 #include "./io.h"
 #include "./TetMesh.h"
 #include "./Fiber.h"
-#include "./SurfaceMesh.h"
-#include "src/CGALTypedefs.h"
+#include "./ColourTable.h"
 
-SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
+FiberSurface getSurfaceMesh(vtkPolyData* polyData)
 {
     if (!polyData)
     {
@@ -131,7 +128,7 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
     }
 
 
-    return SurfaceMesh(vertexCoordinates, triangles, edgeParam, triangleTetId);
+    return FiberSurface(vertexCoordinates, triangles, edgeParam, triangleTetId);
 
 
     // Manual merge
@@ -335,7 +332,7 @@ CGALMesh io::readCGALMesh(const std::string& filename)
     return mesh;
 }
 
-vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh)
+vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(FiberSurface& surfMesh)
 {
     const CGALMesh& mesh = surfMesh.mesh;
     auto edgeParamMap = surfMesh.edgeParam();
@@ -411,7 +408,7 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh
         int tid = tetIdMap[f];
         int sid = sheetIdMap[f];
         int cid = componentIdMap[f];
-        std::array<float, 3> triangleColour = fiber::fiberColours[sid % fiber::fiberColours.size()];
+        const std::array<float, 3> triangleColour = colours::getColour(sid);
 
         vtkTetId->InsertNextValue(tid);
         vtkSheetId->InsertNextValue(sid);
@@ -458,7 +455,7 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(SurfaceMesh& surfMesh
     return polyData;
 }
 
-void io::saveFiberSurface(std::vector<SurfaceMesh>& surfMeshes, const std::string& filename)
+void io::saveFiberSurface(std::vector<FiberSurface>& surfMeshes, const std::string& filename)
 {
     if (surfMeshes.empty())
     {
@@ -482,7 +479,7 @@ void io::saveFiberSurface(std::vector<SurfaceMesh>& surfMeshes, const std::strin
     writer->Write();
 }
 
-void io::writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::string& filename)
+void io::writeImpassableEdgesToVTK(const FiberSurface& surfMesh, const std::string& filename)
 {
     const CGALMesh& mesh = surfMesh.mesh;
     auto isImpassableMap = surfMesh.isImpassable();
@@ -532,7 +529,7 @@ void io::writeImpassableEdgesToVTK(const SurfaceMesh& surfMesh, const std::strin
 }
 
 
-SurfaceMesh io::readDataVtp(const std::string &filename)
+FiberSurface io::readDataVtp(const std::string &filename)
 {
     // Read VTP file
     vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
@@ -567,7 +564,7 @@ TetMesh io::readData(const std::string &filename)
     throw std::runtime_error("Unsupported file type: " + extension);
 }
 
-SurfaceMesh io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2)
+FiberSurface io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2)
 {
     // This is correct I tested now
     std::string field1Name = mesh->GetPointData()->GetArrayName(0);
@@ -643,7 +640,7 @@ SurfaceMesh io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, d
     return getSurfaceMesh(fiberSurfMesh);
 }
 
-SurfaceMesh io::readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2)
+FiberSurface io::readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2)
 {
     // Read the VTU file
     vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
@@ -1390,4 +1387,3 @@ void io::saveOriginalMesh(const std::string filename, vtkSmartPointer<vtkUnstruc
     writer->SetInputData(originalMesh);
     writer->Write();
 }
-

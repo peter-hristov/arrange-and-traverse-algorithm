@@ -49,7 +49,7 @@ set(SOURCES
     ./src/TracerVisualiserMain.cpp
     ./src/TracerVisualiserWidget.cpp
     ./src/TracerVisualiserWindow.cpp
-    ./src/SurfaceMesh.cpp
+    ./src/FiberSurface.cpp
     ./src/ArcBall/Ball.cpp
     ./src/ArcBall/BallAux.cpp
     ./src/ArcBall/BallMath.cpp

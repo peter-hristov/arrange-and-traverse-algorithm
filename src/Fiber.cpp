@@ -6,8 +6,9 @@
 #include "./Timer.h"
 
 #include "./FiberPoint.h"
-#include "./SurfaceMesh.h"
+#include "./FiberSurface.h"
 #include "./FiberLabeling.h"
+#include "./ColourTable.h"
 
 #include <queue>
 #include <unistd.h>
@@ -15,51 +16,6 @@
 #include <unordered_set>
 
 
-SurfaceMesh fiber::computeSegmentedFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, const std::set<int> &selectedSheets)
-{
-    const Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
-    const Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
-    const Segment_2 controlSegment(startPoint, endPoint);
-
-    //Timer::start();
-    const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true);
-    //Timer::stop("Computed Alpha intersections           :");
-
-    //Timer::start();
-    SurfaceMesh surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
-    //Timer::stop("Computing fiber surfaces with TTK      :");
-
-    //Timer::start();
-    std::vector<double> intersectionAlpha;
-    intersectionAlpha.reserve(intersectedSegments.size());
-
-    for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
-    {
-        //if (edgeType == 2 || edgeType == 0)
-
-        if (edgeType == 2)
-        {
-            intersectionAlpha.emplace_back(CGAL::to_double(alpha));
-        }
-    }
-
-    surfaceMesh.remesh(intersectionAlpha);
-    //Timer::stop("Subdivided mesh                        :");
-
-
-
-    //Timer::start();
-    surfaceMesh.labelFiberSurface(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
-    //Timer::stop("Computing triangle sheets 2            :");
-
-    //Timer::start();
-    surfaceMesh.filterTriangles(selectedSheets);
-    //Timer::stop("Filtering out triangles                :");
-
-    //surfaceMesh.printSheetHistogram(reebSpace);
-
-    return surfaceMesh;
-}
 
 std::vector<FiberPoint> fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
@@ -102,7 +58,7 @@ std::vector<FiberPoint> fiber::growSeedSet(const TetMesh &tetMesh, Arrangement &
         bfsQueue.pop();
 
         const int sheetSortId = reebSpace.sheetOrder.at(currentSheeId);
-        const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+        const std::array<float, 3> sheetColour = colours::getColour(sheetSortId);
 
         const std::set<int> triangleUnpacked = tetMesh.triangles[currentTriangleId];
         const std::vector<int> triangleIndices = std::vector<int>(triangleUnpacked.begin(), triangleUnpacked.end());
@@ -138,8 +94,6 @@ std::vector<FiberPoint> fiber::growSeedSet(const TetMesh &tetMesh, Arrangement &
 
             const std::set<int> triangle2Unpacked = tetMesh.triangles[neighbourTriagleId];
             const std::vector<int> triangle2Indices = std::vector<int>(triangle2Unpacked.begin(), triangle2Unpacked.end());
-
-
 
             // The neighbour is active if we've already seen it
             bool isActive = triangleSheetId.contains(neighbourTriagleId);

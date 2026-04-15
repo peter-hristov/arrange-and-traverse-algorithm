@@ -2,8 +2,10 @@
 
 #include "./FiberStitching.h"
 #include "./FiberLabeling.h"
+#include "./ColourTable.h"
 
 #include "./Timer.h"
+#include "src/ColourTable.h"
 
 
 std::tuple<std::vector<int>, std::vector<int>, bool> fiber::stitching::getActiveTrianglesInPath(const std::vector<int> &pathA, const std::vector<int> &pathB, const std::unordered_set<int> &minusTrianglesSet, const std::unordered_set<int> &plusTrianglesSet)
@@ -1637,7 +1639,7 @@ std::vector<FiberPoint> fiber::stitching::computeFiberSurface(TetMesh &tetMesh, 
         {
             const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
             const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
-            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+            const std::array<float, 3> sheetColour = colours::getColour(sheetSortId);
 
             if (_sheetId != -1 && sheetId != _sheetId)
             {
@@ -1941,7 +1943,7 @@ std::vector<FiberPoint> fiber::stitching::computeFiberSurface(TetMesh &tetMesh, 
             uniqueSheetIds.insert(sheetId);
 
 
-            const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+            const std::array<float, 3> sheetColour = colours::getColour(sheetSortId);
 
 
 
@@ -2003,7 +2005,7 @@ std::vector<FiberPoint> fiber::stitching::computeFiberSurface(TetMesh &tetMesh, 
                 const int componentB = fiberGraphs[i].componentRoot.at(plusTriangles[0]);
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentB);
                 const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
-                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+                const std::array<float, 3> sheetColour = colours::getColour(sheetSortId);
 
                 if (_sheetId != -1 && sheetId != _sheetId)
                 {
@@ -2122,7 +2124,7 @@ std::vector<FiberPoint> fiber::stitching::computeFiberSurface(TetMesh &tetMesh, 
                 const int componentA = fiberGraphs[i-1].componentRoot.at(minusTriangles[0]);
                 const int sheetId = reebSpace.correspondenceGraphDS.find(componentA);
                 const int sheetSortId = reebSpace.sheetOrder.at(sheetId);
-                const std::array<float, 3> sheetColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+                const std::array<float, 3> sheetColour = colours::getColour(sheetSortId);
 
                 if (_sheetId != -1 && sheetId != _sheetId)
                 {

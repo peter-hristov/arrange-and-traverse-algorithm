@@ -55,24 +55,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     std::set<int> selectedSheetIds;
 
-    //std::vector<std::vector<float>> fiberColours = {
-        //{1, 0, 0},
-        //{0, 1, 0},
-        //{0, 0, 1}
-    //};
-
-    //std::vector<std::vector<float>> fiberColours2 = {
-        //{0.0, 0.45, 0.7},   // Blue
-        //{0.8, 0.4, 0.0},    // Orange
-        //{0.0, 0.6, 0.5},    // Teal
-        //{0.9, 0.6, 0.0},    // Gold
-        //{0.8, 0.6, 0.7},    // Pink/Mauve
-        //{0.35, 0.7, 0.9},   // Sky Blue
-        //{0.0, 0.6, 0.3},    // Green
-        //{0.9, 0.2, 0.2},    // Red
-        //{0.5, 0.5, 0.0}    // Olive
-    //};
-
     bool clearFibers = 1;
 
     GLfloat isovalueMult = -1.0;
@@ -85,7 +67,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void updateFiberSurface();
     void updateFiberSurfaceFeatures();
 
-    void renderSurface(std::vector<SurfaceMesh> &surfaceMesh);
+    void renderSurface(std::vector<FiberSurface> &surfaceMesh);
 
     void clearFiber();
     void clearFiberSurface();

@@ -1,7 +1,8 @@
-#include "SurfaceMesh.h"
+#include "FiberSurface.h"
 #include "FiberLabeling.h"
+#include "io.h"
 
-void SurfaceMesh::print()
+void FiberSurface::print()
 {
     const auto edgeParamMap = this->edgeParam();
     const auto tetIdMap = this->tetId();
@@ -33,7 +34,7 @@ void SurfaceMesh::print()
     }
 }
 
-void SurfaceMesh::printSheetHistogram(ReebSpace2 &reebSpace)
+void FiberSurface::printSheetHistogram(ReebSpace2 &reebSpace)
 {
     const auto sheetIdMap = this->sheetId();
 
@@ -63,7 +64,7 @@ void SurfaceMesh::printSheetHistogram(ReebSpace2 &reebSpace)
     }
 }
 
-void SurfaceMesh::remesh(const std::vector<double> &isovalues)
+void FiberSurface::remesh(const std::vector<double> &isovalues)
 {
     for (int i = 0 ; i < isovalues.size() ; i++)
     {
@@ -73,7 +74,7 @@ void SurfaceMesh::remesh(const std::vector<double> &isovalues)
     this->triangulate();
 }
 
-bool SurfaceMesh::bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint, std::vector<bool> &visited)
+bool FiberSurface::bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint, std::vector<bool> &visited)
 {
     std::queue<int> bfsQueue;
     bfsQueue.push(seedTriangleId);
@@ -106,7 +107,7 @@ bool SurfaceMesh::bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement
     return false;
 }
 
-int SurfaceMesh::findFiberPointComponent(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const std::vector<int> &tetTriangleIds, const Segment_2 &controlSegment, const double pointAlpha)
+int FiberSurface::findFiberPointComponent(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const std::vector<int> &tetTriangleIds, const Segment_2 &controlSegment, const double pointAlpha)
 {
     const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - pointAlpha, controlSegment[1], pointAlpha);
     const CartesianPoint controlPointCartesian(CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y()));
@@ -133,7 +134,7 @@ int SurfaceMesh::findFiberPointComponent(const TetMesh &tetMesh, const Arrangeme
 
 
 
-int SurfaceMesh::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+int FiberSurface::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const CGALMesh::Face_index &triangle, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
 {
     // 1. Compute the edgePara at the center of the triangle
     double midPointAlpha = 0.0;
@@ -175,7 +176,7 @@ int SurfaceMesh::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangemen
 
 
 
-void SurfaceMesh::labelFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
+void FiberSurface::labelFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments, const Segment_2 &controlSegment)
 {
     auto sheetIdMap = this->sheetId();
     auto componentIdMap = this->componentId();
@@ -247,7 +248,7 @@ void SurfaceMesh::labelFiberSurface(TetMesh &tetMesh, Arrangement &singularArran
 
 
 
-CartesianPoint_3 SurfaceMesh::interpolateVertex(CGALMesh::Vertex_index v0, CGALMesh::Vertex_index v1, double isovalue)
+CartesianPoint_3 FiberSurface::interpolateVertex(CGALMesh::Vertex_index v0, CGALMesh::Vertex_index v1, double isovalue)
 {
     const auto edgeParamMap = this->edgeParam();
 
@@ -276,7 +277,7 @@ CartesianPoint_3 SurfaceMesh::interpolateVertex(CGALMesh::Vertex_index v0, CGALM
 
 
 
-std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALMesh::Vertex_index>> SurfaceMesh::getVertexColours(CGALMesh &cgalMesh, const double isovalue)
+std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALMesh::Vertex_index>> FiberSurface::getVertexColours(CGALMesh &cgalMesh, const double isovalue)
 {
     const auto edgeParamMap = this->edgeParam();
 
@@ -291,7 +292,7 @@ std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALM
         const double e = edgeParamMap[v];
         const double diff = e - isovalue;
 
-        if (std::abs(diff) <= SurfaceMesh::epsilon)
+        if (std::abs(diff) <= FiberSurface::epsilon)
         {
             vertexColour[v] = 0;       // on the isovalue
             grayVertices.push_back(v);
@@ -305,7 +306,7 @@ std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALM
     return {vertexColour, grayVertices};
 }
 
-void SurfaceMesh::remeshOnce(const double isovalue)
+void FiberSurface::remeshOnce(const double isovalue)
 {
 
     auto edgeParamMap = this->edgeParam();
@@ -443,7 +444,7 @@ void SurfaceMesh::remeshOnce(const double isovalue)
 }
 
 
-void SurfaceMesh::triangulate()
+void FiberSurface::triangulate()
 {
     auto tetIdMap = this->tetId();
 
@@ -471,7 +472,7 @@ void SurfaceMesh::triangulate()
     }
 }
 
-void SurfaceMesh::repairMesh()
+void FiberSurface::repairMesh()
 {
     // Finish up with some postprocessing
     mesh.collect_garbage(); // before calling connected_components
@@ -484,7 +485,7 @@ void SurfaceMesh::repairMesh()
     CGAL::Polygon_mesh_processing::remove_degenerate_edges(mesh);
 }
 
-void SurfaceMesh::validateMesh()
+void FiberSurface::validateMesh()
 {
     // Make sure the edge is valid
     if (false == CGAL::is_valid_polygon_mesh(this->mesh))
@@ -524,7 +525,7 @@ void SurfaceMesh::validateMesh()
     }
 }
 
-std::unordered_set<CGALMesh::Edge_index> SurfaceMesh::getActiveEdges(const std::vector<CGALMesh::Vertex_index> &grayVertices, const CGALMesh::Property_map<CGALMesh::Vertex_index, int> &vertexColour)
+std::unordered_set<CGALMesh::Edge_index> FiberSurface::getActiveEdges(const std::vector<CGALMesh::Vertex_index> &grayVertices, const CGALMesh::Property_map<CGALMesh::Vertex_index, int> &vertexColour)
 {
     std::unordered_set<CGALMesh::Edge_index> activeEdges;
 
@@ -592,7 +593,7 @@ std::unordered_set<CGALMesh::Edge_index> SurfaceMesh::getActiveEdges(const std::
 }
 
 
-void SurfaceMesh::filterTriangles(const std::set<int> &selectedSheets)
+void FiberSurface::filterTriangles(const std::set<int> &selectedSheets)
 {
     if (selectedSheets.empty()) { return; }
 
@@ -618,7 +619,7 @@ void SurfaceMesh::filterTriangles(const std::set<int> &selectedSheets)
 }
 
 
-SurfaceMesh::SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId)
+FiberSurface::FiberSurface(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId)
 {
     // Unpack the points
     std::vector<CartesianPoint_3> points;
@@ -701,7 +702,7 @@ SurfaceMesh::SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordin
     }
 }
 
-SurfaceMesh::SurfaceMesh() 
+FiberSurface::FiberSurface() 
 {
     mesh.add_property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY,    -1.0);
     mesh.add_property_map<CGALMesh::Face_index,   int>   (TET_ID_KEY,        -1);
@@ -711,36 +712,82 @@ SurfaceMesh::SurfaceMesh()
 }
 
 
+
+FiberSurface FiberSurface::constructSegmentedFiberSurface(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::vector<std::array<double, 2>> &controlPoints, const std::set<int> &selectedSheets)
+{
+    const Point_2 startPoint(controlPoints[0][0], controlPoints[0][1]);
+    const Point_2 endPoint(controlPoints[1][0], controlPoints[1][1]);
+    const Segment_2 controlSegment(startPoint, endPoint);
+
+    //Timer::start();
+    const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true);
+    //Timer::stop("Computed Alpha intersections           :");
+
+    //Timer::start();
+    FiberSurface surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
+    //Timer::stop("Computing fiber surfaces with TTK      :");
+
+    //Timer::start();
+    std::vector<double> intersectionAlpha;
+    intersectionAlpha.reserve(intersectedSegments.size());
+
+    for (const auto &[alpha, edgeId, edgeType] : intersectedSegments)
+    {
+        //if (edgeType == 2 || edgeType == 0)
+
+        if (edgeType == 2)
+        {
+            intersectionAlpha.emplace_back(CGAL::to_double(alpha));
+        }
+    }
+
+    surfaceMesh.remesh(intersectionAlpha);
+    //Timer::stop("Subdivided mesh                        :");
+
+    //Timer::start();
+    surfaceMesh.labelFiberSurface(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
+    //Timer::stop("Computing triangle sheets 2            :");
+
+    //Timer::start();
+    surfaceMesh.filterTriangles(selectedSheets);
+    //Timer::stop("Filtering out triangles                :");
+
+    //surfaceMesh.printSheetHistogram(reebSpace);
+
+    return surfaceMesh;
+}
+
+
 // Helpers to get the maps of the mesh
-CGALMesh::Property_map<CGALMesh::Vertex_index, double> SurfaceMesh::edgeParam()
+CGALMesh::Property_map<CGALMesh::Vertex_index, double> FiberSurface::edgeParam()
 {
     auto r = mesh.property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY);
     if (!r.has_value()) throw std::runtime_error("edgeParam not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::tetId()
+CGALMesh::Property_map<CGALMesh::Face_index,   int> FiberSurface::tetId()
 {
     auto r = mesh.property_map<CGALMesh::Face_index, int>(TET_ID_KEY);
     if (!r.has_value()) throw std::runtime_error("tetId not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::sheetId()
+CGALMesh::Property_map<CGALMesh::Face_index,   int> FiberSurface::sheetId()
 {
     auto r = mesh.property_map<CGALMesh::Face_index, int>(SHEET_ID_KEY);
     if (!r.has_value()) throw std::runtime_error("sheetId not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::componentId()
+CGALMesh::Property_map<CGALMesh::Face_index,   int> FiberSurface::componentId()
 {
     auto r = mesh.property_map<CGALMesh::Face_index, int>(COMPONENT_ID_KEY);
     if (!r.has_value()) throw std::runtime_error("componentId not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Edge_index,   bool> SurfaceMesh::isImpassable()
+CGALMesh::Property_map<CGALMesh::Edge_index,   bool> FiberSurface::isImpassable()
 {
     auto r = mesh.property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY);
     if (!r.has_value()) throw std::runtime_error("isImpassable not initialized");
@@ -748,38 +795,37 @@ CGALMesh::Property_map<CGALMesh::Edge_index,   bool> SurfaceMesh::isImpassable()
 }
 
 
-CGALMesh::Property_map<CGALMesh::Vertex_index, double> SurfaceMesh::edgeParam() const
+CGALMesh::Property_map<CGALMesh::Vertex_index, double> FiberSurface::edgeParam() const
 {
     auto r = mesh.property_map<CGALMesh::Vertex_index, double>(EDGE_PARAM_KEY);
     if (!r.has_value()) throw std::runtime_error("edgeParam not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::tetId() const
+CGALMesh::Property_map<CGALMesh::Face_index,   int> FiberSurface::tetId() const
 {
     auto r = mesh.property_map<CGALMesh::Face_index, int>(TET_ID_KEY);
     if (!r.has_value()) throw std::runtime_error("tetId not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::sheetId() const
+CGALMesh::Property_map<CGALMesh::Face_index,   int> FiberSurface::sheetId() const
 {
     auto r = mesh.property_map<CGALMesh::Face_index, int>(SHEET_ID_KEY);
     if (!r.has_value()) throw std::runtime_error("sheetId not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Face_index,   int> SurfaceMesh::componentId() const
+CGALMesh::Property_map<CGALMesh::Face_index,   int> FiberSurface::componentId() const
 {
     auto r = mesh.property_map<CGALMesh::Face_index, int>(COMPONENT_ID_KEY);
     if (!r.has_value()) throw std::runtime_error("componentId not initialized");
     return r.value();
 }
 
-CGALMesh::Property_map<CGALMesh::Edge_index,   bool> SurfaceMesh::isImpassable() const
+CGALMesh::Property_map<CGALMesh::Edge_index,   bool> FiberSurface::isImpassable() const
 {
     auto r = mesh.property_map<CGALMesh::Edge_index, bool>(IMPASSABLE_KEY);
     if (!r.has_value()) throw std::runtime_error("isImpassable not initialized");
     return r.value();
 }
-

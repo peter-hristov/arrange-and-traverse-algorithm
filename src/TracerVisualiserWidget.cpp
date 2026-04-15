@@ -17,6 +17,7 @@
 #include "./TracerVisualiserWindow.h"
 #include "./Fiber.h"
 #include "./Timer.h"
+#include "./ColourTable.h"
 
 #include <vtkPointData.h>
 #include <vtkFloatArray.h>
@@ -89,7 +90,7 @@ TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GL
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
-void TracerVisualiserWidget::renderSurface(std::vector<SurfaceMesh> &fiberSurfaces)
+void TracerVisualiserWidget::renderSurface(std::vector<FiberSurface> &fiberSurfaces)
 {
     glBegin(GL_TRIANGLES);
     {
@@ -110,6 +111,8 @@ void TracerVisualiserWidget::renderSurface(std::vector<SurfaceMesh> &fiberSurfac
                 // Get the colour
                 const int sheetId = sheetIdMap[triangle];
                 std::array<float, 3> triangleColour;
+
+                // Default colour if we failed to set a sheet
                 if (sheetId == -1)
                 {
                     triangleColour = {1.0, 1.0, 0.0};
@@ -117,7 +120,7 @@ void TracerVisualiserWidget::renderSurface(std::vector<SurfaceMesh> &fiberSurfac
                 else
                 {
                     const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
-                    triangleColour = fiber::fiberColours[sheetSortId % fiber::fiberColours.size()];
+                    triangleColour = colours::getColour(sheetSortId);
                 }
 
 
@@ -970,4 +973,3 @@ int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
 
     return bestSheetId;
 }
-

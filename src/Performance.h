@@ -5,7 +5,7 @@
 #include "./ReebSpace2.h"
 #include "./LoadingBar.hpp"
 #include "./Fiber.h"
-#include "./SurfaceMesh.h"
+#include "./FiberSurface.h"
 
 #include <random>
 
@@ -122,7 +122,7 @@ namespace performance
             try {
                 const auto start = std::chrono::high_resolution_clock::now();
 
-                SurfaceMesh sfMesh  = fiber::computeSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace, controlPoints);
+                FiberSurface sfMesh  = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace, controlPoints);
 
                 const auto end = std::chrono::high_resolution_clock::now();
                 const double elapsed = std::chrono::duration<double>(end - start).count();

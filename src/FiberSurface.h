@@ -16,7 +16,7 @@
 #include "./FiberGraph.h"
 
 // TODO Copy and move constructors
-class SurfaceMesh
+class FiberSurface
 {
     public:
         CGALMesh mesh;
@@ -43,6 +43,9 @@ class SurfaceMesh
         // Which connected components this triangle is in with respect to the impassable edges
         static constexpr const char* COMPONENT_ID_KEY  = "f:componentId";
 
+        // Factory method
+        static FiberSurface constructSegmentedFiberSurface(TetMesh &, Arrangement &, ReebSpace2 &, const std::vector<std::array<double, 2>> &, const std::set<int> & = {});
+
         //
         // Helpers to get the maps of the mesh
         //
@@ -61,8 +64,8 @@ class SurfaceMesh
         //
         // Constructors
         //
-        SurfaceMesh();
-        SurfaceMesh(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId);
+        FiberSurface();
+        FiberSurface(const std::vector<std::array<double, 3>> &vertexCoordinates, const std::vector<std::array<int, 3>> &triangles, const std::vector<double> &vertexEdgePara, const std::vector<int> &tetId);
         
 
         //
