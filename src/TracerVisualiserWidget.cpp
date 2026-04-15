@@ -270,11 +270,6 @@ void TracerVisualiserWidget::drawSolidTriangle(GLfloat vertices[3][3])
         a[0]*b[1] - a[1]*b[0]
     };
 
-    // Optionally scale by isovalueMult
-    //normal[0] *= isovalueMult;
-    //normal[1] *= isovalueMult;
-    //normal[2] *= isovalueMult;
-
     // Normalize the normal
     GLfloat len = std::sqrt(normal[0]*normal[0] +
                             normal[1]*normal[1] +

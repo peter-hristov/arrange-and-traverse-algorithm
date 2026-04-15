@@ -40,8 +40,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     bool enableLighting = 1;
 
-    GLfloat isovalueMult = -1.0;
-
     void updateFiber();
     void updateFiberSurface();
     void updateFiberSurfaceFeatures();
@@ -72,7 +70,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
   private:
 
-    // Arcball stuff
+    // Arcball stuff for rotation the camera
     QPointF position;
     BallData theBall;
 
@@ -90,6 +88,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     // Main rendering function
     void drawScene();
 
+    // Used to move around the scene (depricated)
     float translateX = 0.;
     float translateY = 0.;
 
@@ -99,7 +98,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     // Utility
     void setMaterial(GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
 
-    // Used for selecting triangles from the fiber surface
+    // Used for selecting triangles from the fiber surface with ray casting
     std::vector<TriangleTree> aabbTriangleTrees;
     void buildAABBTree();
     int pickSegment(int mouseX, int mouseY);
