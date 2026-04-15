@@ -1,5 +1,7 @@
 ### Big Refactor
 [ ] Refactor grow fiber from seeds
+[ ] Merge changes from the performance code
+[ ] Refactor PlotWidget
 
 ### Current 
 
