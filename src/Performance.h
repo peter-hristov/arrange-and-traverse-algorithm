@@ -35,15 +35,23 @@ namespace performance
             const double x = distF(gen);
             const double y = distG(gen);
 
-            const auto start = std::chrono::high_resolution_clock::now();
-            const auto end = std::chrono::high_resolution_clock::now();
-            const double elapsed = std::chrono::duration<double>(end - start).count();
+            try {
 
+                const auto start = std::chrono::high_resolution_clock::now();
 
-            //if (fg.componentRoot.size() > 0)
-            //{
-                //timings.push_back(elapsed);
-            //}
+                const std::vector<FiberPoint> fiberNew = fiber::computeLabeledFiber(tetMesh, singularArrangement, reebSpace, {x, y}, {});
+
+                const auto end = std::chrono::high_resolution_clock::now();
+                const double elapsed = std::chrono::duration<double>(end - start).count();
+
+                if (fiberNew.size() > 0)
+                {
+                    timings.push_back(elapsed);
+                }
+            } catch (const std::exception &e) {
+                throw;
+            }
+
 
             if (iterations++ > samples * 1000)
             {
@@ -111,16 +119,23 @@ namespace performance
 
             const std::vector<std::array<double, 2>> controlPoints{{x1, y1}, {x2, y2}};
 
-            const auto start = std::chrono::high_resolution_clock::now();
-            SurfaceMesh sfMesh  = fiber::computeSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace, controlPoints);
-            const auto end = std::chrono::high_resolution_clock::now();
-            const double elapsed = std::chrono::duration<double>(end - start).count();
+            try {
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                SurfaceMesh sfMesh  = fiber::computeSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace, controlPoints);
+
+                const auto end = std::chrono::high_resolution_clock::now();
+                const double elapsed = std::chrono::duration<double>(end - start).count();
 
 
-            if (sfMesh.mesh.num_faces() > 0)
-            {
-                timings.push_back(elapsed);
+                if (sfMesh.mesh.num_faces() > 0)
+                {
+                    timings.push_back(elapsed);
+                }
+            } catch (const std::exception &e) {
+                throw;
             }
+
 
             if (iterations++ > samples * 1000)
             {

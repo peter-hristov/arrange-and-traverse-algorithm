@@ -182,9 +182,6 @@ std::vector<FiberPoint> fiber::growSeedSet(const TetMesh &tetMesh, Arrangement &
                     activeAdjacentTrianglesConnected.insert({neighbourTriagleId, currentTriangleId});
                 }
 
-
-
-
                 // Compute barycentric coordinates for drawing
                 std::array<double, 3> barycentricCoordinatesNeighbour;
                 if (triangleBarycentricCoordinates.contains(neighbourTriagleId))
