@@ -96,7 +96,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         // Save the fibers
         std::string filename = "./output/fibers.vtp";
         std::cout << "Saving fibers to " << filename << std::endl;
-        io::saveFibers(this->tracerVisualiserWidget->faceFibers, filename);
+        io::saveFibers(this->data, filename);
 
         filename = "./output/fiber-surface.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
@@ -478,8 +478,8 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->fiberPointsTraces.shrink_to_fit();
             this->plotWidget->update();
 
-            this->tracerVisualiserWidget->clearFibers = !this->tracerVisualiserWidget->clearFibers;
-            this->tracerVisualiserWidget->updateFiber({});
+            this->tracerVisualiserWidget->traceFibers = !this->tracerVisualiserWidget->traceFibers;
+            this->tracerVisualiserWidget->clearFibers();
             this->tracerVisualiserWidget->update();
             });
 

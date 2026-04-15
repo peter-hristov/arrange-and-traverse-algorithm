@@ -173,20 +173,24 @@ TracerVisualiserWidget::generateDisplayList()
         // Draw Fiber
         glBegin(GL_LINES);
         {
-            for(const auto &faceFiber : this->faceFibers)
+            for(const auto &fiber : this->data.fibers)
             {
-                if (this->enableLighting)
+                for(const auto &faceFiber : fiber)
                 {
-                    //glColor3fv(faceFiber.colour.data());
-                    glColor4f(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], this->fiberOpcity);
+                    if (this->enableLighting)
+                    {
+                        //glColor3fv(faceFiber.colour.data());
+                        glColor4f(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], this->fiberOpcity);
+
+                    }
+                    else
+                    {
+                        setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+                    }
+
+                    glVertex3fv(faceFiber.point.data());
 
                 }
-                else
-                {
-                    setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
-                }
-
-                glVertex3fv(faceFiber.point.data());
             }
         }
         glEnd();
@@ -781,14 +785,8 @@ TracerVisualiserWidget::mouseDoubleClickEvent(QMouseEvent* event)
     this->update();
 }
 
-void TracerVisualiserWidget::updateFiber(const std::vector<FiberPoint> &newFiberPoints)
+void TracerVisualiserWidget::updateFiber()
 {
-    if (true == clearFibers)
-    {
-        this->faceFibers.clear();
-    }
-
-    this->faceFibers.insert(this->faceFibers.end(), newFiberPoints.begin(), newFiberPoints.end());
     this->generateDisplayList();
     this->update();
 }
@@ -807,9 +805,10 @@ void TracerVisualiserWidget::updateFiberSurfaceFeatures()
     this->update();
 }
 
-void TracerVisualiserWidget::clearFiber()
+void TracerVisualiserWidget::clearFibers()
 {
-    this->faceFibers = {};
+    this->data.fibers.clear();
+    this->data.fibers.shrink_to_fit();
     this->generateDisplayList();
     this->update();
 }

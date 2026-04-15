@@ -55,23 +55,20 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     std::set<int> selectedSheetIds;
 
-    bool clearFibers = 1;
+    bool traceFibers = true;
 
     GLfloat isovalueMult = -1.0;
 
-    std::vector<FiberPoint> faceFibers;
-    //std::vector<FiberPoint> faceFiberSurface;
-    std::vector<FiberPoint> faceFiberSurfaceFeatures;
-
-    void updateFiber(const std::vector<FiberPoint>&);
+    void updateFiber();
     void updateFiberSurface();
     void updateFiberSurfaceFeatures();
 
-    void renderSurface(std::vector<FiberSurface> &surfaceMesh);
-
-    void clearFiber();
+    void clearFibers();
     void clearFiberSurface();
     void clearFiberSurfaceSheets();
+
+    void renderSurface(std::vector<FiberSurface> &surfaceMesh);
+
 
     int displayListIndex = 0;
     void generateDisplayList();

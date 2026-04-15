@@ -71,7 +71,7 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
 
-        if (false == this->sibling->clearFibers)
+        if (false == this->sibling->traceFibers)
         {
             fiberPointsTraces.push_back({mousePoint});
         }
@@ -99,7 +99,7 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
         if (dragging)
         {
             mousePoint = currentPos;
-            if (false == this->sibling->clearFibers)
+            if (false == this->sibling->traceFibers)
             {
                 if (fiberPointsTraces.size() == 0)
                 {
@@ -801,7 +801,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
     //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
     //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
-    if (false == this->sibling->clearFibers)
+    if (false == this->sibling->traceFibers)
     {
         penBlack.setWidthF(8.0);
         p.setPen(penBlack);
@@ -870,7 +870,16 @@ void PlotWidget::paintEvent(QPaintEvent*)
         
         const std::vector<FiberPoint> fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->sibling->selectedSheetIds);
 
-        sibling->updateFiber(fiber);
+        if (this->sibling->traceFibers)
+        {
+            this->data.fibers.push_back(std::move(fiber));
+        }
+        else
+        {
+            this->data.fibers = {std::move(fiber)};
+        }
+
+        sibling->updateFiber();
     }
 
 
@@ -955,10 +964,6 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
     if (recomputeFiberSurfaceFeature && this->sibling->selectedSheetIds.size() > 0)
     {
-        // Compute the fiber surface
-        //
-        std::vector<FiberPoint> fibersAll;
-
         // Draw polygons and compute expected size
         int expectedSize = 0;
         this->featureControlPolygons = {};
