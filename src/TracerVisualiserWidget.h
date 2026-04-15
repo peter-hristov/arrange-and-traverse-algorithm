@@ -18,6 +18,9 @@
 #include "./FiberPoint.h"
 #include "./ArcBall/Ball.h"
 
+// Forward declaration to avoid circular includes
+class TracerVisualiserWindow;
+
 class TracerVisualiserWidget : public QOpenGLWidget
 {
   Q_OBJECT 
@@ -27,11 +30,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
     TracerVisualiserWidget(QWidget*, Data&);
     GLfloat scale = 0;
 
-    //bool drawEdges = false;
-    //bool drawFaces = false;
-    //bool drawVertices = false;
-
-    // Higher is slower zoom out.
     bool drawEdges = 0;
     bool drawFaces = 0;
     bool drawVertices = 0;
@@ -41,17 +39,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
     bool drawFeatureSurfaces = 1;
 
     bool enableLighting = 1;
-
-    // Depricated
-    bool showUIsosurface = false;
-    // Depricated
-    bool showVIsosurface = false;
-
-    float fiberOpcity = 1.8;
-    float fsOpacity = 1.0;
-    float featureOpacity = 1.8;
-
-    int fiberColour = 0;
 
     std::set<int> selectedSheetIds;
 
@@ -65,14 +52,10 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void clearFiberSurface();
     void clearFiberSurfaceSheets();
 
-    void renderSurface(std::vector<FiberSurface> &surfaceMesh);
-
+    void renderSurface(std::vector<FiberSurface> &surfaceMesh, const float opacity);
 
     int displayListIndex = 0;
     void generateDisplayList();
-
-    int displayListIndexTriangles = 0;
-    int displayListIndexTrianglesG = 0;
 
     QWidget* sibling;
 
@@ -88,7 +71,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void wheelEvent(QWheelEvent* event);
     void mouseDoubleClickEvent(QMouseEvent*);
     void keyPressEvent(QKeyEvent* event);
-
 
   private:
 
@@ -107,6 +89,7 @@ class TracerVisualiserWidget : public QOpenGLWidget
     void drawAxis(GLfloat, GLfloat);
     void drawWiredCube(const GLfloat vertices[8][3]);
 
+    // Main rendering function
     void drawScene();
 
     float translateX = 0.;
@@ -118,14 +101,10 @@ class TracerVisualiserWidget : public QOpenGLWidget
     // Utility
     void setMaterial(GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
 
-
-    // Store these as members
-    std::vector<CartesianTriangle_3> pickingTriangles;
-    std::vector<int>                 pickingSheetIds;
-
+    // Used for selecting triangles from the fiber surface
     std::vector<TriangleTree> aabbTriangleTrees;
-
     void buildAABBTree();
-
     int pickSegment(int mouseX, int mouseY);
+
+    TracerVisualiserWindow* parentWindow();
 }; // class GLPolygonWidget

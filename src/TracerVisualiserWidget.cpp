@@ -90,7 +90,7 @@ TracerVisualiserWidget::setMaterial(GLfloat red, GLfloat green, GLfloat blue, GL
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 }
 
-void TracerVisualiserWidget::renderSurface(std::vector<FiberSurface> &fiberSurfaces)
+void TracerVisualiserWidget::renderSurface(std::vector<FiberSurface> &fiberSurfaces, const float opacity)
 {
     glBegin(GL_TRIANGLES);
     {
@@ -127,7 +127,7 @@ void TracerVisualiserWidget::renderSurface(std::vector<FiberSurface> &fiberSurfa
                 // Set colour and compute normal
                 if (this->enableLighting)
                 {
-                    setMaterial(triangleColour[0], triangleColour[1], triangleColour[2], fsOpacity, 1.0);
+                    setMaterial(triangleColour[0], triangleColour[1], triangleColour[2], opacity, 1.0);
                     std::array<GLfloat, 3> normal = this->computeTriangleNormal(vertices[0].data(), vertices[1].data(), vertices[2].data());
                     glNormal3fv(normal.data());
                 }
@@ -159,16 +159,20 @@ TracerVisualiserWidget::generateDisplayList()
 
     if (this->drawFeatureSurfaces)
     {
-        this->renderSurface(this->data.featureSurfaces);
+        const float opacity = static_cast<float>(parentWindow()->featureSurfaceOpacitySlider->value()) / 100.0;
+        this->renderSurface(this->data.featureSurfaces, opacity);
     }
 
     if (this->drawFiberSurfaces)
     {
-        this->renderSurface(this->data.fiberSurfaces);
+        const float opacity = static_cast<float>(parentWindow()->fiberSurfaceOpacitySlider->value()) / 100.0;
+        this->renderSurface(this->data.fiberSurfaces, opacity);
     }
 
     if (this->drawFibers)
     {
+        const float opacity = static_cast<float>(parentWindow()->fiberOpacitySlider->value()) / 100.0;
+
         glDisable(GL_LIGHTING);
         // Draw Fiber
         glBegin(GL_LINES);
@@ -180,7 +184,7 @@ TracerVisualiserWidget::generateDisplayList()
                     if (this->enableLighting)
                     {
                         //glColor3fv(faceFiber.colour.data());
-                        glColor4f(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], this->fiberOpcity);
+                        glColor4f(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], opacity);
 
                     }
                     else
@@ -433,7 +437,7 @@ TracerVisualiserWidget::drawScene()
 
     glColor3f(1, 1, 1);
 
-        glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
     if (true == this->drawEdges)
     {
         //glColor4f(1, 1, 1, this->edgeOpacity);
@@ -500,25 +504,6 @@ TracerVisualiserWidget::drawScene()
         glCallList(displayListIndex);
     }
     glPopMatrix();
-
-
-    if (this->showVIsosurface == true)
-    {
-        glPushMatrix();
-        {
-            glCallList(displayListIndexTrianglesG);
-        }
-        glPopMatrix();
-    }
-
-    if (this->showUIsosurface == true)
-    {
-        glPushMatrix();
-        {
-            glCallList(displayListIndexTriangles);
-        }
-        glPopMatrix();
-    }
 
     if (true == this->drawVertices)
     {
@@ -971,4 +956,9 @@ int TracerVisualiserWidget::pickSegment(int mouseX, int mouseY)
     Timer::stop("Search takes                           :");
 
     return bestSheetId;
+}
+
+TracerVisualiserWindow* TracerVisualiserWidget::parentWindow()
+{
+    return qobject_cast<TracerVisualiserWindow*>(this->parent()->parent());
 }

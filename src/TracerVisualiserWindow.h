@@ -38,9 +38,9 @@ class TracerVisualiserWindow : public QWidget
     QCheckBox *checkboxShowFiberSurfaces;
     QCheckBox *checkboxShowFeatures;
 
-    QSlider *faceOpacitySlider;
-    QSlider *edgeOpacitySlider;
-    QSlider *vertexOpacitySlider;
+    QSlider *fiberOpacitySlider;
+    QSlider *fiberSurfaceOpacitySlider;
+    QSlider *featureSurfaceOpacitySlider;
 
     QSlider *fakeSlider;
     QPushButton *computeTracedFiberSurfaceButton; 

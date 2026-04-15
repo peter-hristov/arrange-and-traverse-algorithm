@@ -65,22 +65,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         this->update();
     }
 
-
-    if (event->key() == Qt::Key_7) {
-        this->tracerVisualiserWidget->fiberColour = 0;
-        this->tracerVisualiserWidget->update();
-    }
-    if (event->key() == Qt::Key_8) {
-        this->tracerVisualiserWidget->fiberColour = 1;
-        this->tracerVisualiserWidget->update();
-    }
-    if (event->key() == Qt::Key_9) {
-        this->tracerVisualiserWidget->fiberColour = 2;
-        this->tracerVisualiserWidget->update();
-    }
-
     if (event->key() == Qt::Key_C) {
-        //checkboxShowTraces->setChecked(!checkboxShowTraces->isChecked());
         this->buttonShowTraces->click();
     }
 
@@ -143,14 +128,20 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     //checkboxShowFaces->setChecked(true);
 
 
-    vertexOpacitySlider = new QSlider(Qt::Horizontal);
-    vertexOpacitySlider->setValue(this->tracerVisualiserWidget->fiberOpcity * 100);
+    fiberOpacitySlider = new QSlider(Qt::Horizontal);
+    fiberOpacitySlider->setMinimum(0);
+    fiberOpacitySlider->setMaximum(100);
+    fiberOpacitySlider->setValue(100);
 
-    edgeOpacitySlider = new QSlider(Qt::Horizontal);
-    edgeOpacitySlider->setValue(this->tracerVisualiserWidget->fsOpacity * 100);
+    fiberSurfaceOpacitySlider = new QSlider(Qt::Horizontal);
+    fiberSurfaceOpacitySlider->setMinimum(0);
+    fiberSurfaceOpacitySlider->setMaximum(100);
+    fiberSurfaceOpacitySlider->setValue(100);
 
-    faceOpacitySlider = new QSlider(Qt::Horizontal);
-    faceOpacitySlider->setValue(this->tracerVisualiserWidget->featureOpacity * 100);
+    featureSurfaceOpacitySlider = new QSlider(Qt::Horizontal);
+    featureSurfaceOpacitySlider->setMinimum(0);
+    featureSurfaceOpacitySlider->setMaximum(100);
+    featureSurfaceOpacitySlider->setValue(100);
 
     //fakeSlider = new QSlider(Qt::Horizontal);
     //fakeSlider->setTracking(false);
@@ -196,11 +187,11 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     rowOneLayout->setContentsMargins(4, 4, 4, 4);
     rowOneLayout->setSpacing(4);
     rowOneLayout->addWidget(checkboxShowFibers,        0, 0);
-    rowOneLayout->addWidget(vertexOpacitySlider,       0, 1);
+    rowOneLayout->addWidget(fiberOpacitySlider,       0, 1);
     rowOneLayout->addWidget(checkboxShowFiberSurfaces, 1, 0);
-    rowOneLayout->addWidget(edgeOpacitySlider,         1, 1);
+    rowOneLayout->addWidget(fiberSurfaceOpacitySlider,         1, 1);
     rowOneLayout->addWidget(checkboxShowFeatures,      2, 0);
-    rowOneLayout->addWidget(faceOpacitySlider,                2, 1);
+    rowOneLayout->addWidget(featureSurfaceOpacitySlider,                2, 1);
     optionsLayout->addWidget(visibilityGroup, 0, 1);
 
 
@@ -482,20 +473,17 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->tracerVisualiserWidget->update();
             });
 
-    connect(this->vertexOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->fiberOpcity = static_cast<double>(this->vertexOpacitySlider->value()) / 100.0;
+    connect(this->fiberOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
         this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
 
-    connect(this->faceOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->featureOpacity = static_cast<double>(this->faceOpacitySlider->value()) / 100.0;
+    connect(this->fiberSurfaceOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
         this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
 
-    connect(this->edgeOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
-        this->tracerVisualiserWidget->fsOpacity = static_cast<double>(this->edgeOpacitySlider->value()) / 100.0;
+    connect(this->featureSurfaceOpacitySlider, &QSlider::valueChanged, plotWidget, [=]() {
         this->tracerVisualiserWidget->generateDisplayList();
         this->tracerVisualiserWidget->update();
     });
