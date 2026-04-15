@@ -55,8 +55,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     std::set<int> selectedSheetIds;
 
-    bool traceFibers = true;
-
     GLfloat isovalueMult = -1.0;
 
     void updateFiber();

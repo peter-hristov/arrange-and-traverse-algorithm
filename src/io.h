@@ -36,7 +36,7 @@ namespace io
 
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
-    void saveFibers(const std::vector<FiberPoint>&, const std::string&);
+    void saveFibers(const std::vector<std::vector<FiberPoint>>&, const std::string&);
 
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 
@@ -49,8 +49,7 @@ namespace io
 
     void saveOriginalMesh(const std::string, vtkSmartPointer<vtkUnstructuredGrid>);
 
-    std::vector<FiberPoint> generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints);
-    void generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string);
 
     void printTriangle(const TetMesh &tetMesh, const int &triangleId);
+
 }

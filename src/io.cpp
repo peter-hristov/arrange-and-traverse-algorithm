@@ -1012,70 +1012,60 @@ void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, cons
 
 
 
-void io::saveFibers(const std::vector<FiberPoint> &fiberPoints, const std::string &filename)
+void io::saveFibers(const std::vector<std::vector<FiberPoint>> &fiberPoints, const std::string &filename)
 {
     if (fiberPoints.empty())
     {
         return;
     }
 
-    //std::cout << "Saving fibers in " << filename << std::endl;
-
-    // Create parent directory if it doesn't exist
     std::filesystem::path filePath(filename);
     if (filePath.has_parent_path())
     {
         std::filesystem::create_directories(filePath.parent_path());
     }
 
-    //std::cout << "Saving fibers in " << outputFile << std::endl;
-    //std::cout << "The fiber has size " << this->faceFibers.size() << std::endl;  
-
-    // 1. Create the points
     auto points = vtkSmartPointer<vtkPoints>::New();
     auto idArray = vtkSmartPointer<vtkIntArray>::New();
     auto colourArray = vtkSmartPointer<vtkDoubleArray>::New();
-
     idArray->SetName("SheetId");
     idArray->SetNumberOfComponents(1);
-
     colourArray->SetName("Colour");
     colourArray->SetNumberOfComponents(3);
 
-    for (const FiberPoint &p : fiberPoints)
-    {
-        points->InsertNextPoint(p.point.data());
-        idArray->InsertNextValue(p.sheetId);
-        colourArray->InsertNextTuple(p.colour.data());
-    }
-
-    // 3. Create the cells (wrap polyline in cell array)
     auto cells = vtkSmartPointer<vtkCellArray>::New();
-    for (int i = 1 ; i < fiberPoints.size() ; i+=2)
-    {
-        if (fiberPoints[i-1].sheetId == fiberPoints[i].sheetId)
-        {
-            // One edge segment
-            auto polyLine = vtkSmartPointer<vtkPolyLine>::New();
-            polyLine->GetPointIds()->SetNumberOfIds(2);
-            polyLine->GetPointIds()->SetId(0, i-1);
-            polyLine->GetPointIds()->SetId(1, i);
 
-            cells->InsertNextCell(polyLine);
+    vtkIdType globalPointId = 0;
+    for (const auto &fiber : fiberPoints)
+    {
+        if (fiber.size() < 2) continue;
+
+        for (const FiberPoint &p : fiber)
+        {
+            points->InsertNextPoint(p.point.data());
+            idArray->InsertNextValue(p.sheetId);
+            colourArray->InsertNextTuple(p.colour.data());
         }
+
+        // Each consecutive pair is one edge segment
+        for (vtkIdType i = 0; i + 1 < static_cast<vtkIdType>(fiber.size()); i += 2)
+        {
+            auto line = vtkSmartPointer<vtkLine>::New();
+            line->GetPointIds()->SetId(0, globalPointId + i);
+            line->GetPointIds()->SetId(1, globalPointId + i + 1);
+            cells->InsertNextCell(line);
+        }
+
+        globalPointId += static_cast<vtkIdType>(fiber.size());
     }
 
-    // 4. Create the polydata object
     auto polyData = vtkSmartPointer<vtkPolyData>::New();
     polyData->SetPoints(points);
     polyData->SetLines(cells);
-
-    // 5. Attach the VertexID array to the point data
     polyData->GetPointData()->AddArray(idArray);
     polyData->GetPointData()->AddArray(colourArray);
-    polyData->GetPointData()->SetScalars(colourArray);  // optional: for coloring
+    polyData->GetPointData()->SetScalars(colourArray);
 
-    // 6. Write to .vtp file (XML format)
     auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
     writer->SetFileName(filename.c_str());
     writer->SetInputData(polyData);
@@ -1083,94 +1073,6 @@ void io::saveFibers(const std::vector<FiberPoint> &fiberPoints, const std::strin
 }
 
 
-std::vector<FiberPoint> io::generatefFaceFibersForSheet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetId, const int numberOfFiberPoints)
-{
-    //CartesianPolygon_2 &polygon = reebSpace.sheetPolygon.at(sheetId);
-
-    //if (polygon.size() == 0)
-    //{
-        //return {};
-    //}
-
-    //// Compute the controid so that we can pull all verties towards it
-    //CartesianPoint centroid = CGAL::centroid(polygon.vertices_begin(), polygon.vertices_end());
-
-    //// If need only one, get it at the center
-    //if (numberOfFiberPoints == 1)
-    //{
-        //const std::array<double, 2> fiberPoint = {(double)centroid.x(), (double)centroid.y()};
-        //const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
-        //printf("The fiber size is %d\n", fiber.size());
-        //return fiber;
-    //}
-
-    //std::vector<std::array<double, 2>> fiberPoints;
-
-
-    //// If we need more, sample along the boundary
-    //for (const CartesianPoint &point : polygon) 
-    //{
-        //// Get point from CGAL (and convert to double )
-        //double u = point.x();
-        //double v = point.y();
-
-        //// Interpolate closer to the centroid to make sure we are in the sheet ( if the sheet is "convex enough")
-        //const double alpha = 0.2;
-        //u = (1 - alpha) * u + alpha * centroid.x();
-        //v = (1 - alpha) * v + alpha * centroid.y();
-
-        //fiberPoints.push_back({u, v});
-    //}
-
-    //std::vector<FiberPoint> sheetFibers;
-
-    //// Calculate step size we only want some of the fiber points, not all
-    //double step = static_cast<double>(fiberPoints.size() - 1) / (numberOfFiberPoints - 1);
-
-    //for (int i = 0; i < numberOfFiberPoints; ++i) 
-    //{
-        //int index = static_cast<int>(i * step);
-
-        //const std::array<double, 2> fiberPoint = {fiberPoints[index][0], fiberPoints[index][1]};
-        //const std::vector<FiberPoint> fiber = fiber::computeFiber(tetMesh, arrangement, reebSpace, fiberPoint, sheetId);
-
-        //printf("The fiber size is %d\n", fiber.size());
-        //sheetFibers.insert(sheetFibers.end(), fiber.begin(), fiber.end());
-    //}
-
-    //return sheetFibers;
-}
-
-void io::generatefFaceFibersForSheets(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace &reebSpace, const int sheetOutputCount, const int numberOfFiberPoints, const std::string folderPath)
-{
-    namespace fs = std::filesystem;
-
-    fs::path folderPathFs(folderPath);
-    if (!fs::exists(folderPathFs)) 
-    {
-        fs::create_directory(folderPathFs);
-    }
-
-    for (const auto &[sheetId, colourId] : reebSpace.sheetConsequitiveIndices)
-    {
-        if (reebSpace.incompleteSheets.contains(sheetId))
-        {
-            printf("Skipping fiber %d, it's incomplete.",  sheetId);
-        }
-
-        if (colourId > sheetOutputCount || reebSpace.incompleteSheets.contains(sheetId))
-        {
-            continue;
-        }
-
-        std::cout << "-------------------------------------------------------------------------------------------- Generating fibers for sheet " << sheetId << "..." << std::endl;
-        const std::vector<FiberPoint> sheetFibers = io::generatefFaceFibersForSheet(tetMesh, arrangement, reebSpace, sheetId, numberOfFiberPoints);
-
-        //std::cout << "Saving fibers..." << std::endl;
-        std::string outputFile = folderPathFs.string() + "/fibers_" + std::to_string(sheetId) + ".vtp";
-        io::saveFibers(sheetFibers, outputFile);
-    }
-}
 
 void io::printTriangle(const TetMesh &tetMesh, const int &triangleId)
 {

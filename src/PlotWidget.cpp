@@ -24,7 +24,6 @@
 #include <qtransform.h>
 #include <utility>
 
-
 #include "./io.h"
 #include "./Timer.h"
 #include "./Fiber.h"
@@ -53,6 +52,11 @@ PlotWidget::PlotWidget(QWidget *parent, Data &_data)
     paddedMaxG = data.tetMesh.maxG + paddingScalingFactor * (data.tetMesh.maxG - data.tetMesh.minG);
 }
 
+TracerVisualiserWindow* PlotWidget::parentWindow()
+{
+    return qobject_cast<TracerVisualiserWindow*>(this->parent()->parent());
+}
+
 void PlotWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::RightButton) 
@@ -71,7 +75,8 @@ void PlotWidget::mousePressEvent(QMouseEvent* event)
         mousePointInitialPos = event->localPos();
         mousePoint = mousePointInitialPos;
 
-        if (false == this->sibling->traceFibers)
+
+        if (parentWindow()->buttonShowTraces->isChecked()) 
         {
             fiberPointsTraces.push_back({mousePoint});
         }
@@ -99,7 +104,8 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
         if (dragging)
         {
             mousePoint = currentPos;
-            if (false == this->sibling->traceFibers)
+
+            if (parentWindow()->buttonShowTraces->isChecked()) 
             {
                 if (fiberPointsTraces.size() == 0)
                 {
@@ -801,7 +807,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
     //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
     //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
-    if (false == this->sibling->traceFibers)
+    if (parentWindow()->buttonShowTraces->isChecked()) 
     {
         penBlack.setWidthF(8.0);
         p.setPen(penBlack);
@@ -836,10 +842,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         controlPointSheetSelection.reset();
 
-
-        if (auto *window = qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())) {
-            window->updateSelectedSheets(this->sibling->selectedSheetIds);
-        }
+        parentWindow()->updateSelectedSheets(this->sibling->selectedSheetIds);
 
         this->staticReebSpaceCache = nullptr;
         this->update();
@@ -870,7 +873,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         
         const std::vector<FiberPoint> fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->sibling->selectedSheetIds);
 
-        if (this->sibling->traceFibers)
+        if (qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())->buttonShowTraces->isChecked()) 
         {
             this->data.fibers.push_back(std::move(fiber));
         }

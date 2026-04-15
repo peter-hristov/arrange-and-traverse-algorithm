@@ -25,6 +25,9 @@
 #include "./Data.h"
 #include "./TracerVisualiserWidget.h"
 
+// Forward declaration to avoid circular includes
+class TracerVisualiserWindow;
+
 class PlotWidget : public QWidget
 {
     Q_OBJECT
@@ -97,6 +100,8 @@ class PlotWidget : public QWidget
         const float controlPointRadious = this->resolution / 200.0;
 
         void saveToFile(const std::string& filename);
+
+        TracerVisualiserWindow* parentWindow();
 
     protected:
         void mouseMoveEvent(QMouseEvent* event);
