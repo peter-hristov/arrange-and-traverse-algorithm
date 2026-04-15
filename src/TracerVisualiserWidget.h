@@ -40,8 +40,6 @@ class TracerVisualiserWidget : public QOpenGLWidget
 
     bool enableLighting = 1;
 
-    std::set<int> selectedSheetIds;
-
     GLfloat isovalueMult = -1.0;
 
     void updateFiber();

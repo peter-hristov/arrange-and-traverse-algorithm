@@ -685,9 +685,9 @@ TracerVisualiserWidget::mousePressEvent(QMouseEvent* event)
 
         if (sheetId >= 0)
         {
-            this->selectedSheetIds.insert(sheetId);
+            this->data.selectedSheetIds.insert(sheetId);
 
-            for (const int id : this->selectedSheetIds)
+            for (const int id : this->data.selectedSheetIds)
             {
                 //std::cout << "Sheet " << id << " has area " << data.reebSpace2.sheetArea[id] << " which is a ratio of : " << 100.0 * data.reebSpace2.sheetArea[id] <<  std::endl;
                 printf("Sheet %d had area %.2f (which is %.2f%%).\n", id, data.reebSpace2.sheetArea[id], 100.0 * data.reebSpace2.sheetAreaProportion[id]);
@@ -697,7 +697,7 @@ TracerVisualiserWidget::mousePressEvent(QMouseEvent* event)
             this->sibling->update();
 
             if (auto *window = qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())) {
-                window->updateSelectedSheets(this->selectedSheetIds);
+                window->updateSelectedSheets(this->data.selectedSheetIds);
             }
 
             update();

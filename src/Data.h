@@ -13,6 +13,7 @@
 #include "./FiberSurface.h"
 
 
+// This class contains the data shared between the widgets
 class Data
 {
   public:
@@ -42,6 +43,7 @@ class Data
 
     vtkSmartPointer<vtkPolyData> molecule;
 
-    bool zeroAxis;
+    std::set<int> selectedSheetIds;
 
+    bool zeroAxis;
 };

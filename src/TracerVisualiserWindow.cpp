@@ -320,13 +320,13 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
             if (this->data.reebSpace2.sheetArea.contains(sheetId))
             {
-                this->tracerVisualiserWidget->selectedSheetIds.insert(sheetId);
+                this->data.selectedSheetIds.insert(sheetId);
 
                 this->plotWidget->staticReebSpaceCache = nullptr;
                 this->plotWidget->update();
                 this->tracerVisualiserWidget->update();
             }
-            this->updateSelectedSheets(this->tracerVisualiserWidget->selectedSheetIds);
+            this->updateSelectedSheets(this->data.selectedSheetIds);
             });
 
 
@@ -334,11 +334,11 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
 
     connect(buttonAddTopSheets, &QPushButton::clicked, this, [this]() {
             const size_t numberOfSheets = spinBoxAddTopSheets->value();
-            this->tracerVisualiserWidget->selectedSheetIds = {};
+            this->data.selectedSheetIds = {};
 
             for (int i = 0 ; i < std::min(numberOfSheets, data.reebSpace2.orderSheet.size()) ; i++)
             {
-                this->tracerVisualiserWidget->selectedSheetIds.insert(data.reebSpace2.orderSheet[i]);
+                this->data.selectedSheetIds.insert(data.reebSpace2.orderSheet[i]);
             }
 
 
@@ -346,7 +346,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
             this->plotWidget->update();
             this->tracerVisualiserWidget->update();
 
-            this->updateSelectedSheets(this->tracerVisualiserWidget->selectedSheetIds);
+            this->updateSelectedSheets(this->data.selectedSheetIds);
             });
 
 
@@ -374,7 +374,7 @@ TracerVisualiserWindow::TracerVisualiserWindow(QWidget* parent, Data &_data)
     connect(this->clearSelectedSheetsButton, &QPushButton::clicked, this, [this]() {
             this->plotWidget->staticReebSpaceCache = nullptr;
             this->plotWidget->featureControlPolygons = {};
-            this->tracerVisualiserWidget->selectedSheetIds = {};
+            this->data.selectedSheetIds = {};
             this->tracerVisualiserWidget->clearFiberSurfaceSheets();
 
             this->plotWidget->update();

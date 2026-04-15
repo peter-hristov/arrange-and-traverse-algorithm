@@ -133,7 +133,7 @@ void PlotWidget::saveSelectedSheets(QPainter &p)
     //}
 
     // Create pixmaps in the SAME logical resolution
-    for (const int selectedSheetId : this->sibling->selectedSheetIds)
+    for (const int selectedSheetId : this->data.selectedSheetIds)
     {
         QPixmap pixmap(resolution, resolution);
         pixmap.fill(Qt::transparent);
@@ -159,7 +159,7 @@ void PlotWidget::saveSelectedSheets(QPainter &p)
             const int sheetId = data.reebSpace2.correspondenceGraphDS.parent[componentId];
 
 
-            const bool isSelected = this->sibling->selectedSheetIds.contains(sheetId);
+            const bool isSelected = this->data.selectedSheetIds.contains(sheetId);
 
             if (isSelected)
             {
@@ -409,12 +409,12 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
             float sa;
 
             // No selection
-            if (this->sibling->selectedSheetIds.empty())
+            if (this->data.selectedSheetIds.empty())
             {
                 sa = 0.5f;
             }
             // Selected sheets
-            else if (this->sibling->selectedSheetIds.contains(sheetId))
+            else if (this->data.selectedSheetIds.contains(sheetId))
             {
                 sa = 0.7f;
             }
@@ -835,14 +835,14 @@ void PlotWidget::paintEvent(QPaintEvent*)
         for (const int componentId : data.reebSpace2.correspondenceGraph[activeFace->data()])
         {
             const int sheetId = data.reebSpace2.correspondenceGraphDS.find(componentId);
-            this->sibling->selectedSheetIds.insert(sheetId);
+            this->data.selectedSheetIds.insert(sheetId);
 
             printf("Adding sheet %d with area %.2f (which is %.2f%%).\n", sheetId, data.reebSpace2.sheetArea[sheetId], 100.0 * data.reebSpace2.sheetArea[sheetId]);
         }
 
         controlPointSheetSelection.reset();
 
-        parentWindow()->updateSelectedSheets(this->sibling->selectedSheetIds);
+        parentWindow()->updateSelectedSheets(this->data.selectedSheetIds);
 
         this->staticReebSpaceCache = nullptr;
         this->update();
@@ -871,7 +871,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
         
-        const std::vector<FiberPoint> fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->sibling->selectedSheetIds);
+        const std::vector<FiberPoint> fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->data.selectedSheetIds);
 
         if (qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())->buttonShowTraces->isChecked()) 
         {
@@ -965,14 +965,14 @@ void PlotWidget::paintEvent(QPaintEvent*)
     // Feature Drawing
     // ----------------------------------------------------------------
 
-    if (recomputeFiberSurfaceFeature && this->sibling->selectedSheetIds.size() > 0)
+    if (recomputeFiberSurfaceFeature && this->data.selectedSheetIds.size() > 0)
     {
         // Draw polygons and compute expected size
         int expectedSize = 0;
         this->featureControlPolygons = {};
 
         std::cout << "Computing sheet epsilon polygons... \n";
-        for (const int desiredSheetId : this->sibling->selectedSheetIds)
+        for (const int desiredSheetId : this->data.selectedSheetIds)
         {
 
             if (false == data.reebSpace2.sheetEpsilonPolygons.contains(desiredSheetId))
@@ -1013,7 +1013,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         LoadingBar bar(40, "Computing features fiber surfaces...");
         int computedFS = 0;
-        for (const int desiredSheetId : this->sibling->selectedSheetIds)
+        for (const int desiredSheetId : this->data.selectedSheetIds)
         {
             const std::vector<std::vector<std::array<double, 2>>> sheetPolygons = data.reebSpace2.sheetEpsilonPolygons.at(desiredSheetId);
 
