@@ -9,7 +9,6 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
-#include "./FiberPoint.h"
 #include "./FiberSurface.h"
 #include "./Fiber.h"
 
@@ -37,7 +36,7 @@ class Data
         reebSpace2(rs2)
     {}
 
-    std::vector<fiber::Fiber> fibers;
+    std::vector<Fiber> fibers;
     std::vector<FiberSurface> fiberSurfaces;
     std::vector<FiberSurface> featureSurfaces;
 

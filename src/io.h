@@ -9,7 +9,6 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
-#include "./FiberPoint.h"
 
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
@@ -36,7 +35,7 @@ namespace io
 
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
-    void saveFibers(const std::vector<std::vector<FiberPoint>>&, const std::string&);
+    //void saveFibers(const std::vector<std::vector<FiberPoint>>&, const std::string&);
 
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 

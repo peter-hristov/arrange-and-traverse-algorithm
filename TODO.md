@@ -1,10 +1,11 @@
 ### Big Refactor
-[ ] Refactor grow fiber from seeds
 [ ] Refactor PlotWidget
+[ ] Refactor fiber graph
 
 ### Current 
 
 ### Done
+[x] Refactor grow fiber from seeds
 [x] Refactor TracerVisualiserWidget
 [x] Refactor FiberSurface class again 
 [x] Refactor colours into their own namespace

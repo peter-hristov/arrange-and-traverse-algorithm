@@ -4,12 +4,8 @@
 
 #include "./io.h"
 #include "./Timer.h"
-
-#include "./FiberPoint.h"
+#include "./SeedSet.h"
 #include "./FiberSurface.h"
-#include "./FiberLabeling.h"
-#include "./ColourTable.h"
-#include "src/FiberGraph.h"
 
 #include <cstdio>
 #include <queue>
@@ -19,14 +15,14 @@
 
 
 
-fiber::Fiber fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
+Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
-    const std::vector<std::pair<int, int>> fiberSeeds = fiber::labeling::computeFiberSeeds(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
-    return growSeedSet(tetMesh, reebSpace, controlPoint, fiberSeeds);
+    const std::vector<std::pair<int, int>> fiberSeeds = SeedSet::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
+    return Fiber::growFiberFromSeedSet(tetMesh, reebSpace, controlPoint, fiberSeeds);
 }
 
 
-static std::optional<std::array<float, 3>> tryComputeBarycentricCoordinates(const TetMesh& tetMesh, const int triangleId, const CartesianPoint& P)
+std::optional<std::array<float, 3>> FiberComponent::tryComputePointCoordinates(const TetMesh& tetMesh, const int triangleId, const CartesianPoint& P)
 {
     // Unpack the triangle vertices and put them it into points
     const std::set<int>& triangleVertices = tetMesh.triangles[triangleId];
@@ -61,11 +57,11 @@ static std::optional<std::array<float, 3>> tryComputeBarycentricCoordinates(cons
 return result;
 }
 
-static fiber::FiberComponent growFiberComponentFromSeed(const TetMesh& tetMesh, const std::array<double, 2>& controlPoint, const int triangleId, const int sheetId)
+FiberComponent FiberComponent::growFiberComponentFromSeedPair(const TetMesh& tetMesh, const std::array<double, 2>& controlPoint, const int triangleId, const int sheetId)
 {
     const CartesianPoint P(controlPoint[0], controlPoint[1]);
 
-    fiber::FiberComponent fc;
+    FiberComponent fc;
     fc.sheetId = sheetId;
 
     std::queue<int> bfsQueue;
@@ -75,7 +71,7 @@ static fiber::FiberComponent growFiberComponentFromSeed(const TetMesh& tetMesh, 
     std::unordered_map<int, int> parent;
     parent[triangleId] = triangleId;
 
-    const auto seedTriangleBarycentricCoordinates = tryComputeBarycentricCoordinates(tetMesh, triangleId, P);
+    const auto seedTriangleBarycentricCoordinates = FiberComponent::tryComputePointCoordinates(tetMesh, triangleId, P);
     if (!seedTriangleBarycentricCoordinates) 
     {
         std::cerr << "Seed triangle does not contain control point.";
@@ -103,7 +99,7 @@ static fiber::FiberComponent growFiberComponentFromSeed(const TetMesh& tetMesh, 
             }
 
             // If this triangle is active, compute it's barycentricCoordinates
-            if (const auto barycentricCoordinates = tryComputeBarycentricCoordinates(tetMesh, nbTriangleId, P)) 
+            if (const auto barycentricCoordinates = FiberComponent::tryComputePointCoordinates(tetMesh, nbTriangleId, P)) 
             {
                 fc.triangleBarycentricCoordinates[nbTriangleId] = *barycentricCoordinates;
                 fc.edges.emplace_back(currentTriangleId, nbTriangleId);
@@ -118,17 +114,17 @@ static fiber::FiberComponent growFiberComponentFromSeed(const TetMesh& tetMesh, 
 }
 
 
-fiber::Fiber fiber::growSeedSet(const TetMesh &tetMesh, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
+Fiber Fiber::growFiberFromSeedSet(const TetMesh &tetMesh, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint, const std::vector<std::pair<int, int>> &fiberSeeds)
 {
-
-    fiber::Fiber fiberComponents;
-    fiberComponents.reserve(fiberSeeds.size());
+    Fiber fiber;
+    fiber.components.reserve(fiberSeeds.size());
 
     for (const auto &[triangleId, componentId] : fiberSeeds)
     {
         const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
-        fiberComponents.emplace_back(growFiberComponentFromSeed(tetMesh, controlPoint, triangleId, sheetId));
+        fiber.components.emplace_back(FiberComponent::growFiberComponentFromSeedPair(tetMesh, controlPoint, triangleId, sheetId));
     }
 
-    return fiberComponents;
+    return fiber;
 }
+

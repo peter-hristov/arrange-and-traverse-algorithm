@@ -178,9 +178,9 @@ TracerVisualiserWidget::generateDisplayList()
         glDisable(GL_LIGHTING);
         glBegin(GL_LINES);
         {
-            for(const fiber::Fiber &fiber : this->data.fibers)
+            for(const Fiber &fiber : this->data.fibers)
             {
-                for(const fiber::FiberComponent &fiberComponent : fiber)
+                for(const FiberComponent &fiberComponent : fiber.components)
                 {
                     // Set the colour
                     const int sheetId = fiberComponent.sheetId;

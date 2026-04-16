@@ -38,12 +38,12 @@ namespace performance
 
                 const auto start = std::chrono::high_resolution_clock::now();
 
-                const fiber::Fiber fiberNew = fiber::computeLabeledFiber(tetMesh, singularArrangement, reebSpace, {x, y}, {});
+                const Fiber fiber = Fiber::computeLabeledFiber(tetMesh, singularArrangement, reebSpace, {x, y}, {});
 
                 const auto end = std::chrono::high_resolution_clock::now();
                 const double elapsed = std::chrono::duration<double>(end - start).count();
 
-                if (fiberNew.size() > 0)
+                if (fiber.components.size() > 0)
                 {
                     timings.push_back(elapsed);
                 }

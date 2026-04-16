@@ -1,6 +1,7 @@
-#include "FiberSurface.h"
-#include "FiberLabeling.h"
 #include "io.h"
+#include "Fiber.h"
+#include "FiberSurface.h"
+#include "SeedSet.h"
 
 void FiberSurface::print()
 {
@@ -145,7 +146,7 @@ int FiberSurface::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangeme
     midPointAlpha /= 3.0;
 
     // 2. Compute the fiber graph at the alpha in the range
-    const std::vector<std::pair<int, int>> fiberSeeds = fiber::labeling::computeFiberSeedsGivenLine(tetMesh, singularArrangement, reebSpace, controlSegment, midPointAlpha, intersectedSegments);
+    const std::vector<std::pair<int, int>> fiberSeedSet = SeedSet::computeFiberSeedSetGivenLine(tetMesh, singularArrangement, reebSpace, controlSegment, midPointAlpha, intersectedSegments);
 
     // 3. Determine which fiber component contains a triangle from the tet
     const int tetId = this->tetId()[triangle];
@@ -162,7 +163,7 @@ int FiberSurface::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangeme
         tetMesh.triangleIndices.at({b, c, d}),
     };
 
-    const int componentId = findFiberPointComponent(tetMesh, singularArrangement, fiberSeeds, tetTriangleIds, controlSegment, midPointAlpha);
+    const int componentId = findFiberPointComponent(tetMesh, singularArrangement, fiberSeedSet, tetTriangleIds, controlSegment, midPointAlpha);
 
     if (componentId != -1)
     {

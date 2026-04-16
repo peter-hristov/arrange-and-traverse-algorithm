@@ -1012,65 +1012,65 @@ void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, cons
 
 
 
-void io::saveFibers(const std::vector<std::vector<FiberPoint>> &fiberPoints, const std::string &filename)
-{
-    if (fiberPoints.empty())
-    {
-        return;
-    }
+//void io::saveFibers(const std::vector<std::vector<FiberPoint>> &fiberPoints, const std::string &filename)
+//{
+    //if (fiberPoints.empty())
+    //{
+        //return;
+    //}
 
-    std::filesystem::path filePath(filename);
-    if (filePath.has_parent_path())
-    {
-        std::filesystem::create_directories(filePath.parent_path());
-    }
+    //std::filesystem::path filePath(filename);
+    //if (filePath.has_parent_path())
+    //{
+        //std::filesystem::create_directories(filePath.parent_path());
+    //}
 
-    auto points = vtkSmartPointer<vtkPoints>::New();
-    auto idArray = vtkSmartPointer<vtkIntArray>::New();
-    auto colourArray = vtkSmartPointer<vtkDoubleArray>::New();
-    idArray->SetName("SheetId");
-    idArray->SetNumberOfComponents(1);
-    colourArray->SetName("Colour");
-    colourArray->SetNumberOfComponents(3);
+    //auto points = vtkSmartPointer<vtkPoints>::New();
+    //auto idArray = vtkSmartPointer<vtkIntArray>::New();
+    //auto colourArray = vtkSmartPointer<vtkDoubleArray>::New();
+    //idArray->SetName("SheetId");
+    //idArray->SetNumberOfComponents(1);
+    //colourArray->SetName("Colour");
+    //colourArray->SetNumberOfComponents(3);
 
-    auto cells = vtkSmartPointer<vtkCellArray>::New();
+    //auto cells = vtkSmartPointer<vtkCellArray>::New();
 
-    vtkIdType globalPointId = 0;
-    for (const auto &fiber : fiberPoints)
-    {
-        if (fiber.size() < 2) continue;
+    //vtkIdType globalPointId = 0;
+    //for (const auto &fiber : fiberPoints)
+    //{
+        //if (fiber.size() < 2) continue;
 
-        for (const FiberPoint &p : fiber)
-        {
-            points->InsertNextPoint(p.point.data());
-            idArray->InsertNextValue(p.sheetId);
-            colourArray->InsertNextTuple(p.colour.data());
-        }
+        //for (const FiberPoint &p : fiber)
+        //{
+            //points->InsertNextPoint(p.point.data());
+            //idArray->InsertNextValue(p.sheetId);
+            //colourArray->InsertNextTuple(p.colour.data());
+        //}
 
-        // Each consecutive pair is one edge segment
-        for (vtkIdType i = 0; i + 1 < static_cast<vtkIdType>(fiber.size()); i += 2)
-        {
-            auto line = vtkSmartPointer<vtkLine>::New();
-            line->GetPointIds()->SetId(0, globalPointId + i);
-            line->GetPointIds()->SetId(1, globalPointId + i + 1);
-            cells->InsertNextCell(line);
-        }
+        //// Each consecutive pair is one edge segment
+        //for (vtkIdType i = 0; i + 1 < static_cast<vtkIdType>(fiber.size()); i += 2)
+        //{
+            //auto line = vtkSmartPointer<vtkLine>::New();
+            //line->GetPointIds()->SetId(0, globalPointId + i);
+            //line->GetPointIds()->SetId(1, globalPointId + i + 1);
+            //cells->InsertNextCell(line);
+        //}
 
-        globalPointId += static_cast<vtkIdType>(fiber.size());
-    }
+        //globalPointId += static_cast<vtkIdType>(fiber.size());
+    //}
 
-    auto polyData = vtkSmartPointer<vtkPolyData>::New();
-    polyData->SetPoints(points);
-    polyData->SetLines(cells);
-    polyData->GetPointData()->AddArray(idArray);
-    polyData->GetPointData()->AddArray(colourArray);
-    polyData->GetPointData()->SetScalars(colourArray);
+    //auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    //polyData->SetPoints(points);
+    //polyData->SetLines(cells);
+    //polyData->GetPointData()->AddArray(idArray);
+    //polyData->GetPointData()->AddArray(colourArray);
+    //polyData->GetPointData()->SetScalars(colourArray);
 
-    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-    writer->SetFileName(filename.c_str());
-    writer->SetInputData(polyData);
-    writer->Write();
-}
+    //auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    //writer->SetFileName(filename.c_str());
+    //writer->SetInputData(polyData);
+    //writer->Write();
+//}
 
 
 

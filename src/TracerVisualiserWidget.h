@@ -15,7 +15,6 @@
 #include <QOpenGLWidget>
 
 #include "./Data.h"
-#include "./FiberPoint.h"
 #include "./ArcBall/Ball.h"
 
 // Forward declaration to avoid circular includes

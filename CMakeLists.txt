@@ -36,13 +36,11 @@ find_package(CGAL 6.0.1 REQUIRED)
 find_package(VTK 9.4.1 REQUIRED)
 
 set(SOURCES
-    ./src/Data.cpp
     ./src/io.cpp
     ./src/TetMesh.cpp
     ./src/ReebSpace2.cpp
     ./src/Fiber.cpp
-    ./src/FiberLabeling.cpp
-    ./src/FiberStitching.cpp
+    ./src/SeedSet.cpp
     ./src/Arrangement.cpp
     ./src/ReebSpace.cpp
     ./src/PlotWidget.cpp

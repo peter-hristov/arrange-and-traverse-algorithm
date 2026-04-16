@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "./FiberPoint.h"
 #include "./TetMesh.h"
 #include "./ReebSpace2.h"
 #include "./Arrangement.h"
