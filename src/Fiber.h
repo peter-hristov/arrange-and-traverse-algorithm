@@ -18,13 +18,10 @@ class FiberComponent
         // Gives the barycentric coordinates of the point of intersection of the fiber and the triangles
         std::unordered_map<int, std::array<float, 3>> triangleBarycentricCoordinates;
 
-        // (Helper) Cheap test if a point is in a triangle, then if it is compute bary coords and them actual point coords
-        static std::optional<std::array<float, 3>> tryComputePointCoordinates(const TetMesh& tetMesh, const int triangleId, const CartesianPoint& P);
-
         // Grow a component component from a single seed pair
         static FiberComponent growFiberComponentFromSeedPair(const TetMesh& tetMesh, const std::array<double, 2>& controlPoint, const int triangleId, const int sheetId);
 
-        // Grow a component component from a single seed pair to determine whether it contains a tet
+        // Grow a component component from a single seed pair to determine whether it contains a tet 
         static bool doesComponentContainTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint);
 };
 

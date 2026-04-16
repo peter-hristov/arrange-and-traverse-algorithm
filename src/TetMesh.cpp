@@ -759,20 +759,56 @@ const std::array<std::array<float, 3>, 3> TetMesh::getTriangleVerticesCoordinate
 
 bool TetMesh::isTriangleActive(const int &triangleId, const CartesianPoint &controlPoint) const
 {
-    // Skip if the neighbour is not active
-    const std::set<int> &triangleUnpacked = this->triangles[triangleId];
-    const std::vector<int> triangleIndices = {
-        *triangleUnpacked.begin(),
-        *std::next(triangleUnpacked.begin(), 1),
-        *std::next(triangleUnpacked.begin(), 2) 
-    };
+    // Unpack the triangle vertices and put them it into points
+    const std::set<int>& triangleVertices = this->triangles[triangleId];
 
-    const std::vector<CartesianPoint> triangleCoordinates = {
-        CartesianPoint (this->vertexCoordinatesF[triangleIndices[0]], this->vertexCoordinatesG[triangleIndices[0]]),
-        CartesianPoint (this->vertexCoordinatesF[triangleIndices[1]], this->vertexCoordinatesG[triangleIndices[1]]),
-        CartesianPoint (this->vertexCoordinatesF[triangleIndices[2]], this->vertexCoordinatesG[triangleIndices[2]]) 
-    };
-    const auto result = CGAL::bounded_side_2(triangleCoordinates.begin(), triangleCoordinates.end(), controlPoint);
+    const auto itA = triangleVertices.begin();
+    const CartesianPoint A(this->vertexCoordinatesF[*itA], this->vertexCoordinatesG[*itA]);
+
+    const auto itB = std::next(itA);
+    const CartesianPoint B(this->vertexCoordinatesF[*itB], this->vertexCoordinatesG[*itB]);
+
+    const auto itC = std::next(itB);
+    const CartesianPoint C(this->vertexCoordinatesF[*itC], this->vertexCoordinatesG[*itC]);
+
+    CartesianPoint tri[3] = {A, B, C};
+    auto result = CGAL::bounded_side_2(tri, tri + 3, controlPoint) ;
 
     return result == CGAL::ON_BOUNDED_SIDE;
+}
+
+
+std::optional<std::array<float, 3>> TetMesh::tryComputeActivePointCoordinates(const int triangleId, const CartesianPoint& P) const
+{
+    // Unpack the triangle vertices and put them it into points
+    const std::set<int>& triangleVertices = this->triangles[triangleId];
+
+    const auto itA = triangleVertices.begin();
+    const CartesianPoint A(this->vertexCoordinatesF[*itA], this->vertexCoordinatesG[*itA]);
+
+    const auto itB = std::next(itA);
+    const CartesianPoint B(this->vertexCoordinatesF[*itB], this->vertexCoordinatesG[*itB]);
+
+    const auto itC = std::next(itB);
+    const CartesianPoint C(this->vertexCoordinatesF[*itC], this->vertexCoordinatesG[*itC]);
+
+    CartesianPoint tri[3] = {A, B, C};
+    if (CGAL::bounded_side_2(tri, tri + 3, P) != CGAL::ON_BOUNDED_SIDE) return std::nullopt;
+
+    std::array<double, 3> bc;
+    CGAL::Barycentric_coordinates::triangle_coordinates_2(A, B, C, P, bc.begin());
+
+    // Fetch 3D domain coords
+    const auto& A3 = this->vertexDomainCoordinates[*itA];
+    const auto& B3 = this->vertexDomainCoordinates[*itB];
+    const auto& C3 = this->vertexDomainCoordinates[*itC];
+
+    // Interpolate
+    std::array<float, 3> result{
+        static_cast<float>(bc[0] * A3[0] + bc[1] * B3[0] + bc[2] * C3[0]),
+            static_cast<float>(bc[0] * A3[1] + bc[1] * B3[1] + bc[2] * C3[1]),
+            static_cast<float>(bc[0] * A3[2] + bc[1] * B3[2] + bc[2] * C3[2])
+    };
+
+    return result;
 }

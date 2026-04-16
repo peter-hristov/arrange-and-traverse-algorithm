@@ -21,42 +21,6 @@ Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangem
     return Fiber::growFiberFromSeedSet(tetMesh, reebSpace, controlPoint, fiberSeeds);
 }
 
-
-std::optional<std::array<float, 3>> FiberComponent::tryComputePointCoordinates(const TetMesh& tetMesh, const int triangleId, const CartesianPoint& P)
-{
-    // Unpack the triangle vertices and put them it into points
-    const std::set<int>& triangleVertices = tetMesh.triangles[triangleId];
-
-    const auto itA = triangleVertices.begin();
-    const CartesianPoint A(tetMesh.vertexCoordinatesF[*itA], tetMesh.vertexCoordinatesG[*itA]);
-
-    const auto itB = std::next(itA);
-    const CartesianPoint B(tetMesh.vertexCoordinatesF[*itB], tetMesh.vertexCoordinatesG[*itB]);
-
-    const auto itC = std::next(itB);
-    const CartesianPoint C(tetMesh.vertexCoordinatesF[*itC], tetMesh.vertexCoordinatesG[*itC]);
-
-    CartesianPoint tri[3] = {A, B, C};
-    if (CGAL::bounded_side_2(tri, tri + 3, P) != CGAL::ON_BOUNDED_SIDE) return std::nullopt;
-
-    std::array<double, 3> bc;
-    CGAL::Barycentric_coordinates::triangle_coordinates_2(A, B, C, P, bc.begin());
-
-    // Fetch 3D domain coords
-    const auto& A3 = tetMesh.vertexDomainCoordinates[*itA];
-    const auto& B3 = tetMesh.vertexDomainCoordinates[*itB];
-    const auto& C3 = tetMesh.vertexDomainCoordinates[*itC];
-
-    // Interpolate
-    std::array<float, 3> result{
-        static_cast<float>(bc[0] * A3[0] + bc[1] * B3[0] + bc[2] * C3[0]),
-            static_cast<float>(bc[0] * A3[1] + bc[1] * B3[1] + bc[2] * C3[1]),
-            static_cast<float>(bc[0] * A3[2] + bc[1] * B3[2] + bc[2] * C3[2])
-    };
-
-return result;
-}
-
 FiberComponent FiberComponent::growFiberComponentFromSeedPair(const TetMesh& tetMesh, const std::array<double, 2>& controlPoint, const int triangleId, const int sheetId)
 {
     const CartesianPoint P(controlPoint[0], controlPoint[1]);
@@ -71,7 +35,7 @@ FiberComponent FiberComponent::growFiberComponentFromSeedPair(const TetMesh& tet
     std::unordered_map<int, int> parent;
     parent[triangleId] = triangleId;
 
-    const auto seedTriangleBarycentricCoordinates = FiberComponent::tryComputePointCoordinates(tetMesh, triangleId, P);
+    const auto seedTriangleBarycentricCoordinates = tetMesh.tryComputeActivePointCoordinates(triangleId, P);
     if (!seedTriangleBarycentricCoordinates) 
     {
         std::cerr << "Seed triangle does not contain control point.";
@@ -99,7 +63,7 @@ FiberComponent FiberComponent::growFiberComponentFromSeedPair(const TetMesh& tet
             }
 
             // If this triangle is active, compute it's barycentricCoordinates
-            if (const auto barycentricCoordinates = FiberComponent::tryComputePointCoordinates(tetMesh, nbTriangleId, P)) 
+            if (const auto barycentricCoordinates = tetMesh.tryComputeActivePointCoordinates(nbTriangleId, P)) 
             {
                 fc.triangleBarycentricCoordinates[nbTriangleId] = *barycentricCoordinates;
                 fc.edges.emplace_back(currentTriangleId, nbTriangleId);
@@ -167,6 +131,7 @@ bool FiberComponent::doesComponentContainTet(const TetMesh &tetMesh, const Arran
 
 int Fiber::whichComponentContainsTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const CartesianPoint &controlPoint, const int &tetId)
 {
+    // Unpack the triangles of the tet, if we intersect any one of those, we are done
     const int a = tetMesh.tetrahedra[tetId][0];
     const int b = tetMesh.tetrahedra[tetId][1];
     const int c = tetMesh.tetrahedra[tetId][2];

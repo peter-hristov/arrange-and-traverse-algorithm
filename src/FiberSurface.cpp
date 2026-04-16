@@ -91,7 +91,7 @@ int FiberSurface::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangeme
     // 2. Compute the fiber graph at the alpha in the range
     const seeds::SeedSet fiberSeedSet = seeds::computeFiberSeedSetGivenLine(tetMesh, singularArrangement, reebSpace, controlSegment, midPointAlpha, intersectedSegments);
 
-    // 3. Determine which fiber component contains a triangle from the tet
+    // 3. Determine which fiber component intersects the tet (grow it form the seed set)
     const int tetId = this->tetId()[triangle];
     const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - midPointAlpha, controlSegment[1], midPointAlpha);
     const CartesianPoint controlPointCartesian(CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y()));

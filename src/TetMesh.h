@@ -111,4 +111,5 @@ class TetMesh
     int computeSingularSetConnectivity2();
 
     bool isTriangleActive(const int &triangleId, const CartesianPoint &controlPoint) const;
+    std::optional<std::array<float, 3>> tryComputeActivePointCoordinates(const int triangleId, const CartesianPoint& P) const;
 };

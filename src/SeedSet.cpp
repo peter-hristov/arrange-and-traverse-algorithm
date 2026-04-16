@@ -48,7 +48,7 @@ seeds::SeedSet seeds::computeFiberSeedSet(TetMesh &tetMesh, Arrangement &singula
 
     //FiberGraph pg = reebSpace.representativeFiberGraphs[activeFace->data()];
 
-    std::vector<std::pair<int, int>> fiberSeeds;
+    SeedSet fiberSeeds;
 
 
     // If there are selected sheets, only use their fiber components
@@ -361,7 +361,7 @@ seeds::SeedSet seeds::computeFiberSeedSetGivenLine(TetMesh &tetMesh, Arrangement
 
 
     //FiberGraph pg = reebSpace.representativeFiberGraphs[activeFace->data()];
-    std::vector<std::pair<int, int>> fiberSeeds = reebSpace.representativeFiberGraphSeeds[activeFace->data()];
+    SeedSet fiberSeeds = reebSpace.representativeFiberGraphSeeds[activeFace->data()];
 
     //printf("This is the initial fiber graph:\n");
     //pg.printByRoot();
