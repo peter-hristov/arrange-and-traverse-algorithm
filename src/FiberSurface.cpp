@@ -75,63 +75,6 @@ void FiberSurface::remesh(const std::vector<double> &isovalues)
     this->triangulate();
 }
 
-bool FiberSurface::bfsComponentFromSeed(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint, std::vector<bool> &visited)
-{
-    std::queue<int> bfsQueue;
-    bfsQueue.push(seedTriangleId);
-    visited[seedTriangleId] = true;
-
-    while (!bfsQueue.empty())
-    {
-        const int currentTriangleId = bfsQueue.front();
-        bfsQueue.pop();
-
-        // If it's the one we want, we are done
-        if (std::find(tetTriangleIds.begin(), tetTriangleIds.end(), currentTriangleId) != tetTriangleIds.end())
-        {
-            return true;
-        }
-
-        for (const int &neighbourTriangleId : tetMesh.tetIncidentTriangles[currentTriangleId])
-        {
-            // Skip if it's visited
-            if (visited[neighbourTriangleId]) { continue; }
-
-            // Skip if it's not active
-            if (false == tetMesh.isTriangleActive(neighbourTriangleId, controlPoint)) { continue; }
-
-            bfsQueue.push(neighbourTriangleId);
-            visited[neighbourTriangleId] = true;
-        }
-    }
-
-    return false;
-}
-
-int FiberSurface::findFiberPointComponent(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const std::vector<int> &tetTriangleIds, const Segment_2 &controlSegment, const double pointAlpha)
-{
-    const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - pointAlpha, controlSegment[1], pointAlpha);
-    const CartesianPoint controlPointCartesian(CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y()));
-
-    std::vector<bool> visited(tetMesh.triangleIndices.size(), false);
-
-    for (const auto &[triangleId, componentId] : fiberSeeds)
-    {
-        if (bfsComponentFromSeed(tetMesh, singularArrangement, triangleId, tetTriangleIds, controlPointCartesian, visited))
-        {
-            return componentId;
-        }
-    }
-
-    return -1;
-}
-
-
-
-
-
-
-
 
 
 
@@ -146,24 +89,14 @@ int FiberSurface::labelTriangle(TetMesh &tetMesh, Arrangement &singularArrangeme
     midPointAlpha /= 3.0;
 
     // 2. Compute the fiber graph at the alpha in the range
-    const std::vector<std::pair<int, int>> fiberSeedSet = SeedSet::computeFiberSeedSetGivenLine(tetMesh, singularArrangement, reebSpace, controlSegment, midPointAlpha, intersectedSegments);
+    const seeds::SeedSet fiberSeedSet = seeds::computeFiberSeedSetGivenLine(tetMesh, singularArrangement, reebSpace, controlSegment, midPointAlpha, intersectedSegments);
 
     // 3. Determine which fiber component contains a triangle from the tet
     const int tetId = this->tetId()[triangle];
+    const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - midPointAlpha, controlSegment[1], midPointAlpha);
+    const CartesianPoint controlPointCartesian(CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y()));
 
-    const int a = tetMesh.tetrahedra[tetId][0];
-    const int b = tetMesh.tetrahedra[tetId][1];
-    const int c = tetMesh.tetrahedra[tetId][2];
-    const int d = tetMesh.tetrahedra[tetId][3];
-
-    const std::vector<int> tetTriangleIds = {
-        tetMesh.triangleIndices.at({a, b, c}),
-        tetMesh.triangleIndices.at({a, b, d}),
-        tetMesh.triangleIndices.at({a, c, d}),
-        tetMesh.triangleIndices.at({b, c, d}),
-    };
-
-    const int componentId = findFiberPointComponent(tetMesh, singularArrangement, fiberSeedSet, tetTriangleIds, controlSegment, midPointAlpha);
+    const int componentId = Fiber::whichComponentContainsTet(tetMesh, singularArrangement, fiberSeedSet, controlPointCartesian, tetId);
 
     if (componentId != -1)
     {

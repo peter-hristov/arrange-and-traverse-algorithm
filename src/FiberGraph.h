@@ -17,7 +17,7 @@ class FiberGraph
 {
     public:
 
-        // Which triangles belong to which root
+        // All triangles within the same component have the same root
         // triangleId -> triangleId
         std::unordered_map<int, int> componentRoot;
 
@@ -490,8 +490,6 @@ class FiberGraph
                 }
             }
         }
-
-
 
         // This can probs be done with a binary search but linear search is better since edge degrees are small in practise
         //

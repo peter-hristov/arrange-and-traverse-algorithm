@@ -1,6 +1,6 @@
 #include "SeedSet.h"
 
-std::vector<std::pair<int, int>> SeedSet::computeFiberSeedSet(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint, const std::set<int> &selectedSheetIds)
+seeds::SeedSet seeds::computeFiberSeedSet(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint, const std::set<int> &selectedSheetIds)
 {
     const Point_2 controlPointEPEC(controlPoint[0], controlPoint[1]);
 
@@ -282,7 +282,7 @@ std::vector<std::pair<int, int>> SeedSet::computeFiberSeedSet(TetMesh &tetMesh, 
 
 
 
-std::vector<std::pair<int, int>> SeedSet::computeFiberSeedSetGivenLine(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments)
+seeds::SeedSet seeds::computeFiberSeedSetGivenLine(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const Segment_2 &controlSegment, const K::FT &pointAlpha, const std::vector<std::tuple<K::FT, int, int>> &intersectedSegments)
 {
 
     const Point_2 controlPoint = CGAL::barycenter(controlSegment[0], 1.0 - pointAlpha, controlSegment[1], pointAlpha);
@@ -350,7 +350,7 @@ std::vector<std::pair<int, int>> SeedSet::computeFiberSeedSetGivenLine(TetMesh &
     if (destinationSegmentId == -1)
     {
         std::array<double, 2> controlPointDouble = {CGAL::to_double(controlPoint.x()), CGAL::to_double(controlPoint.y())};
-        return SeedSet::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPointDouble, {});
+        return seeds::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPointDouble, {});
     }
 
     //const int destinationSegmentId = std::get<1>(intersectedSegments.back());

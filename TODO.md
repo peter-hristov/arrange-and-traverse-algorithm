@@ -1,8 +1,9 @@
 ### Big Refactor
+
 [ ] Refactor PlotWidget
-[ ] Refactor fiber graph
 
 ### Current 
+[ ] Refactor fiber graph
 
 ### Done
 [x] Refactor grow fiber from seeds

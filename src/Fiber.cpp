@@ -17,7 +17,7 @@
 
 Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds)
 {
-    const std::vector<std::pair<int, int>> fiberSeeds = SeedSet::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
+    const seeds::SeedSet fiberSeeds = seeds::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
     return Fiber::growFiberFromSeedSet(tetMesh, reebSpace, controlPoint, fiberSeeds);
 }
 
@@ -128,3 +128,65 @@ Fiber Fiber::growFiberFromSeedSet(const TetMesh &tetMesh, ReebSpace2 &reebSpace,
     return fiber;
 }
 
+
+
+bool FiberComponent::doesComponentContainTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const int seedTriangleId, const std::vector<int> &tetTriangleIds, const CartesianPoint &controlPoint)
+{
+    std::queue<int> bfsQueue;
+    bfsQueue.push(seedTriangleId);
+
+    std::vector<bool> visited(tetMesh.triangleIndices.size(), false);
+    visited[seedTriangleId] = true;
+
+    while (!bfsQueue.empty())
+    {
+        const int currentTriangleId = bfsQueue.front();
+        bfsQueue.pop();
+
+        // If it's the one we want, we are done
+        if (std::find(tetTriangleIds.begin(), tetTriangleIds.end(), currentTriangleId) != tetTriangleIds.end())
+        {
+            return true;
+        }
+
+        for (const int &neighbourTriangleId : tetMesh.tetIncidentTriangles[currentTriangleId])
+        {
+            // Skip if it's visited
+            if (visited[neighbourTriangleId]) { continue; }
+
+            // Skip if it's not active
+            if (false == tetMesh.isTriangleActive(neighbourTriangleId, controlPoint)) { continue; }
+
+            bfsQueue.push(neighbourTriangleId);
+            visited[neighbourTriangleId] = true;
+        }
+    }
+
+    return false;
+}
+
+int Fiber::whichComponentContainsTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const CartesianPoint &controlPoint, const int &tetId)
+{
+    const int a = tetMesh.tetrahedra[tetId][0];
+    const int b = tetMesh.tetrahedra[tetId][1];
+    const int c = tetMesh.tetrahedra[tetId][2];
+    const int d = tetMesh.tetrahedra[tetId][3];
+
+    const std::vector<int> tetTriangleIds = {
+        tetMesh.triangleIndices.at({a, b, c}),
+        tetMesh.triangleIndices.at({a, b, d}),
+        tetMesh.triangleIndices.at({a, c, d}),
+        tetMesh.triangleIndices.at({b, c, d}),
+    };
+
+
+    for (const auto &[triangleId, componentId] : fiberSeeds)
+    {
+        if (FiberComponent::doesComponentContainTet(tetMesh, singularArrangement, triangleId, tetTriangleIds, controlPoint))
+        {
+            return componentId;
+        }
+    }
+
+    return -1;
+}
