@@ -11,9 +11,9 @@
 #include "./ReebSpace2.h"
 #include "./FiberPoint.h"
 #include "./FiberSurface.h"
+#include "./Fiber.h"
 
 
-// This class contains the data shared between the widgets
 class Data
 {
   public:
@@ -40,6 +40,8 @@ class Data
     std::vector<std::vector<FiberPoint>> fibers;
     std::vector<FiberSurface> fiberSurfaces;
     std::vector<FiberSurface> featureSurfaces;
+
+    std::vector<fiber::Fiber> fibers2;
 
     vtkSmartPointer<vtkPolyData> molecule;
 

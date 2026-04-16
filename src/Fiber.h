@@ -8,10 +8,28 @@
 #include "./Arrangement.h"
 #include "./FiberSurface.h"
 
+
+
+
+
 namespace fiber
 {
-    std::vector<FiberPoint> computeLabeledFiber(TetMesh &, Arrangement &, ReebSpace2 &, std::array<double, 2>, const std::set<int> &);
+    class FiberComponent
+    {
+        public:
+            int sheetId;
 
-    std::vector<FiberPoint> growSeedSet(const TetMesh &tetMesh, Arrangement &arrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &fiberPoint, const std::vector<std::pair<int, int>> &fiberSeeds);
+            // All fiber segments in a fiber component
+            std::vector<std::pair<int, int>> edges;
+
+            // Gives the barycentric coordinates of the point of intersection of the fiber and the triangles
+            std::unordered_map<int, std::array<float, 3>> triangleBarycentricCoordinates;
+
+    };
+
+    typedef std::vector<FiberComponent> Fiber;
+
+    Fiber computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds);
+    Fiber growSeedSet(const TetMesh &tetMesh, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint, const std::vector<std::pair<int, int>> &fiberSeeds);
 
 };

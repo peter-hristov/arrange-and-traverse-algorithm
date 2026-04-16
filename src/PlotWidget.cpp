@@ -871,15 +871,15 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
         
-        const std::vector<FiberPoint> fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->data.selectedSheetIds);
+        const fiber::Fiber fiber = fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->data.selectedSheetIds);
 
         if (qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())->buttonShowTraces->isChecked()) 
         {
-            this->data.fibers.push_back(std::move(fiber));
+            this->data.fibers2.push_back(std::move(fiber));
         }
         else
         {
-            this->data.fibers = {std::move(fiber)};
+            this->data.fibers2 = {std::move(fiber)};
         }
 
         sibling->updateFiber();

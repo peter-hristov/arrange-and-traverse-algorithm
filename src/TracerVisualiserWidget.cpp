@@ -169,30 +169,42 @@ TracerVisualiserWidget::generateDisplayList()
         this->renderSurface(this->data.fiberSurfaces, opacity);
     }
 
+
+    // Draw Fiber
     if (this->drawFibers)
     {
         const float opacity = static_cast<float>(parentWindow()->fiberOpacitySlider->value()) / 100.0;
 
         glDisable(GL_LIGHTING);
-        // Draw Fiber
         glBegin(GL_LINES);
         {
-            for(const auto &fiber : this->data.fibers)
+            for(const fiber::Fiber &fiber : this->data.fibers2)
             {
-                for(const auto &faceFiber : fiber)
+                for(const fiber::FiberComponent &fiberComponent : fiber)
                 {
-                    if (this->enableLighting)
-                    {
-                        //glColor3fv(faceFiber.colour.data());
-                        glColor4f(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], opacity);
+                    // Set the colour
+                    const int sheetId = fiberComponent.sheetId;
+                    std::array<float, 3> triangleColour;
 
+                    // Default colour if we failed to set a sheet
+                    if (sheetId == -1)
+                    {
+                        triangleColour = {1.0, 1.0, 0.0};
                     }
                     else
                     {
-                        setMaterial(faceFiber.colour[0], faceFiber.colour[1], faceFiber.colour[2], 1.0, 1.0);
+                        const int sheetSortId = data.reebSpace2.sheetOrder.at(sheetId);
+                        triangleColour = colours::getColour(sheetSortId);
                     }
 
-                    glVertex3fv(faceFiber.point.data());
+                    glColor4f(triangleColour[0], triangleColour[1], triangleColour[2], opacity);
+
+                    // Draw the edges
+                    for(const auto &[triangleIdA, triangleIdB] : fiberComponent.edges)
+                    {
+                        glVertex3fv(fiberComponent.triangleBarycentricCoordinates.at(triangleIdA).data());
+                        glVertex3fv(fiberComponent.triangleBarycentricCoordinates.at(triangleIdB).data());
+                    }
 
                 }
             }
