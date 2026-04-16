@@ -37,11 +37,10 @@ class Data
         reebSpace2(rs2)
     {}
 
-    std::vector<std::vector<FiberPoint>> fibers;
+    std::vector<fiber::Fiber> fibers;
     std::vector<FiberSurface> fiberSurfaces;
     std::vector<FiberSurface> featureSurfaces;
 
-    std::vector<fiber::Fiber> fibers2;
 
     vtkSmartPointer<vtkPolyData> molecule;
 

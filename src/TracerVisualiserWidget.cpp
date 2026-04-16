@@ -178,7 +178,7 @@ TracerVisualiserWidget::generateDisplayList()
         glDisable(GL_LIGHTING);
         glBegin(GL_LINES);
         {
-            for(const fiber::Fiber &fiber : this->data.fibers2)
+            for(const fiber::Fiber &fiber : this->data.fibers)
             {
                 for(const fiber::FiberComponent &fiberComponent : fiber)
                 {

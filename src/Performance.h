@@ -14,7 +14,6 @@ namespace performance
 
     inline void testInteractiveFiberPerformance(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const int samples, const std::string filename)
     {
-
         static std::mt19937 gen(std::random_device{}());
 
         const double epsF = abs(tetMesh.maxF - tetMesh.minF) / 10000.0;
