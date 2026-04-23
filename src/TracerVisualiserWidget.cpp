@@ -202,8 +202,8 @@ TracerVisualiserWidget::generateDisplayList()
                     // Draw the edges
                     for(const auto &[triangleIdA, triangleIdB] : fiberComponent.edges)
                     {
-                        glVertex3fv(fiberComponent.triangleBarycentricCoordinates.at(triangleIdA).data());
-                        glVertex3fv(fiberComponent.triangleBarycentricCoordinates.at(triangleIdB).data());
+                        glVertex3fv(fiberComponent.trianglePointCoordinates.at(triangleIdA).data());
+                        glVertex3fv(fiberComponent.trianglePointCoordinates.at(triangleIdB).data());
                     }
 
                 }

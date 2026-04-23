@@ -18,6 +18,7 @@
 #include <vtkPolyLine.h>
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
+#include <vtkFloatArray.h>
 #include <vtkAppendPolyData.h>
 
 
@@ -1287,5 +1288,145 @@ void io::saveOriginalMesh(const std::string filename, vtkSmartPointer<vtkUnstruc
     auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
     writer->SetFileName(filename.c_str());
     writer->SetInputData(originalMesh);
+    writer->Write();
+}
+
+void io::saveFibers(const std::vector<Fiber> &fibers, const ReebSpace2 &reebSpace, const std::string &filename)
+{
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+        std::filesystem::create_directories(filePath.parent_path());
+
+    auto points      = vtkSmartPointer<vtkPoints>::New();
+    auto idArray     = vtkSmartPointer<vtkIntArray>::New();
+    auto fiberIdArray = vtkSmartPointer<vtkIntArray>::New();
+    auto colourArray = vtkSmartPointer<vtkFloatArray>::New();
+    auto cells       = vtkSmartPointer<vtkCellArray>::New();
+
+    idArray->SetName("SheetId");
+    idArray->SetNumberOfComponents(1);
+
+    fiberIdArray->SetName("FiberId");
+    fiberIdArray->SetNumberOfComponents(1);
+
+    colourArray->SetName("Colour");
+    colourArray->SetNumberOfComponents(3);
+
+    const std::array<float, 3> defaultColour = {1.0f, 1.0f, 0.0f};
+
+    vtkIdType globalPointId = 0;
+
+    for (int fiberId = 0; fiberId < static_cast<int>(fibers.size()); fiberId++)
+    {
+        for (const FiberComponent &component : fibers[fiberId].components)
+        {
+            std::array<float, 3> colour;
+            if (component.sheetId == -1)
+            {
+                colour = defaultColour;
+            }
+            else
+            {
+                const int sheetSortId = reebSpace.sheetOrder.at(component.sheetId);
+                colour = colours::getColour(sheetSortId);
+            }
+
+            for (const auto &[triA, triB] : component.edges)
+            {
+                auto itA = component.trianglePointCoordinates.find(triA);
+                auto itB = component.trianglePointCoordinates.find(triB);
+
+                if (itA == component.trianglePointCoordinates.end() ||
+                    itB == component.trianglePointCoordinates.end())
+                    continue;
+
+                const std::array<float, 3> &p0 = itA->second;
+                const std::array<float, 3> &p1 = itB->second;
+
+                points->InsertNextPoint(p0.data());
+                points->InsertNextPoint(p1.data());
+
+                idArray->InsertNextValue(component.sheetId);
+                idArray->InsertNextValue(component.sheetId);
+
+                fiberIdArray->InsertNextValue(fiberId);
+                fiberIdArray->InsertNextValue(fiberId);
+
+                colourArray->InsertNextTuple(colour.data());
+                colourArray->InsertNextTuple(colour.data());
+
+                auto line = vtkSmartPointer<vtkLine>::New();
+                line->GetPointIds()->SetId(0, globalPointId);
+                line->GetPointIds()->SetId(1, globalPointId + 1);
+                cells->InsertNextCell(line);
+
+                globalPointId += 2;
+            }
+        }
+    }
+
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetLines(cells);
+    polyData->GetPointData()->AddArray(idArray);
+    polyData->GetPointData()->AddArray(fiberIdArray);
+    polyData->GetPointData()->AddArray(colourArray);
+    polyData->GetPointData()->SetScalars(colourArray);
+
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(polyData);
+    writer->Write();
+}
+
+void io::saveFiberTraces(const PlotWidget *pl, const std::string &filename)
+{
+    std::filesystem::path filePath(filename);
+    if (filePath.has_parent_path())
+        std::filesystem::create_directories(filePath.parent_path());
+
+    auto points       = vtkSmartPointer<vtkPoints>::New();
+    auto fiberIdArray = vtkSmartPointer<vtkIntArray>::New();
+    auto cells        = vtkSmartPointer<vtkCellArray>::New();
+
+    fiberIdArray->SetName("PointId");
+    fiberIdArray->SetNumberOfComponents(1);
+
+    vtkIdType globalPointId = 0;
+
+    for (int fiberId = pl->controlTraces.size() - 1; fiberId >= 0; fiberId--)
+    {
+        const QPolygonF &trace = pl->controlTraces[fiberId];
+        if (trace.size() < 2)
+            continue;
+
+        for (int i = trace.size() - 1; i >= 0; i--)
+        {
+            const float u = pl->paddedMinF + (trace[i].x() / pl->resolution) * (pl->paddedMaxF - pl->paddedMinF);
+            const float v = pl->paddedMinG + (trace[i].y() / pl->resolution) * (pl->paddedMaxG - pl->paddedMinG);
+            points->InsertNextPoint(u, v, 0.0);
+            fiberIdArray->InsertNextValue(globalPointId + (trace.size() - 1 - i));
+        }
+
+        for (vtkIdType i = 0; i + 1 < static_cast<vtkIdType>(trace.size()); i++)
+        {
+            auto line = vtkSmartPointer<vtkLine>::New();
+            line->GetPointIds()->SetId(0, globalPointId + i);
+            line->GetPointIds()->SetId(1, globalPointId + i + 1);
+            cells->InsertNextCell(line);
+        }
+
+        globalPointId += static_cast<vtkIdType>(trace.size());
+    }
+
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetLines(cells);
+    polyData->GetPointData()->AddArray(fiberIdArray);
+    polyData->GetPointData()->SetScalars(fiberIdArray);
+
+    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(polyData);
     writer->Write();
 }

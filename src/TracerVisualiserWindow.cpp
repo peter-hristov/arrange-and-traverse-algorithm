@@ -81,7 +81,11 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         // Save the fibers
         std::string filename = "./output/fibers.vtp";
         std::cout << "Saving fibers to " << filename << std::endl;
-        //io::saveFibers(this->data.fibers, filename);
+        io::saveFibers(this->data.fibers, this->data.reebSpace2, filename);
+
+        filename = "./output/fiberTraces.vtp";
+        std::cout << "Saving fiber to " << filename << std::endl;
+        io::saveFiberTraces(this->plotWidget, filename);
 
         filename = "./output/fiber-surface.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;

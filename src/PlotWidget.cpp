@@ -807,10 +807,14 @@ void PlotWidget::paintEvent(QPaintEvent*)
     //p.drawLine(fiberPoint.x(), fiberPoint.y() - resolution, fiberPoint.x(), fiberPoint.y() + resolution);
     //p.drawLine(fiberPoint.x() - resolution, fiberPoint.y(), fiberPoint.x() + resolution, fiberPoint.y());
 
+    // Drawing the trace of the fibers
     if (parentWindow()->buttonShowTraces->isChecked()) 
     {
         penBlack.setWidthF(8.0);
         p.setPen(penBlack);
+
+        this->controlTraces.clear();
+        this->controlTraces.shrink_to_fit();
 
         for (const QVector<QPointF> &fiberPointsTrace : this->fiberPointsTraces)
         {
@@ -822,6 +826,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
                 fiberPointsTraceTransformed[i] = controlPointTransformed;
             }
             p.drawPolyline(QPolygonF(fiberPointsTraceTransformed));
+            this->controlTraces.push_back(fiberPointsTraceTransformed);
         }
     }
 

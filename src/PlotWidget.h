@@ -80,6 +80,7 @@ class PlotWidget : public QWidget
         QVector<QPolygonF> featureControlPolygons;
 
         QVector<QVector<QPointF>> fiberPointsTraces;
+        std::vector<QPolygonF> controlTraces;
 
         int desiredSheetId = -1;
         //int desiredSheetId = 0;

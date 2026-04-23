@@ -42,7 +42,7 @@ FiberComponent FiberComponent::growFiberComponentFromSeedPair(const TetMesh& tet
         return {};
     }
 
-    fc.triangleBarycentricCoordinates[triangleId] = *seedTriangleBarycentricCoordinates;
+    fc.trianglePointCoordinates[triangleId] = *seedTriangleBarycentricCoordinates;
 
     while (!bfsQueue.empty()) 
     {
@@ -65,7 +65,7 @@ FiberComponent FiberComponent::growFiberComponentFromSeedPair(const TetMesh& tet
             // If this triangle is active, compute it's barycentricCoordinates
             if (const auto barycentricCoordinates = tetMesh.tryComputeActivePointCoordinates(nbTriangleId, P)) 
             {
-                fc.triangleBarycentricCoordinates[nbTriangleId] = *barycentricCoordinates;
+                fc.trianglePointCoordinates[nbTriangleId] = *barycentricCoordinates;
                 fc.edges.emplace_back(currentTriangleId, nbTriangleId);
 
                 bfsQueue.push(nbTriangleId);

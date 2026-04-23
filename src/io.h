@@ -9,10 +9,15 @@
 #include "./Arrangement.h"
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
+#include "./Fiber.h"
+#include "./PlotWidget.h"
 
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
+
+#include <QVector>
+#include <QPointF>
 
 
 namespace io
@@ -36,6 +41,9 @@ namespace io
     void saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename);
     void saveSheets2(const TetMesh &tetMesh, const Arrangement &arrangement, ReebSpace2 &reebSpace, const std::string &outputSheetPolygonsFilename);
     //void saveFibers(const std::vector<std::vector<FiberPoint>>&, const std::string&);
+
+    void saveFibers(const std::vector<Fiber> &fibers, const ReebSpace2 &reebSpace, const std::string &filename);
+    void saveFiberTraces(const PlotWidget *pl, const std::string &filename);
 
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 

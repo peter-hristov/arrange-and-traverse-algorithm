@@ -15,8 +15,8 @@ class FiberComponent
         // All fiber segments in a fiber component
         std::vector<std::pair<int, int>> edges;
 
-        // Gives the barycentric coordinates of the point of intersection of the fiber and the triangles
-        std::unordered_map<int, std::array<float, 3>> triangleBarycentricCoordinates;
+        // Gives the coordinates of the point of intersection of the fiber and the triangles
+        std::unordered_map<int, std::array<float, 3>> trianglePointCoordinates;
 
         // Grow a component component from a single seed pair
         static FiberComponent growFiberComponentFromSeedPair(const TetMesh& tetMesh, const std::array<double, 2>& controlPoint, const int triangleId, const int sheetId);
@@ -39,7 +39,5 @@ class Fiber
         static int whichComponentContainsTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const CartesianPoint &controlPoint, const int &tetId);
 
 };
-
-
 
 
