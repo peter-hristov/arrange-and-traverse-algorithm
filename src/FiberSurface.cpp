@@ -202,15 +202,6 @@ CartesianPoint_3 FiberSurface::interpolateVertex(CGALMesh::Vertex_index v0, CGAL
             );
 }
 
-
-
-
-
-
-
-
-
-
 std::pair<CGALMesh::Property_map<CGALMesh::Vertex_index, int>, std::vector<CGALMesh::Vertex_index>> FiberSurface::getVertexColours(CGALMesh &cgalMesh, const double isovalue)
 {
     const auto edgeParamMap = this->edgeParam();
@@ -319,8 +310,6 @@ void FiberSurface::remeshOnce(const double isovalue)
 
     // 4. Split faces and save theones that need to be triangulated later
     //
-    std::unordered_set<CGALMesh::Face_index> facesToTriangulate;
-
     for (const auto f : facesToSplit)
     {
         const int faceTetId = tetIdMap[f];
@@ -359,16 +348,6 @@ void FiberSurface::remeshOnce(const double isovalue)
 
         tetIdMap[newF0] = faceTetId;
         tetIdMap[newF1] = faceTetId;
-
-        // Save non-triangle faces to later triangulation
-        if (mesh.degree(newF0) > 3)
-        {
-            facesToTriangulate.insert(newF0);
-        }
-        if (mesh.degree(newF1) > 3)
-        {
-            facesToTriangulate.insert(newF1);
-        }
     }
 
 
