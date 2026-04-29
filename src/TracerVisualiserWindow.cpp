@@ -46,21 +46,55 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == Qt::Key_I) {
         this->plotWidget->mousePoint.setY(this->plotWidget->mousePoint.y() - moveSpeed);
+
+        if (this->buttonShowTraces->isChecked()) 
+        {
+            if (this->plotWidget->fiberPointsTraces.size() == 0)
+            {
+                this->plotWidget->fiberPointsTraces.push_back({});
+            }
+            this->plotWidget->fiberPointsTraces.back().push_back(this->plotWidget->mousePoint);
+        }
+
         this->plotWidget->recomputeFiber = true;
         this->update();
     }
     if (event->key() == Qt::Key_J) {
         this->plotWidget->mousePoint.setX(this->plotWidget->mousePoint.x() - moveSpeed);
+        if (this->buttonShowTraces->isChecked()) 
+        {
+            if (this->plotWidget->fiberPointsTraces.size() == 0)
+            {
+                this->plotWidget->fiberPointsTraces.push_back({});
+            }
+            this->plotWidget->fiberPointsTraces.back().push_back(this->plotWidget->mousePoint);
+        }
         this->plotWidget->recomputeFiber = true;
         this->update();
     }
     if (event->key() == Qt::Key_K) {
         this->plotWidget->mousePoint.setY(this->plotWidget->mousePoint.y() + moveSpeed);
+        if (this->buttonShowTraces->isChecked()) 
+        {
+            if (this->plotWidget->fiberPointsTraces.size() == 0)
+            {
+                this->plotWidget->fiberPointsTraces.push_back({});
+            }
+            this->plotWidget->fiberPointsTraces.back().push_back(this->plotWidget->mousePoint);
+        }
         this->plotWidget->recomputeFiber = true;
         this->update();
     }
     if (event->key() == Qt::Key_L) {
         this->plotWidget->mousePoint.setX(this->plotWidget->mousePoint.x() + moveSpeed);
+        if (this->buttonShowTraces->isChecked()) 
+        {
+            if (this->plotWidget->fiberPointsTraces.size() == 0)
+            {
+                this->plotWidget->fiberPointsTraces.push_back({});
+            }
+            this->plotWidget->fiberPointsTraces.back().push_back(this->plotWidget->mousePoint);
+        }
         this->plotWidget->recomputeFiber = true;
         this->update();
     }
