@@ -812,3 +812,18 @@ std::optional<std::array<float, 3>> TetMesh::tryComputeActivePointCoordinates(co
 
     return result;
 }
+
+void TetMesh::computeSingularVertices()
+{
+
+    this->isVertexSingular = std::vector<bool>(this->vertexCoordinatesG.size(), false);
+
+    for (const auto &[edge, type] : this->edgeSingularTypes)
+    {
+        if (type != 1)
+        {
+            this->isVertexSingular[edge[0]] = true;
+            this->isVertexSingular[edge[1]] = true;
+        }
+    }
+}

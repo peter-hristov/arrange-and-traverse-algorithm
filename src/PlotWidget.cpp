@@ -120,8 +120,6 @@ void PlotWidget::mouseMoveEvent(QMouseEvent* event)
 }
 
 
-
-
 void PlotWidget::saveSelectedSheets(QPainter &p)
 {
     QMap<int, QPixmap> sheetPixmaps;

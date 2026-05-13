@@ -107,6 +107,7 @@ class PlotWidget : public QWidget
     protected:
         void mouseMoveEvent(QMouseEvent* event);
         void mousePressEvent(QMouseEvent* event);
+
         void drawInteriorPointsImages(QPainter& p);
         void drawAxisLabels(QPainter& p);
         void drawAxisLabels2(QPainter& p);

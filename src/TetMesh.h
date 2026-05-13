@@ -25,6 +25,8 @@ class TetMesh
     std::vector<double> vertexCoordinatesG;
     std::vector<std::array<float, 3>> vertexDomainCoordinates;
 
+    std::vector<bool> isVertexSingular;
+
     // Bounding box min/max for the domain and range coordinates of all vertices
     double minF, maxF, minG, maxG;
     float minX, maxX, minY, maxY, minZ, maxZ;
@@ -48,6 +50,7 @@ class TetMesh
     std::vector<std::vector<int>> upperStarTrianglesNew;
     std::vector<std::vector<int>> lowerStarTrianglesNew;
 
+    // The vertex IDs in the triangle
     std::vector<std::set<int>> triangles;
     std::unordered_map<std::set<int>, int, MyHash<std::set<int>>> triangleIndices;
 
@@ -112,4 +115,6 @@ class TetMesh
 
     bool isTriangleActive(const int &triangleId, const CartesianPoint &controlPoint) const;
     std::optional<std::array<float, 3>> tryComputeActivePointCoordinates(const int triangleId, const CartesianPoint& P) const;
+
+    void computeSingularVertices();
 };

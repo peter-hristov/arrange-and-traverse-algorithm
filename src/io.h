@@ -59,4 +59,8 @@ namespace io
 
     void printTriangle(const TetMesh &tetMesh, const int &triangleId);
 
+    void writeSheetData(const std::string& path,
+            const std::vector<bool>& isVertexSingular,
+            const std::map<int, double>& sheetArea,
+            const std::map<int, std::vector<int>>& sheetRegularVertices);
 }

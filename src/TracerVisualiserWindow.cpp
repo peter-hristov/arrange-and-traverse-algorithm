@@ -74,6 +74,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_K) {
         this->plotWidget->mousePoint.setY(this->plotWidget->mousePoint.y() + moveSpeed);
+
         if (this->buttonShowTraces->isChecked()) 
         {
             if (this->plotWidget->fiberPointsTraces.size() == 0)
@@ -87,6 +88,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_L) {
         this->plotWidget->mousePoint.setX(this->plotWidget->mousePoint.x() + moveSpeed);
+
         if (this->buttonShowTraces->isChecked()) 
         {
             if (this->plotWidget->fiberPointsTraces.size() == 0)
@@ -95,6 +97,7 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
             }
             this->plotWidget->fiberPointsTraces.back().push_back(this->plotWidget->mousePoint);
         }
+
         this->plotWidget->recomputeFiber = true;
         this->update();
     }
@@ -133,6 +136,8 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 
         filename = "./output/reeb-space.png";
         std::cout << "Saving surfaces to to " << filename << std::endl;
+
+        std::cerr << "This many fiber " << this->data.fibers.size() << " and this many trace points " << plotWidget->fiberPointsTraces.back().size();
 
         this->plotWidget->saveToFile(filename);
         this->plotWidget->shouldSaveSheets = true;

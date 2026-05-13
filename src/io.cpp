@@ -1430,3 +1430,46 @@ void io::saveFiberTraces(const PlotWidget *pl, const std::string &filename)
     writer->SetInputData(polyData);
     writer->Write();
 }
+
+
+void io::writeSheetData(const std::string& path,
+                    const std::vector<bool>& isVertexSingular,
+                    const std::map<int, double>& sheetArea,
+                    const std::map<int, std::vector<int>>& sheetRegularVertices)
+{
+    std::ofstream out(path, std::ios::binary);
+
+    // isVertexSingular
+    const size_t numVertices = isVertexSingular.size();
+    out.write(reinterpret_cast<const char*>(&numVertices), sizeof(numVertices));
+    for (const bool v : isVertexSingular)
+    {
+        const uint8_t b = v ? 1 : 0;
+        out.write(reinterpret_cast<const char*>(&b), sizeof(b));
+    }
+
+    // sheetArea
+    const size_t numAreas = sheetArea.size();
+    out.write(reinterpret_cast<const char*>(&numAreas), sizeof(numAreas));
+    for (const auto& [sheetId, area] : sheetArea)
+    {
+        out.write(reinterpret_cast<const char*>(&sheetId), sizeof(sheetId));
+        out.write(reinterpret_cast<const char*>(&area), sizeof(area));
+    }
+
+    // sheetRegularVertices
+    const size_t numSheets = sheetRegularVertices.size();
+    out.write(reinterpret_cast<const char*>(&numSheets), sizeof(numSheets));
+    for (const auto& [sheetId, vertices] : sheetRegularVertices)
+    {
+        out.write(reinterpret_cast<const char*>(&sheetId), sizeof(sheetId));
+        const size_t numVertices = vertices.size();
+        out.write(reinterpret_cast<const char*>(&numVertices), sizeof(numVertices));
+        for (const int v : vertices)
+        {
+            out.write(reinterpret_cast<const char*>(&v), sizeof(v));
+        }
+    }
+}
+
+

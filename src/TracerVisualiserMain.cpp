@@ -18,7 +18,7 @@
 #include "./ReebSpace2.h"
 #include "./UnitTests.h"
 #include "./Performance.h"
-#include "src/Performance.h"
+#include "./Fiber.h"
 
 
 using namespace std;
@@ -62,6 +62,9 @@ int main(int argc, char* argv[])
 
     string readReebSpaceFile;
     cliApp.add_option("--readReebSpace, -l", readReebSpaceFile, "Load the Reeb space from disk with this filename.");
+
+    string saveReebSpaceSheetsInfoFile;
+    cliApp.add_option("--saveSheetInfo, -i", saveReebSpaceSheetsInfoFile, "Save info about the sheets.");
 
     string fiberBenchmarkFile;
     cliApp.add_option("--fiberPerformanceTimingsFile, -b", fiberBenchmarkFile, "Benchmakr for timings.");
@@ -395,6 +398,60 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+
+    // New Stuff
+
+    tetMesh.computeSingularVertices();
+
+    static std::mt19937 gen(std::random_device{}());
+    std::uniform_real_distribution<double> dist(-0.0000001, -0.0000001);
+
+    auto containsVertexInFiber = [&tetMesh](const Fiber& fb, int i) -> bool
+    {
+        for (const FiberComponent& fc : fb.components)
+        {
+            for (const auto& [triangleId, barycentricCoordinates] : fc.trianglePointCoordinates)
+            {
+                for (const int triangleVertexId : tetMesh.triangles[triangleId])
+                {
+                    if (triangleId == i)
+                    {
+                        return fc.sheetId;
+                    }
+                }
+            }
+        }
+        return -1;
+    };
+
+
+    if (false == saveReebSpaceSheetsInfoFile.empty())
+    {
+        std::map<int, std::vector<int>> sheetRegularVertices;
+        Timer::start();
+        for (int i = 0 ; i < tetMesh.isVertexSingular.size() ; i++)
+        {
+            if (tetMesh.isVertexSingular[i]) { continue; }
+            const std::array<double, 2> controlPoint = {tetMesh.vertexCoordinatesF[i] + dist(gen), tetMesh.vertexCoordinatesG[i] + dist(gen)};
+
+            //std::cout << "Computing labeled fiber for vertex id " << i << std::endl;
+            Fiber fb = Fiber::computeLabeledFiber(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
+
+            const int sheetId = containsVertexInFiber(fb, i);
+
+            if (sheetId == -1)
+            {
+                std::cerr << "Error in computation!\n";
+            }
+            else
+            {
+                sheetRegularVertices[sheetId].push_back(i);
+            }
+        }
+        Timer::stop("Computing all flexible fibers          :");
+
+        io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, sheetRegularVertices);
+    }
 
     // Set up QT Application
     QApplication app(argc, argv);
