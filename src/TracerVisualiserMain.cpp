@@ -451,6 +451,8 @@ int main(int argc, char* argv[])
         Timer::stop("Computing all flexible fibers          :");
 
         io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, sheetRegularVertices);
+
+        return 0;
     }
 
     // Set up QT Application
