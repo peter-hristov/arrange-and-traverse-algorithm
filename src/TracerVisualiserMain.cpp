@@ -414,7 +414,7 @@ int main(int argc, char* argv[])
             {
                 for (const int triangleVertexId : tetMesh.triangles[triangleId])
                 {
-                    if (triangleId == i)
+                    if (triangleVertexId == i)
                     {
                         return fc.sheetId;
                     }
@@ -450,6 +450,7 @@ int main(int argc, char* argv[])
         }
         Timer::stop("Computing all flexible fibers          :");
 
+        std::cerr << "The file is " << saveReebSpaceSheetsInfoFile;
         io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, sheetRegularVertices);
 
         return 0;
