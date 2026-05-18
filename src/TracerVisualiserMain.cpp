@@ -259,7 +259,6 @@ int main(int argc, char* argv[])
     //}
 
 
-
     Timer::start();
     reebSpace2.computeSheets(singularArrangement);
     Timer::stop("Postprocessing                         :");
@@ -271,10 +270,6 @@ int main(int argc, char* argv[])
         auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
         curve.is_vertical();          // forces lazy _is_vertical initialization
     }
-
-
-
-
 
 
     Timer::start();
@@ -404,20 +399,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-
-    // New Stuff
-    if (false == saveReebSpaceSheetsInfoFile.empty())
-    {
-        const std::map<int, std::vector<int>> sheetRegularVertices = augmentation::computeRegularVerticesSheets(tetMesh, singularArrangement, reebSpace2); 
-
-        //Timer::stop("Computing all flexible fibers          :");
-
-        std::cerr << "\nSaved regular vertex sheets to file " << saveReebSpaceSheetsInfoFile;
-        io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, sheetRegularVertices);
-
-        return 0;
-    }
-
     // Set up QT Application
     QApplication app(argc, argv);
     glutInit(&argc, argv);
@@ -425,6 +406,17 @@ int main(int argc, char* argv[])
     // Package all my data for visualisation
     Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
     data.zeroAxis = addZeroAxis;
+
+
+    // New Stuff
+    if (false == saveReebSpaceSheetsInfoFile.empty())
+    {
+        data.sheetRegularVertices = augmentation::computeRegularVertexSheets(tetMesh, singularArrangement, reebSpace2); 
+
+        std::cerr << "\nSaved regular vertex sheets to file " << saveReebSpaceSheetsInfoFile;
+        io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, data.sheetRegularVertices);
+        return 0;
+    }
 
     if (false == moleculeFilename.empty())
     {

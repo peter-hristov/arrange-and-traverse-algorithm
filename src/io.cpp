@@ -1435,7 +1435,7 @@ void io::saveFiberTraces(const PlotWidget *pl, const std::string &filename)
 void io::writeSheetData(const std::string& path,
                     const std::vector<bool>& isVertexSingular,
                     const std::map<int, double>& sheetArea,
-                    const std::map<int, std::vector<int>>& sheetRegularVertices)
+                    const std::vector<int>& regularVertexSheet)
 {
     std::ofstream out(path, std::ios::binary);
 
@@ -1457,6 +1457,16 @@ void io::writeSheetData(const std::string& path,
         out.write(reinterpret_cast<const char*>(&area), sizeof(area));
     }
 
+
+    std::map<int, std::vector<int>> sheetRegularVertices;
+
+    for (int vid = 0; vid < static_cast<int>(regularVertexSheet.size()); ++vid)
+    {
+        int sheetId = regularVertexSheet[vid];
+        if (sheetId != -1)
+            sheetRegularVertices[sheetId].push_back(vid);
+    }
+
     // sheetRegularVertices
     const size_t numSheets = sheetRegularVertices.size();
     out.write(reinterpret_cast<const char*>(&numSheets), sizeof(numSheets));
@@ -1473,3 +1483,46 @@ void io::writeSheetData(const std::string& path,
 }
 
 
+void io::saveWithSheetData(
+    vtkSmartPointer<vtkUnstructuredGrid> originalMesh,
+    const std::vector<int>&              regularVertexSheet,
+    const std::string&                   filename,
+    int                                  noSheetSentinel)
+{
+    if (!originalMesh)
+        throw std::invalid_argument("io::saveWithSheetData – mesh is null");
+
+    const vtkIdType numPoints = originalMesh->GetNumberOfPoints();
+
+    if (static_cast<vtkIdType>(regularVertexSheet.size()) != numPoints)
+        throw std::invalid_argument("io::saveWithSheetData – "
+            "regularVertexSheet size does not match mesh point count");
+
+    // ------------------------------------------------------------------
+    // 1. Build SheetId point array directly from the vector
+    // ------------------------------------------------------------------
+    auto sheetArray = vtkSmartPointer<vtkIntArray>::New();
+    sheetArray->SetName("SheetId");
+    sheetArray->SetNumberOfComponents(1);
+    sheetArray->SetNumberOfTuples(numPoints);
+
+    for (vtkIdType i = 0; i < numPoints; ++i)
+        sheetArray->SetValue(i, regularVertexSheet[static_cast<size_t>(i)]);
+
+    // ------------------------------------------------------------------
+    // 2. Shallow copy and attach the field
+    // ------------------------------------------------------------------
+    auto meshCopy = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    meshCopy->ShallowCopy(originalMesh);
+    meshCopy->GetPointData()->AddArray(sheetArray);
+    meshCopy->GetPointData()->SetActiveScalars("SheetId");
+
+    // ------------------------------------------------------------------
+    // 3. Write .vtu
+    // ------------------------------------------------------------------
+    auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+    writer->SetFileName(filename.c_str());
+    writer->SetInputData(meshCopy);
+    writer->SetDataModeToBinary();
+    writer->Write();
+}

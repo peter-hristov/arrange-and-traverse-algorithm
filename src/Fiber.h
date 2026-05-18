@@ -30,7 +30,7 @@ class Fiber
     public:
         std::vector<FiberComponent> components;
 
-        static Fiber computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds);
+        static Fiber computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds, const bool debugPrint = false);
 
         // Grow all the fiber components from the Seed set
         static Fiber growFiberFromSeedSet(const TetMesh &tetMesh, ReebSpace2 &reebSpace, const std::array<double, 2> &controlPoint, const std::vector<std::pair<int, int>> &fiberSeeds);

@@ -11,5 +11,5 @@
 
 namespace augmentation
 {
-    std::map<int, std::vector<int>> computeRegularVerticesSheets(TetMesh &, Arrangement &, ReebSpace2 &); 
+    std::vector<int> computeRegularVertexSheets(TetMesh &, Arrangement &, ReebSpace2 &); 
 }

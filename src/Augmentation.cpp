@@ -1,9 +1,9 @@
 #include "./Augmentation.h"
 #include "./LoadingBar.hpp"
-#include "src/Arrangement.h"
+#include "./io.h"
 
 
-int containsVertexInFiber(const TetMesh& tetMesh, const Fiber& fb, const int sheetId)
+int containsVertexInFiber(const TetMesh& tetMesh, const Fiber& fb, const int vertexId)
 {
     for (const FiberComponent& fc : fb.components)
     {
@@ -11,7 +11,7 @@ int containsVertexInFiber(const TetMesh& tetMesh, const Fiber& fb, const int she
         {
             for (const int triangleVertexId : tetMesh.triangles[triangleId])
             {
-                if (triangleVertexId == sheetId)
+                if (triangleVertexId == vertexId)
                 {
                     return fc.sheetId;
                 }
@@ -21,24 +21,22 @@ int containsVertexInFiber(const TetMesh& tetMesh, const Fiber& fb, const int she
     return -1;
 };
 
-std::map<int, std::vector<int>> augmentation::computeRegularVerticesSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace)
+std::vector<int> augmentation::computeRegularVertexSheets(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace)
 {
     // For a mini perturbation for the regular vertex points
     static std::mt19937 gen(std::random_device{}());
-    std::uniform_real_distribution<double> dist(-0.0000001, 0.0000001);
+    std::uniform_real_distribution<double> dist(-0.00000001, 0.00000001);
 
-    std::map<int, std::vector<int>> sheetRegularVertices;
+    std::vector<int> regularVertexSheet(tetMesh.isVertexSingular.size(), -1);
 
     LoadingBar bar(40, "Augmenting Reeb space...");
 
-    //Timer::start();
     for (int vertexId = 0 ; vertexId < tetMesh.isVertexSingular.size() ; vertexId++)
     {
         if (tetMesh.isVertexSingular[vertexId]) { continue; }
 
         const std::array<double, 2> controlPoint = {tetMesh.vertexCoordinatesF[vertexId] + dist(gen), tetMesh.vertexCoordinatesG[vertexId] + dist(gen)};
 
-        //std::cout << "Computing labeled fiber for vertex id " << i << std::endl;
         Fiber fb = Fiber::computeLabeledFiber(tetMesh, singularArrangement, reebSpace, controlPoint, {});
 
         const int sheetId = containsVertexInFiber(tetMesh, fb, vertexId);
@@ -49,11 +47,13 @@ std::map<int, std::vector<int>> augmentation::computeRegularVerticesSheets(TetMe
         }
         else
         {
-            sheetRegularVertices[sheetId].push_back(vertexId);
+            regularVertexSheet[vertexId] = sheetId;
         }
 
-        bar.update((100 * vertexId) / tetMesh.isVertexSingular.size());
+        bar.update((100 * (vertexId + 1)) / tetMesh.isVertexSingular.size());
     }
 
-    return sheetRegularVertices;
+    io::saveWithSheetData(tetMesh.originalMesh, regularVertexSheet, "regularVertexSheets.vtu");
+
+    return regularVertexSheet;
 }

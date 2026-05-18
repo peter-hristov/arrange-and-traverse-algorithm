@@ -62,5 +62,11 @@ namespace io
     void writeSheetData(const std::string& path,
             const std::vector<bool>& isVertexSingular,
             const std::map<int, double>& sheetArea,
-            const std::map<int, std::vector<int>>& sheetRegularVertices);
+            const std::vector<int>& sheetRegularVertices);
+
+    void saveWithSheetData(
+            vtkSmartPointer<vtkUnstructuredGrid>    originalMesh,
+            const std::vector<int>& regularVertexSheet,
+            const std::string&                     basePath,
+            int                                    noSheetSentinel = -1);
 }

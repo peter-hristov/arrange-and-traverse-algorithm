@@ -40,6 +40,7 @@ class Data
     std::vector<FiberSurface> fiberSurfaces;
     std::vector<FiberSurface> featureSurfaces;
 
+    std::vector<int> sheetRegularVertices;
 
     vtkSmartPointer<vtkPolyData> molecule;
 

@@ -10,6 +10,7 @@
 
 namespace seeds
 {
+    // Each seed is <triangleId, componentId>
     typedef std::pair<int, int> SeedPair;
     typedef std::vector<SeedPair> SeedSet;
 

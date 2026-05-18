@@ -516,20 +516,26 @@ TracerVisualiserWidget::drawScene()
     {
         // Draw Vertices
         {
+            glDisable(GL_LIGHTING);
             for (int i = 0 ; i < this->data.tetMesh.vertexDomainCoordinates.size() ; i++) 
             {
-                const auto &vertex = this->data.tetMesh.vertexDomainCoordinates[i];
+                //if (this->data.sheetRegularVertices[i] != 27 && this->data.sheetRegularVertices[i] != 133) { continue; }
 
-                //glColor4f(1, 1, 1, this->vertexOpacity);
+                const auto &vertex = this->data.tetMesh.vertexDomainCoordinates[i];
+                //std::cerr << "Drawing vertex " << i << std::endl;
+
+                //glColor4f(1, 1, 1, 1);
+                glColor3f(1, 1, 1);
                 glPushMatrix();
                 {
                     glTranslatef(vertex[0], vertex[1], vertex[2]);
                     GLUquadric* sphere = gluNewQuadric();
-                    gluSphere(sphere, 0.01, 10, 10);
-                    delete sphere;
+                    gluSphere(sphere, 3, 10, 10);
+                    gluDeleteQuadric(sphere);  // not delete
                 }
                 glPopMatrix();
             }
+            glEnable(GL_LIGHTING);
 
         }
     }
