@@ -42,6 +42,7 @@ set(SOURCES
     ./src/Fiber.cpp
     ./src/SeedSet.cpp
     ./src/Arrangement.cpp
+    ./src/Augmentation.cpp
     ./src/ReebSpace.cpp
     ./src/PlotWidget.cpp
     ./src/TracerVisualiserMain.cpp
