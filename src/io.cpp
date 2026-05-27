@@ -333,7 +333,7 @@ CGALMesh io::readCGALMesh(const std::string& filename)
     return mesh;
 }
 
-vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(FiberSurface& surfMesh)
+vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(const FiberSurface& surfMesh)
 {
     const CGALMesh& mesh = surfMesh.mesh;
     auto edgeParamMap = surfMesh.edgeParam();
@@ -456,7 +456,7 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(FiberSurface& surfMes
     return polyData;
 }
 
-void io::saveFiberSurface(std::vector<FiberSurface>& surfMeshes, const std::string& filename)
+void io::saveFiberSurface(const std::vector<FiberSurface>& surfMeshes, const std::string& filename)
 {
     if (surfMeshes.empty())
     {

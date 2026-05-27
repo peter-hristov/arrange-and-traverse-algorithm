@@ -28,6 +28,8 @@ Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangem
             std::cerr << "triangleId : " << triangleId << ", sheetId :  " << sheetId << std::endl;
         }
         std::cerr << std::endl;
+
+        std::cerr << "Control point : (" << controlPoint[0] << ", " << controlPoint[1] << ")\n";
     }
 
     return Fiber::growFiberFromSeedSet(tetMesh, reebSpace, controlPoint, fiberSeeds);

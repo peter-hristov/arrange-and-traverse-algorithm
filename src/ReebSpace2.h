@@ -78,6 +78,7 @@ class ReebSpace2
         // Given a number n, what's the nth biggest sheet
         std::vector<int> orderSheet;
 
+        // Opposite map of orderSheet, given a sheet, what is it's order
         std::unordered_map<int, int> sheetOrder;
 
         std::map<int, std::vector<std::vector<Halfedge_const_handle>>> sheetBoundaries;

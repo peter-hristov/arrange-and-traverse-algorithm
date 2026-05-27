@@ -6,6 +6,7 @@
 
 #include <GL/glut.h>
 #include <QApplication>
+#include <string>
 
 #include "./io.h"
 #include "./Timer.h"
@@ -88,6 +89,15 @@ int main(int argc, char* argv[])
 
     std::optional<float> gMax;
     cliApp.add_option("--gMax", gMax, "Set the max value for the g scalar field.");
+
+    std::optional<float> fieldFValueFS;
+    cliApp.add_option("--fieldFValueFS", fieldFValueFS, "Set value to compute an FS for the f field.");
+
+    std::optional<float> fieldGValueFS;
+    cliApp.add_option("--fieldGValueFS", fieldGValueFS, "Set value to compute an FS for the g field.");
+
+    int sheetsToProcess = 20;
+    cliApp.add_option("--sheetsToProcess", sheetsToProcess, "How many of the top sheets would you like to process?.");
 
     //string outputFibersFilename = "./fibers.vtp";
     //cliApp.add_option("--outputFibers", outputSheetPolygonsFilename, "Filename where to save the visible fiber components. Must be .vtp");
@@ -204,6 +214,7 @@ int main(int argc, char* argv[])
         Timer::start();
         reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
         Timer::stop("Edge regions plus/minus triangles      :");
+
 
         Timer::start();
         reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
@@ -382,6 +393,46 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (fieldFValueFS.has_value())
+    {
+        for (int i = 0 ; i < sheetsToProcess ; i++)
+        {
+            const int sheetId = reebSpace2.orderSheet[i];
+
+            const std::vector<std::array<double, 2>> controlPoints{
+                    {fieldFValueFS.value(), -1e10}, 
+                    {fieldFValueFS.value(), +1e10}
+            };
+
+            FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {sheetId});
+
+            std::string fsFilename = "./output/fs.f." + std::to_string(sheetId) + ".vtp";
+            io::saveFiberSurface({fs}, fsFilename);
+
+            std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl;
+        }
+    }
+
+    if (fieldGValueFS.has_value())
+    {
+        for (int i = 0 ; i < sheetsToProcess ; i++)
+        {
+            const int sheetId = reebSpace2.orderSheet[i];
+
+            const std::vector<std::array<double, 2>> controlPoints{
+                    {-1e10, fieldGValueFS.value()}, 
+                    {+1e10, fieldGValueFS.value()}
+            };
+
+            FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {sheetId});
+
+            std::string fsFilename = "./output/fs.g." + std::to_string(sheetId) + ".vtp";
+            io::saveFiberSurface({fs}, fsFilename);
+
+            std::cout << "Saved g-field labeled FS in " << fsFilename << std::endl;
+        }
+    }
+
 
     if (false == fiberBenchmarkFile.empty())
     {
@@ -415,7 +466,7 @@ int main(int argc, char* argv[])
 
         std::cerr << "\nSaved regular vertex sheets to file " << saveReebSpaceSheetsInfoFile;
         io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, data.sheetRegularVertices);
-        return 0;
+        //return 0;
     }
 
     if (false == moleculeFilename.empty())
