@@ -565,11 +565,15 @@ TetMesh io::readData(const std::string &filename, const std::string &fName, cons
     throw std::runtime_error("Unsupported file type: " + extension);
 }
 
-FiberSurface io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2)
+FiberSurface io::computeFiberSurface(const TetMesh &tetMesh, double u1, double v1, double u2, double v2)
 {
-    // This is correct I tested now
-    std::string field1Name = mesh->GetPointData()->GetArrayName(0);
-    std::string field2Name = mesh->GetPointData()->GetArrayName(1);
+
+    vtkSmartPointer<vtkUnstructuredGrid> mesh = tetMesh.originalMesh;
+
+
+    // This is correct I tested now, they are reversed in TTK
+    std::string field1Name = tetMesh.longnameG;
+    std::string field2Name = tetMesh.longnameF;
 
     // Create a polyline for the range polygon
     //
@@ -641,21 +645,22 @@ FiberSurface io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, 
     return getSurfaceMesh(fiberSurfMesh);
 }
 
+// Depricated
 FiberSurface io::readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2)
 {
     // Read the VTU file
-    vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    reader->SetFileName(filename.c_str());
+    //vtkSmartPointer<vtkXMLUnstructuredGridReader> reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    //reader->SetFileName(filename.c_str());
 
-    reader->Update();
+    //reader->Update();
 
-    vtkSmartPointer<vtkUnstructuredGrid> mesh = reader->GetOutput();
-    if (!mesh)
-    {
-        throw std::runtime_error("Failed to get mesh output from the file: " + filename);
-    }
+    //vtkSmartPointer<vtkUnstructuredGrid> mesh = reader->GetOutput();
+    //if (!mesh)
+    //{
+        //throw std::runtime_error("Failed to get mesh output from the file: " + filename);
+    //}
 
-    return io::computeFiberSurface(mesh, u1, v1, u2, v2);
+    //return io::computeFiberSurface(mesh, u1, v1, u2, v2);
 }
 
 

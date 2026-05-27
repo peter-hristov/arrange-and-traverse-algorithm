@@ -637,7 +637,7 @@ FiberSurface FiberSurface::constructSegmentedFiberSurface(TetMesh &tetMesh, Arra
     //Timer::stop("Computed Alpha intersections           :");
 
     //Timer::start();
-    FiberSurface surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
+    FiberSurface surfaceMesh = io::computeFiberSurface(tetMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
     //Timer::stop("Computing fiber surfaces with TTK      :");
 
     //Timer::start();

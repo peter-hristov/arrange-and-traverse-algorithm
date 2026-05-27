@@ -28,7 +28,7 @@ namespace io
     //SurfaceMesh readDataVtuTTK(const std::string &filename);
     
     FiberSurface readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2);
-    FiberSurface computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, double u1, double v1, double u2, double v2);
+    FiberSurface computeFiberSurface(const TetMesh &, double u1, double v1, double u2, double v2);
 
     vtkSmartPointer<vtkPolyData> readMolecule(const std::string& filename);
 
