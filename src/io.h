@@ -22,9 +22,9 @@
 
 namespace io
 {
-    TetMesh readData(const std::string&);
+    TetMesh readData(const std::string&, const std::string &fName = {}, const std::string &gName = {});
     TetMesh readDataTxt(const std::string&);
-    TetMesh readDataVtu(const std::string&);
+    TetMesh readDataVtu(const std::string&, const std::string &fName = {}, const std::string &gName = {});
     //SurfaceMesh readDataVtuTTK(const std::string &filename);
     
     FiberSurface readDataVtuTTK(const std::string &filename, double u1, double v1, double u2, double v2);

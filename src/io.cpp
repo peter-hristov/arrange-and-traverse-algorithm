@@ -543,7 +543,7 @@ FiberSurface io::readDataVtp(const std::string &filename)
 }
 
 
-TetMesh io::readData(const std::string &filename)
+TetMesh io::readData(const std::string &filename, const std::string &fName, const std::string &gName)
 {
     std::filesystem::path filePath(filename);
     
@@ -555,7 +555,7 @@ TetMesh io::readData(const std::string &filename)
     std::string extension = filePath.extension().string();
     if (extension == ".vtu") 
     {
-        return io::readDataVtu(filename);
+        return io::readDataVtu(filename, fName, gName);
     } 
     else if (extension == ".txt") 
     {
@@ -662,7 +662,7 @@ FiberSurface io::readDataVtuTTK(const std::string &filename, double u1, double v
 
 
 
-TetMesh io::readDataVtu(const std::string &filename)
+TetMesh io::readDataVtu(const std::string &filename, const std::string &fName, const std::string &gName)
 {
     TetMesh tetMesh;
 
@@ -692,8 +692,8 @@ TetMesh io::readDataVtu(const std::string &filename)
     int numTets = mesh->GetNumberOfCells();
 
     // Initialize all the data arrays
-    tetMesh.vertexCoordinatesF = std::vector<double>(numVertices);
-    tetMesh.vertexCoordinatesG = std::vector<double>(numVertices);
+    tetMesh.vertexCoordinatesF = std::vector<double>(numVertices, -1);
+    tetMesh.vertexCoordinatesG = std::vector<double>(numVertices, -1);
     tetMesh.tetrahedra = std::vector<std::array<int, 4>>(numTets);
     tetMesh.vertexDomainCoordinates = std::vector<std::array<float, 3>>(numVertices);
 
@@ -730,13 +730,29 @@ TetMesh io::readDataVtu(const std::string &filename)
 
     assert(pointData->GetNumberOfArrays() >= 2);
 
-    vtkDataArray* fDataArray = pointData->GetArray(1);
-    vtkDataArray* gDataArray = pointData->GetArray(0);
+    vtkDataArray* fDataArray;
+    if (fName.empty())
+    {
+        fDataArray = pointData->GetArray(0);
+    }
+    else
+    {
+        fDataArray = pointData->GetArray(fName.c_str());
+    }
+
+    vtkDataArray* gDataArray;
+    if (gName.empty())
+    {
+        gDataArray = pointData->GetArray(1);
+    }
+    else
+    {
+        gDataArray = pointData->GetArray(gName.c_str());
+    }
 
     // Set deault names for the range axis
     tetMesh.longnameF = fDataArray->GetName();
     tetMesh.longnameG = gDataArray->GetName();
-
 
     assert(fDataArray->GetNumberOfTuples() == numVertices);
     assert(gDataArray->GetNumberOfTuples() == numVertices);
@@ -750,6 +766,7 @@ TetMesh io::readDataVtu(const std::string &filename)
     {
         tetMesh.vertexCoordinatesG[i] = gDataArray->GetTuple1(i);
     }
+
 
     tetMesh.originalMesh = mesh;
 

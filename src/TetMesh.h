@@ -71,7 +71,7 @@ class TetMesh
 
     void sortVertices();
     void printMesh();
-    void perturbRangeValues(const double &perturbationEpsilon);
+    void perturbRangeValues(const double &perturbationEpsilon, const std::string &fName = {}, const std::string &gName = {});
 
 
     // We only add upperLink/lowerLink to data, the rest of data is unchagned

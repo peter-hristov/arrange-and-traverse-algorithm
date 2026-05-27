@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     bool addZeroAxis = false;
     cliApp.add_flag("--zeroAxis", addZeroAxis, "Add the 0-0 axis to the fiber surface.");
 
-    float perturbationEpsilon = 0.0f;
+    std::optional<double> perturbationEpsilon;
     cliApp.add_option("--epsilon, -e", perturbationEpsilon, "Strength of the numerial perturbation in the range [-e, e].");
 
     string outputSheetPolygonsFilename;
@@ -96,6 +96,12 @@ int main(int argc, char* argv[])
     std::optional<float> fieldGValueFS;
     cliApp.add_option("--fieldGValueFS", fieldGValueFS, "Set value to compute an FS for the g field.");
 
+    string fName = "";
+    cliApp.add_option("--fName", fName, "The name of the f field to read from the input data.");
+
+    string gName = "";
+    cliApp.add_option("--gName", gName, "The name of the g field to read from the input data.");
+
     int sheetsToProcess = 20;
     cliApp.add_option("--sheetsToProcess", sheetsToProcess, "How many of the top sheets would you like to process?. Default is 20.");
 
@@ -115,7 +121,7 @@ int main(int argc, char* argv[])
     try
     {
         Timer::start();
-        tetMesh = io::readData(filename);
+        tetMesh = io::readData(filename, fName, gName);
         Timer::stop("Reading input data                     :");
     }
     catch (const std::exception &e)
@@ -129,9 +135,12 @@ int main(int argc, char* argv[])
     // TetMesh computation
     //
 
-    Timer::start();
-    tetMesh.perturbRangeValues(perturbationEpsilon);
-    Timer::stop("Perturbing range values                :");
+    if (perturbationEpsilon.has_value())
+    {
+        Timer::start();
+        tetMesh.perturbRangeValues(perturbationEpsilon.value(), fName, gName);
+        Timer::stop("Perturbing range values                :");
+    }
 
     Timer::start();
     tetMesh.sortVertices();

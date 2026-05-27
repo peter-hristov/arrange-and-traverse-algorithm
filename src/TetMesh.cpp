@@ -6,14 +6,33 @@
 
 #include <vtkPointData.h>
 
-void TetMesh::perturbRangeValues(const double &epsilon)
+void TetMesh::perturbRangeValues(const double &epsilon, const std::string &fName, const std::string &gName)
 {
     static std::mt19937 gen(std::random_device{}());
     std::uniform_real_distribution<double> dist(-epsilon, epsilon);
 
     vtkPointData* pointData = this->originalMesh->GetPointData();
-    vtkDataArray* fDataArray = pointData->GetArray(1);
-    vtkDataArray* gDataArray = pointData->GetArray(0);
+
+    vtkDataArray* fDataArray;
+    if (fName.empty())
+    {
+        fDataArray = pointData->GetArray(0);
+    }
+    else
+    {
+        fDataArray = pointData->GetArray(fName.c_str());
+    }
+
+    vtkDataArray* gDataArray;
+    if (gName.empty())
+    {
+        gDataArray = pointData->GetArray(1);
+    }
+    else
+    {
+        gDataArray = pointData->GetArray(gName.c_str());
+    }
+
 
     for (vtkIdType i = 0; i < fDataArray->GetNumberOfTuples(); i++) 
     {
@@ -30,6 +49,11 @@ void TetMesh::perturbRangeValues(const double &epsilon)
         gDataArray->SetTuple1(i, newValue);
         this->vertexCoordinatesG[i] = newValue;
     }
+
+
+
+
+
 }
 
 void TetMesh::computeDomainBoundingBox()
