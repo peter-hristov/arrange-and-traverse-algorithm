@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
     cliApp.add_option("--fieldGValueFS", fieldGValueFS, "Set value to compute an FS for the g field.");
 
     int sheetsToProcess = 20;
-    cliApp.add_option("--sheetsToProcess", sheetsToProcess, "How many of the top sheets would you like to process?.");
+    cliApp.add_option("--sheetsToProcess", sheetsToProcess, "How many of the top sheets would you like to process?. Default is 20.");
 
     //string outputFibersFilename = "./fibers.vtp";
     //cliApp.add_option("--outputFibers", outputSheetPolygonsFilename, "Filename where to save the visible fiber components. Must be .vtp");

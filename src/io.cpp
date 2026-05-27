@@ -885,29 +885,46 @@ void io::saveSheetsFeatures(const TetMesh &tetMesh,
 }
 
 void io::saveSheets2(const TetMesh &tetMesh,
-                        const Arrangement &arrangement,
-                        ReebSpace2 &reebSpace,
-                        const std::string &outputSheetPolygonsFilename)
+                     const Arrangement &arrangement,
+                     ReebSpace2 &reebSpace,
+                     const std::string &outputSheetPolygonsFilename)
 {
-    auto points = vtkSmartPointer<vtkPoints>::New();
-    auto polys = vtkSmartPointer<vtkCellArray>::New();
+    auto points   = vtkSmartPointer<vtkPoints>::New();
+    auto polys    = vtkSmartPointer<vtkCellArray>::New();
     auto sheetIds = vtkSmartPointer<vtkIntArray>::New();
-    auto faceIds = vtkSmartPointer<vtkIntArray>::New();
-
+    auto faceIds  = vtkSmartPointer<vtkIntArray>::New();
     sheetIds->SetName("SheetId");
     faceIds->SetName("FaceId");
 
+    // --- CDT types ---
+    typedef CGAL::Exact_predicates_inexact_constructions_kernel      K;
+    typedef CGAL::Triangulation_vertex_base_2<K>                     Vb;
+    struct FaceInfo { int nesting_level = -1; };
+    typedef CGAL::Triangulation_face_base_with_info_2<FaceInfo, K>   Fbb;
+    typedef CGAL::Constrained_triangulation_face_base_2<K, Fbb>      Fb;
+    typedef CGAL::Triangulation_data_structure_2<Vb, Fb>             TDS;
+    typedef CGAL::Exact_predicates_tag                               Itag;
+    typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
 
-    std::map<Vertex_const_handle, int> vertexIdMap;
-
-    for (auto v = arrangement.arr.vertices_begin(); v != arrangement.arr.vertices_end(); ++v)
+    auto mark_domains = [](CDT& ct, CDT::Face_handle start, int index,
+                           std::list<CDT::Edge>& border)
     {
-        const Point_2 &p = v->point();
-        vtkIdType id = points->InsertNextPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y()), 0.0);
-
-        vertexIdMap[v] = vertexIdMap.size();
-    }
-
+        if (start->info().nesting_level != -1) return;
+        std::list<CDT::Face_handle> queue = { start };
+        while (!queue.empty()) {
+            CDT::Face_handle fh = queue.front(); queue.pop_front();
+            if (fh->info().nesting_level != -1) continue;
+            fh->info().nesting_level = index;
+            for (int i = 0; i < 3; ++i) {
+                CDT::Edge e(fh, i);
+                CDT::Face_handle nb = fh->neighbor(i);
+                if (nb->info().nesting_level == -1) {
+                    if (ct.is_constrained(e)) border.push_back(e);
+                    else                       queue.push_back(nb);
+                }
+            }
+        }
+    };
 
     std::cout << "---------------------------------------- Outputting sheets\n";
 
@@ -918,50 +935,75 @@ void io::saveSheets2(const TetMesh &tetMesh,
 
         const int faceId = fit->data();
 
-        std::vector<vtkIdType> ptIds;
+        // --- Triangulate this face with CGAL CDT ---
+        CDT cdt;
+        auto circ  = fit->outer_ccb();
+        auto curr  = circ;
 
-        auto circ = fit->outer_ccb();
-        auto start = circ;
-        do
+        CDT::Vertex_handle first = cdt.insert(
+            K::Point_2(CGAL::to_double(curr->source()->point().x()),
+                       CGAL::to_double(curr->source()->point().y())));
+        CDT::Vertex_handle prev = first;
+        ++curr;
+
+        do {
+            CDT::Vertex_handle vh = cdt.insert(
+                K::Point_2(CGAL::to_double(curr->source()->point().x()),
+                           CGAL::to_double(curr->source()->point().y())));
+            cdt.insert_constraint(prev, vh);
+            prev = vh;
+        } while (++curr != circ);
+        cdt.insert_constraint(prev, first);
+
+        // Mark nesting levels
+        for (auto f : cdt.all_face_handles())
+            f->info().nesting_level = -1;
+        std::list<CDT::Edge> border;
+        mark_domains(cdt, cdt.infinite_face(), 0, border);
+        while (!border.empty()) {
+            CDT::Edge e = border.front(); border.pop_front();
+            CDT::Face_handle nb = e.first->neighbor(e.second);
+            if (nb->info().nesting_level == -1)
+                mark_domains(cdt, nb, e.first->info().nesting_level + 1, border);
+        }
+
+        // --- Insert CDT triangles into VTK ---
+        for (auto f : cdt.finite_face_handles())
         {
-            const int pointId = vertexIdMap.at(circ->target());
-            ptIds.push_back(pointId);
-            ++circ;
-        } while (circ != start);
+            if (f->info().nesting_level != 1)
+                continue;
 
-        for (const int &componentId : reebSpace.correspondenceGraph[faceId])
-        {
-            const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+            vtkIdType triIds[3];
+            for (int i = 0; i < 3; ++i)
+            {
+                auto& p = f->vertex(i)->point();
+                triIds[i] = points->InsertNextPoint(p.x(), p.y(), 0.0);
+            }
 
-            // Insert the polygon directly into vtkCellArray
-            polys->InsertNextCell(ptIds.size(), ptIds.data());
-            sheetIds->InsertNextValue(sheetId);
-            faceIds->InsertNextValue(faceId);
+            for (const int &componentId : reebSpace.correspondenceGraph[faceId])
+            {
+                const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+                polys->InsertNextCell(3, triIds);
+                sheetIds->InsertNextValue(sheetId);
+                faceIds->InsertNextValue(faceId);
+            }
         }
     }
 
-    // Create polydata
     auto polyData = vtkSmartPointer<vtkPolyData>::New();
     polyData->SetPoints(points);
     polyData->SetPolys(polys);
     polyData->GetCellData()->AddArray(sheetIds);
     polyData->GetCellData()->AddArray(faceIds);
 
-    // --- Triangulate polygons --- // very important, otherwise paraview will triangulate and can sometimes fill in missing polygons
-    auto triangleFilter = vtkSmartPointer<vtkTriangleFilter>::New();
-    triangleFilter->SetInputData(polyData);
-    triangleFilter->Update();
-    auto triangulatedPolyData = triangleFilter->GetOutput();
-
-    // Write triangulated polydata
     auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
     writer->SetFileName(outputSheetPolygonsFilename.c_str());
-    writer->SetInputData(triangulatedPolyData);
-    writer->SetDataModeToAscii(); // optional for debugging
+    writer->SetInputData(polyData);
+    writer->SetDataModeToAscii();
     writer->Write();
 
-    std::cout << "Saved " << polys->GetNumberOfCells() 
-        << " polygons to " << outputSheetPolygonsFilename << std::endl;
+    std::cout << "Saved " << polys->GetNumberOfCells()
+              << " triangles to " << outputSheetPolygonsFilename << std::endl;
 }
 
 void io::saveSheets(const TetMesh &tetMesh, const Arrangement &arrangement, const ReebSpace &reebSpace, const std::string &outputSheetPolygonsFilename)
