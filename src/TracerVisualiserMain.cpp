@@ -454,10 +454,6 @@ int main(int argc, char* argv[])
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
 
 
-    if (headless)
-    {
-        return 0;
-    }
 
     // Set up QT Application
     QApplication app(argc, argv);
@@ -476,6 +472,11 @@ int main(int argc, char* argv[])
         std::cerr << "\nSaved regular vertex sheets to file " << saveReebSpaceSheetsInfoFile;
         io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, data.sheetRegularVertices);
         //return 0;
+    }
+
+    if (headless)
+    {
+        return 0;
     }
 
     if (false == moleculeFilename.empty())
