@@ -643,7 +643,6 @@ FiberSurface FiberSurface::constructSegmentedFiberSurface(TetMesh &tetMesh, Arra
     //Timer::start();
     FiberSurface surfaceMesh = io::computeFiberSurface(tetMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
 
-    std::cerr << "The initial FS nas " << surfaceMesh.mesh.number_of_faces() << " triangles.\n";
     //Timer::stop("Computing fiber surfaces with TTK      :");
 
     //Timer::start();

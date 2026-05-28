@@ -404,24 +404,24 @@ int main(int argc, char* argv[])
 
     if (fieldFValueFS.has_value())
     {
-        const std::vector<std::array<double, 2>> controlPoint{
-            {fieldFValueFS.value(), -1e10}, 
-                {fieldFValueFS.value(), +1e10}
+        const std::vector<std::array<double, 2>> controlPoints{
+            {fieldFValueFS.value(), tetMesh.minG - 1.0}, 
+                {fieldFValueFS.value(), tetMesh.minG + 1.0}
         };
 
-        FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
+        FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {});
 
         std::string fsFilename = "./output/labeled.fs.f.vtp";
         io::saveFiberSurface({fs}, fsFilename);
 
-        std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl << std::endl;
+        std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl;
     }
 
     if (fieldGValueFS.has_value())
     {
         const std::vector<std::array<double, 2>> controlPoint{
-            {-1e10, fieldGValueFS.value()}, 
-                {+1e10, fieldGValueFS.value()}
+            {tetMesh.minF - 1.0, fieldGValueFS.value()}, 
+                {tetMesh.maxF + 1.0, fieldGValueFS.value()}
         };
 
         FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
