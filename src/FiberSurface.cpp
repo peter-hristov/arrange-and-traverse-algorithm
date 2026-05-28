@@ -396,6 +396,8 @@ void FiberSurface::repairMesh()
 
     // 2. Remove degenerate edges (edges shorter than a threshold)
     CGAL::Polygon_mesh_processing::remove_degenerate_edges(mesh);
+
+    CGAL::Polygon_mesh_processing::remove_isolated_vertices(mesh);
 }
 
 void FiberSurface::validateMesh()
@@ -516,6 +518,8 @@ void FiberSurface::filterTriangles(const std::set<int> &selectedSheets)
     for (const auto f : mesh.faces())
     {
         const int sheetId = sheetIdMap[f];
+
+        std::cerr << "Sheet id is " << sheetId << std::endl;
 
         if (false == selectedSheets.contains(sheetId))
         {
@@ -638,6 +642,8 @@ FiberSurface FiberSurface::constructSegmentedFiberSurface(TetMesh &tetMesh, Arra
 
     //Timer::start();
     FiberSurface surfaceMesh = io::computeFiberSurface(tetMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
+
+    std::cerr << "The initial FS nas " << surfaceMesh.mesh.number_of_faces() << " triangles.\n";
     //Timer::stop("Computing fiber surfaces with TTK      :");
 
     //Timer::start();

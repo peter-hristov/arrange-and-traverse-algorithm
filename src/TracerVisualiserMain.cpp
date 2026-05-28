@@ -404,42 +404,32 @@ int main(int argc, char* argv[])
 
     if (fieldFValueFS.has_value())
     {
-        for (int i = 0 ; i < sheetsToProcess ; i++)
-        {
-            const int sheetId = reebSpace2.orderSheet[i];
+        const std::vector<std::array<double, 2>> controlPoint{
+            {fieldFValueFS.value(), -1e10}, 
+                {fieldFValueFS.value(), +1e10}
+        };
 
-            const std::vector<std::array<double, 2>> controlPoints{
-                    {fieldFValueFS.value(), -1e10}, 
-                    {fieldFValueFS.value(), +1e10}
-            };
+        FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
 
-            FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {sheetId});
+        std::string fsFilename = "./output/labeled.fs.f.vtp";
+        io::saveFiberSurface({fs}, fsFilename);
 
-            std::string fsFilename = "./output/fs.f." + std::to_string(sheetId) + ".vtp";
-            io::saveFiberSurface({fs}, fsFilename);
-
-            std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl;
-        }
+        std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl << std::endl;
     }
 
     if (fieldGValueFS.has_value())
     {
-        for (int i = 0 ; i < sheetsToProcess ; i++)
-        {
-            const int sheetId = reebSpace2.orderSheet[i];
+        const std::vector<std::array<double, 2>> controlPoint{
+            {-1e10, fieldGValueFS.value()}, 
+                {+1e10, fieldGValueFS.value()}
+        };
 
-            const std::vector<std::array<double, 2>> controlPoints{
-                    {-1e10, fieldGValueFS.value()}, 
-                    {+1e10, fieldGValueFS.value()}
-            };
+        FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
 
-            FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {sheetId});
+        std::string fsFilename = "./output/labeled.fs.g.vtp";
+        io::saveFiberSurface({fs}, fsFilename);
 
-            std::string fsFilename = "./output/fs.g." + std::to_string(sheetId) + ".vtp";
-            io::saveFiberSurface({fs}, fsFilename);
-
-            std::cout << "Saved g-field labeled FS in " << fsFilename << std::endl;
-        }
+        std::cout << "Saved g-field labeled FS in " << fsFilename << std::endl;
     }
 
 

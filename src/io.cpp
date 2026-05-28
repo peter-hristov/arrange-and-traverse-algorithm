@@ -342,6 +342,8 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(const FiberSurface& s
     auto componentIdMap = surfMesh.componentId();
     auto isImpassableMap = surfMesh.isImpassable();
 
+    std::cerr << "The fiber surface has " << mesh.number_of_faces() << " triangles.\n";
+
     // -------------------------------------------------------------------------
     // 1. Points
     // -------------------------------------------------------------------------
