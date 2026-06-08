@@ -906,6 +906,145 @@ void io::saveSheetsFeatures(const TetMesh &tetMesh,
     writer->Write();
 }
 
+// Debug print for a face
+void debug_face(Arrangement_2::Face_const_iterator fit)
+{
+    std::cout << "=== FACE DEBUG (ID=" << fit->data() << ") ===\n";
+    std::cout << "  is_unbounded: " << fit->is_unbounded() << "\n";
+
+    // --- Outer CCB ---
+    auto circ = fit->outer_ccb(), curr = circ;
+    std::vector<std::pair<double,double>> outerPts;
+    std::set<std::pair<double,double>> outerPtSet;
+    bool hasDuplicates = false;
+    int edgeCount = 0;
+    do {
+        double x = CGAL::to_double(curr->source()->point().x());
+        double y = CGAL::to_double(curr->source()->point().y());
+        outerPts.push_back({x, y});
+        if (!outerPtSet.insert({x, y}).second)
+            hasDuplicates = true;
+        ++edgeCount;
+    } while (++curr != circ);
+
+    std::cout << "  Outer CCB vertex count: " << edgeCount << "\n";
+    std::cout << "  Outer CCB has duplicate (pinch) points: " << (hasDuplicates ? "YES <---" : "no") << "\n";
+
+    // Compute AABB and signed area
+    double minX = 1e18, minY = 1e18, maxX = -1e18, maxY = -1e18;
+    double signedArea = 0.0;
+    for (int i = 0; i < (int)outerPts.size(); ++i) {
+        auto [x0, y0] = outerPts[i];
+        auto [x1, y1] = outerPts[(i + 1) % outerPts.size()];
+        signedArea += (x0 * y1 - x1 * y0);
+        minX = std::min(minX, x0); minY = std::min(minY, y0);
+        maxX = std::max(maxX, x0); maxY = std::max(maxY, y0);
+    }
+    signedArea *= 0.5;
+    std::cout << "  Outer CCB signed area: " << signedArea
+              << (signedArea < 0 ? " (CW -- unexpected!)" : " (CCW ok)") << "\n";
+    std::cout << "  Outer CCB AABB: [" << minX << ", " << maxX << "] x ["
+              << minY << ", " << maxY << "]\n";
+
+    // Print all outer vertices
+    std::cout << "  Outer CCB vertices:\n";
+    for (int i = 0; i < (int)outerPts.size(); ++i)
+    {
+        std::cout << "    [" << i << "] (" << outerPts[i].first << ", " << outerPts[i].second << ")\n";
+    }
+
+    // Check for self-intersections (O(n^2), debug only)
+    auto segmentsIntersect = [](double ax, double ay, double bx, double by,
+                                double cx, double cy, double dx, double dy) -> bool {
+        auto cross = [](double ux, double uy, double vx, double vy) {
+            return ux * vy - uy * vx;
+        };
+        double d1 = cross(bx-ax, by-ay, cx-ax, cy-ay);
+        double d2 = cross(bx-ax, by-ay, dx-ax, dy-ay);
+        double d3 = cross(dx-cx, dy-cy, ax-cx, ay-cy);
+        double d4 = cross(dx-cx, dy-cy, bx-cx, by-cy);
+        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+            ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)))
+            return true;
+        return false;
+    };
+    int selfIsectCount = 0;
+    for (int i = 0; i < (int)outerPts.size(); ++i) {
+        for (int j = i + 2; j < (int)outerPts.size(); ++j) {
+            if (i == 0 && j == (int)outerPts.size() - 1) continue; // adjacent
+            auto [ax, ay] = outerPts[i];
+            auto [bx, by] = outerPts[(i+1) % outerPts.size()];
+            auto [cx, cy] = outerPts[j];
+            auto [dx, dy] = outerPts[(j+1) % outerPts.size()];
+            if (segmentsIntersect(ax,ay,bx,by,cx,cy,dx,dy))
+                ++selfIsectCount;
+        }
+    }
+    std::cout << "  Outer CCB self-intersections: " << selfIsectCount
+              << (selfIsectCount ? " <--- NON-SIMPLE!" : "") << "\n";
+
+    // --- Holes ---
+    int holeIdx = 0;
+    for (auto hole = fit->inner_ccbs_begin(); hole != fit->inner_ccbs_end(); ++hole, ++holeIdx)
+    {
+        auto hcirc = *hole, hcurr = hcirc;
+        std::vector<std::pair<double,double>> holePts;
+        std::set<std::pair<double,double>> holePtSet;
+        bool holeDups = false;
+        double holeArea = 0.0;
+        do {
+            double x = CGAL::to_double(hcurr->source()->point().x());
+            double y = CGAL::to_double(hcurr->source()->point().y());
+            holePts.push_back({x, y});
+            if (!holePtSet.insert({x, y}).second)
+                holeDups = true;
+        } while (++hcurr != hcirc);
+
+        for (int i = 0; i < (int)holePts.size(); ++i) {
+            auto [x0,y0] = holePts[i];
+            auto [x1,y1] = holePts[(i+1) % holePts.size()];
+            holeArea += (x0*y1 - x1*y0);
+        }
+        holeArea *= 0.5;
+
+        std::cout << "  Hole[" << holeIdx << "] vertex count: " << holePts.size() << "\n";
+        std::cout << "  Hole[" << holeIdx << "] signed area: " << holeArea
+                  << (holeArea > 0 ? " (CCW -- unexpected for hole!)" : " (CW ok)") << "\n";
+        std::cout << "  Hole[" << holeIdx << "] has duplicate (pinch) points: " << (holeDups ? "YES <---" : "no") << "\n";
+        std::cout << "  Hole[" << holeIdx << "] vertices:\n";
+        for (int i = 0; i < (int)holePts.size(); ++i)
+            std::cout << "    [" << i << "] (" << holePts[i].first << ", " << holePts[i].second << ")\n";
+    }
+    if (holeIdx == 0)
+        std::cout << "  Holes: none\n";
+    else
+        std::cout << "  Total holes: " << holeIdx << "\n";
+
+    std::cout << "=== END FACE " << fit->data() << " ===\n\n";
+}
+
+template <typename FaceHandle>
+bool face_is_degenerate(FaceHandle fit, double areaThreshold = 1e-10)
+{
+    auto circ = fit->outer_ccb(), curr = circ;
+    double signedArea = 0.0;
+    std::vector<std::pair<double,double>> pts;
+    do {
+        pts.push_back({
+            CGAL::to_double(curr->source()->point().x()),
+            CGAL::to_double(curr->source()->point().y())
+        });
+    } while (++curr != circ);
+
+    for (int i = 0; i < (int)pts.size(); ++i) {
+        auto [x0, y0] = pts[i];
+        auto [x1, y1] = pts[(i + 1) % pts.size()];
+        signedArea += (x0 * y1 - x1 * y0);
+    }
+    signedArea = std::abs(signedArea * 0.5);
+    return signedArea < areaThreshold;
+}
+
 void io::saveSheets2(const TetMesh &tetMesh,
                      const Arrangement &arrangement,
                      ReebSpace2 &reebSpace,
@@ -948,14 +1087,15 @@ void io::saveSheets2(const TetMesh &tetMesh,
         }
     };
 
-    std::cout << "---------------------------------------- Outputting sheets\n";
-
     for (auto fit = arrangement.arr.faces_begin(); fit != arrangement.arr.faces_end(); ++fit)
     {
-        if (fit->is_unbounded())
-            continue;
+        if (fit->is_unbounded())    {continue;}
+        if (face_is_degenerate(fit)) { continue; }
 
         const int faceId = fit->data();
+
+        //std::cout << "Saving face with ID " << faceId << std::endl;
+        //debug_face(fit);
 
         // --- Triangulate this face with CGAL CDT ---
         CDT cdt;
@@ -968,6 +1108,8 @@ void io::saveSheets2(const TetMesh &tetMesh,
         CDT::Vertex_handle prev = first;
         ++curr;
 
+        //std::cout << "Crash 1\n";
+
         do {
             CDT::Vertex_handle vh = cdt.insert(
                 K::Point_2(CGAL::to_double(curr->source()->point().x()),
@@ -977,17 +1119,28 @@ void io::saveSheets2(const TetMesh &tetMesh,
         } while (++curr != circ);
         cdt.insert_constraint(prev, first);
 
+        //std::cout << "Crash 2\n";
+
         // Mark nesting levels
         for (auto f : cdt.all_face_handles())
             f->info().nesting_level = -1;
         std::list<CDT::Edge> border;
+        //std::cout << "Crash 2.1\n";
         mark_domains(cdt, cdt.infinite_face(), 0, border);
+        //std::cout << "Crash 2.2\n";
         while (!border.empty()) {
             CDT::Edge e = border.front(); border.pop_front();
             CDT::Face_handle nb = e.first->neighbor(e.second);
             if (nb->info().nesting_level == -1)
+            {
+
+                //std::cout << "Crash 2.3\n";
                 mark_domains(cdt, nb, e.first->info().nesting_level + 1, border);
+                //std::cout << "Crash 2.4\n";
+            }
         }
+
+        //std::cout << "Crash 3\n";
 
         // --- Insert CDT triangles into VTK ---
         for (auto f : cdt.finite_face_handles())
@@ -1010,6 +1163,7 @@ void io::saveSheets2(const TetMesh &tetMesh,
                 faceIds->InsertNextValue(faceId);
             }
         }
+        //std::cout << "Crash 4\n";
     }
 
     auto polyData = vtkSmartPointer<vtkPolyData>::New();
