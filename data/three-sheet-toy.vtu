@@ -13,20 +13,20 @@
         </DataArray>
       </Points>
       <PointData>
-        <DataArray type="Float64" Name="RangeV" format="ascii">
-          6.0
-          1.0
-          1.0
-          6.0
-          3.0
-          4.0
-        </DataArray>
         <DataArray type="Float64" Name="RangeU" format="ascii">
           3.0
           3.0
           1.5
           1.5
           1.0
+          4.0
+        </DataArray>
+        <DataArray type="Float64" Name="RangeV" format="ascii">
+          6.0
+          1.0
+          1.0
+          6.0
+          3.0
           4.0
         </DataArray>
       </PointData>
