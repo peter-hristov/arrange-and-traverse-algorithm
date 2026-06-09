@@ -211,6 +211,18 @@ void Arrangement::connectNestedFaces(TetMesh &tetMesh)
                             );
 
                 }
+                else
+                {
+                    const auto ogSegment = this->arr.originating_curves_begin(circ);
+
+                    ounterBoundaryVertices.push_back(
+                            this->arrangementPointIndices.at(ogSegment.ptr()->source())
+                            );
+
+                    ounterBoundaryVertices.push_back(
+                            this->arrangementPointIndices.at(ogSegment.ptr()->target())
+                            );
+                }
 
                 ++circ;
                 faceBoundarySize++;
@@ -239,6 +251,18 @@ void Arrangement::connectNestedFaces(TetMesh &tetMesh)
                         {
                             innerBoundary.insert(
                                     this->arrangementPointIndices.at(circ->source()->point())
+                                    );
+                        }
+                        else
+                        {
+                            const auto ogSegment = this->arr.originating_curves_begin(circ);
+
+                            innerBoundary.insert(
+                                    this->arrangementPointIndices.at(ogSegment.ptr()->source())
+                                    );
+
+                            innerBoundary.insert(
+                                    this->arrangementPointIndices.at(ogSegment.ptr()->target())
                                     );
                         }
 
