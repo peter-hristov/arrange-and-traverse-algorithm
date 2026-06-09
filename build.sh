@@ -66,7 +66,7 @@ make install
 
 ### RS Explorer
 cd $projectFolder/build
-cmake -DCMAKE_PREFIX_PATH="$projectFolder/libraries/install/cgal;$projectFolder/libraries/install/vtk;$projectFolder/libraries/install/ttk" -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_PREFIX_PATH="$projectFolder/libraries/install/cgal;$projectFolder/libraries/install/vtk;$projectFolder/libraries/install/ttk;$projectFolder/libraries/install/boost_1_88_0" -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DCMAKE_BUILD_TYPE=Release ..
 make
 
 cd $projectFolder
