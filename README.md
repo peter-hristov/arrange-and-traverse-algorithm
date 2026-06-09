@@ -8,6 +8,10 @@ This application has the following dependencies:
     TTK  v1.3.0
     CGAL v6.0.1
 
+# Cloning
+
+git clone --recursive -b singular-arrange-and-traverse-hpc-3-time-varying https://github.com/peter-hristov/arrange-and-traverse-algorithm sat-hpc-3
+
 # Building 
 You could install all the dependencies on your own, or use the build script we provide. Our script clones vtk, ttk and cgal into the ./libraries folder and then compiles and install them in the folder ./libraries/install. 
 The ttk library linked to the vtk install in ./libraries/install.

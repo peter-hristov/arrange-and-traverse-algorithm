@@ -10,6 +10,17 @@ echo "The current folder is $projectFolder"
 # Set up where are going to clones and compile all dependencies
 mkdir libraries
 
+## Boost
+echo "Building Boost"
+
+cd $projectFolder/libraries
+wget https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz
+
+tar -xvf boost_1_88_0.tar.gz
+cd boost_1_88_0/
+./bootstrap.sh --prefix="$projectFolder/libraries/install/boost_1_88_0"
+./b2 install -j$CORES
+
 ## VTK 
 echo "Building VTK"
 
@@ -35,7 +46,7 @@ cd ./cgal
 mkdir build install
 cd build
 
-cmake -DCMAKE_INSTALL_PREFIX="$projectFolder/libraries/install/cgal" -DCMAKE_BUILD_TYPE="Release" ..
+cmake -DCMAKE_PREFIX_PATH="$projectFolder/libraries/install/boost_1_88_0" -DCMAKE_INSTALL_PREFIX="$projectFolder/libraries/install/cgal" -DCMAKE_BUILD_TYPE="Release" ..
 make -j$CORES
 make install
 
@@ -49,10 +60,9 @@ cd ./ttk
 mkdir build install
 cd build
 
-cmake -DCMAKE_INSTALL_PREFIX="$projectFolder/libraries/install/ttk" -DCMAKE_BUILD_TYPE="Release" -DTTK_BUILD_PARAVIEW_PLUGINS="Off" -DCMAKE_PREFIX_PATH="$projectFolder/libraries/install/vtk" ..
+cmake -DCMAKE_INSTALL_PREFIX="$projectFolder/libraries/install/ttk" -DCMAKE_BUILD_TYPE="Release" -DTTK_BUILD_PARAVIEW_PLUGINS="Off" -DCMAKE_PREFIX_PATH="$projectFolder/libraries/install/vtk;$projectFolder/libraries/install/boost_1_88_0" ..
 make -j$CORES
 make install
-
 
 ### RS Explorer
 cd $projectFolder/build
