@@ -4,8 +4,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include <GL/glut.h>
-#include <QApplication>
 #include <string>
 
 #include "./io.h"
@@ -15,7 +13,6 @@
 #include "./Data.h"
 #include "./Arrangement.h"
 #include "./utility/CLI11.hpp"
-#include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
 #include "./UnitTests.h"
 #include "./Performance.h"
@@ -443,12 +440,6 @@ int main(int argc, char* argv[])
     //io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
 
-
-
-    // Set up QT Application
-    QApplication app(argc, argv);
-    glutInit(&argc, argv);
-
     // Package all my data for visualisation
     Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
     data.zeroAxis = addZeroAxis;
@@ -463,38 +454,6 @@ int main(int argc, char* argv[])
         io::writeSheetData(saveReebSpaceSheetsInfoFile, tetMesh.isVertexSingular, reebSpace2.sheetArea, data.sheetRegularVertices);
         //return 0;
     }
-
-    if (headless)
-    {
-        return 0;
-    }
-
-    if (false == moleculeFilename.empty())
-    {
-        data.molecule = io::readMolecule(moleculeFilename);
-    }
-
-    // Create the widget
-    TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);
-    window->setWindowTitle("RS Explorer");
-
-    // Make the window full screen by default
-    //window->showMaximized();
-
-    window->setWindowState(Qt::WindowNoState);
-    //window->setMinimumSize(1800, 1200);
-    window->setMinimumSize(1200, 800);
-    window->showNormal();
-    window->move(0, 0);
-
-    // Show the label
-    window->show();
-
-    // start it running
-    app.exec();
-
-    // clean up
-    delete window;
 
     // return to caller
     return 0;

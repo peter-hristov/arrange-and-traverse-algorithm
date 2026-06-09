@@ -1,6 +1,8 @@
+#include <random>
+
 #include "./Timer.h"
 #include "./Arrangement.h"
-#include "src/CGALTypedefs.h"
+#include "./CGALTypedefs.h"
 
 
 

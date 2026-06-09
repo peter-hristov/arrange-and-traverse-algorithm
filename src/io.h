@@ -10,14 +10,14 @@
 #include "./ReebSpace.h"
 #include "./ReebSpace2.h"
 #include "./Fiber.h"
-#include "./PlotWidget.h"
+//#include "./PlotWidget.h"
 
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 
-#include <QVector>
-#include <QPointF>
+//#include <QVector>
+//#include <QPointF>
 
 
 namespace io
@@ -43,7 +43,7 @@ namespace io
     //void saveFibers(const std::vector<std::vector<FiberPoint>>&, const std::string&);
 
     void saveFibers(const std::vector<Fiber> &fibers, const ReebSpace2 &reebSpace, const std::string &filename);
-    void saveFiberTraces(const PlotWidget *pl, const std::string &filename);
+    //void saveFiberTraces(const PlotWidget *pl, const std::string &filename);
 
     void saveSheetGraph(ReebSpace2 &reebSpace, const std::string&);
 
