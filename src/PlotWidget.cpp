@@ -33,6 +33,7 @@
 #include "./LoadingBar.hpp"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
+#include "./TIMT.h"
 
 using namespace std;
 
@@ -884,6 +885,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         {
             this->data.fibers = {std::move(fiber)};
         }
+
+        timt::generateTopologyGraph(data.tetMesh, {u, v});
 
         sibling->updateFiber();
     }
