@@ -90,25 +90,24 @@ void timt::generateTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &
         if (CGAL::collinear_are_ordered_along_line(segment.source(), pProj, segment.target()))
         {
             allVertexPoints.push_back(pProj);
-            const int newVertexId = static_cast<int>(allVertexPoints.size()) - 1;
-            // @TODO compute allDomainCoordinates[newVertexId] here based on the 2D coords (linear interpoatled)
             allDomainCoordinates.push_back(interpolateDomainCoordinate(segment, pProj, allDomainCoordinates[edge[0]], allDomainCoordinates[edge[1]]));
 
+            const int newVertexId = static_cast<int>(allVertexPoints.size()) - 1;
             topologyGraphEdges.push_back({edge[0], newVertexId});
             topologyGraphEdges.push_back({newVertexId, edge[1]});
 
-            std::cout << "Adding split edge " << edge[0] << " -> " << allVertexPoints.size() << std::endl;
-            std::cout << "Adding split edge " << allVertexPoints.size() << " -> " << edge[1] << std::endl;
+            //std::cout << "Adding split edge " << edge[0] << " -> " << allVertexPoints.size() << std::endl;
+            //std::cout << "Adding split edge " << allVertexPoints.size() << " -> " << edge[1] << std::endl;
         }
         else
         {
             topologyGraphEdges.push_back({edge[0], edge[1]});
 
-            std::cout << "Adding edge " << edge[0] << " -> " << edge[1] << std::endl;
+            //std::cout << "Adding edge " << edge[0] << " -> " << edge[1] << std::endl;
 
         }
     }
-    Timer::stop("Computing distances                    :");
+    Timer::stop("Computing topology graph               :");
 
     // 5. Compute all the distances
     Timer::start();
