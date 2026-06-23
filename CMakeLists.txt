@@ -38,6 +38,7 @@ find_package(VTK 9.4.1 REQUIRED)
 set(SOURCES
     ./src/io.cpp
     ./src/TetMesh.cpp
+    ./src/TIMT.cpp
     ./src/ReebSpace2.cpp
     ./src/Fiber.cpp
     ./src/SeedSet.cpp
