@@ -886,12 +886,26 @@ void PlotWidget::paintEvent(QPaintEvent*)
             this->data.fibers = {std::move(fiber)};
         }
 
-        //timt::generateTopologyGraph(data.tetMesh, {u, v});
 
         sibling->updateFiber();
     }
 
 
+    if (this->recomputeTIMT == true)
+    {
+
+        this->recomputeTIMT = false;
+
+        const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
+        const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
+
+        timt::TopologyGraph inexactTg   = timt::computeInexactTopologyGraph(data.tetMesh, {u, v});
+        timt::writeTopologyGraphToVTP(inexactTg, "topologyGraph.inexact.vtp");
+
+        timt::TopologyGraph exactTg     = timt::computeExactTopologyGraph(data.tetMesh, {u, v});
+        timt::writeTopologyGraphToVTP(exactTg, "topologyGraph.vtp");
+
+    }
 
 
 

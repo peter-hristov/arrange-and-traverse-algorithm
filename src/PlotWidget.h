@@ -51,6 +51,7 @@ class PlotWidget : public QWidget
         bool recomputeFiber = false;
         bool recomputeFiberSurface = false;
         bool recomputeFiberSurfaceFeature = false;
+        bool recomputeTIMT = false;
 
         Data &data;
         TracerVisualiserWidget *sibling;

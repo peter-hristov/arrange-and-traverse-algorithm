@@ -20,6 +20,13 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 {
     const int moveSpeed = 2;
 
+    if (event->key() == Qt::Key_T) 
+    {
+        this->plotWidget->recomputeTIMT = true;
+        this->plotWidget->update();
+        this->update();
+    }
+
     if (event->key() == Qt::Key_U) {
         QApplication::quit();
     }
