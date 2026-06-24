@@ -902,9 +902,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
         timt::TopologyGraph inexactTg   = timt::computeInexactTopologyGraph(data.tetMesh, {u, v});
         timt::writeTopologyGraphToVTP(inexactTg, "topologyGraph.inexact.vtp");
 
-        timt::TopologyGraph exactTg     = timt::computeExactTopologyGraph(data.tetMesh, {u, v});
+        timt::TopologyGraph exactTg     = timt::computeExactTopologyGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
         timt::writeTopologyGraphToVTP(exactTg, "topologyGraph.vtp");
-
     }
 
 

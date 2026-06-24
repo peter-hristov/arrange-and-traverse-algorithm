@@ -1,6 +1,8 @@
 #pragma once
 
 #include "./TetMesh.h"
+#include "./ReebSpace2.h"
+#include "./Arrangement.h"
 
 namespace timt
 {
@@ -13,7 +15,7 @@ namespace timt
         std::set<std::pair<int, int>> edges;
     };
 
-    TopologyGraph computeExactTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &p);
+    TopologyGraph computeExactTopologyGraph(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &p);
     TopologyGraph computeInexactTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &p);
 
     void writeTopologyGraphToVTP(

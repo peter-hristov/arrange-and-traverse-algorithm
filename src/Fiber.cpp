@@ -15,6 +15,68 @@
 
 
 
+std::set<int> computeFiberComponentTriangles(const TetMesh& tetMesh, const std::array<double, 2>& controlPoint, const int triangleId)
+{
+    const CartesianPoint P(controlPoint[0], controlPoint[1]);
+
+    // Sanity check
+    const auto seedTriangleBarycentricCoordinates = tetMesh.tryComputeActivePointCoordinates(triangleId, P);
+    if (!seedTriangleBarycentricCoordinates)
+    {
+        std::cerr << "Seed triangle does not contain control point.";
+        return {};
+    }
+
+    std::queue<int> bfsQueue;
+    bfsQueue.push(triangleId);
+
+    // Also our visited array
+    std::set<int> visitedTriangles;
+    visitedTriangles.insert(triangleId);
+
+    while (!bfsQueue.empty())
+    {
+        const int currentTriangleId = bfsQueue.front();
+        bfsQueue.pop();
+
+        for (const int nbTriangleId : tetMesh.tetIncidentTriangles[currentTriangleId])
+        {
+            // If the neighbour has been visited (it has a parent)
+            if (visitedTriangles.contains(nbTriangleId))
+            {
+                continue;
+            }
+
+            // If this triangle is active, compute its barycentric coordinates
+            if (const auto barycentricCoordinates = tetMesh.tryComputeActivePointCoordinates(nbTriangleId, P))
+            {
+                bfsQueue.push(nbTriangleId);
+                visitedTriangles.insert(nbTriangleId);
+            }
+        }
+    }
+
+    return visitedTriangles;
+}
+
+std::vector<std::set<int>> Fiber::computeActiveTrianglesPerComponent(TetMesh& tetMesh, Arrangement& singularArrangement, ReebSpace2& reebSpace, std::array<double, 2> controlPoint)
+{
+    const seeds::SeedSet fiberSeeds = seeds::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, {});
+
+    std::vector<std::set<int>> activeTrianglesPerComponent;
+    for (int i = 0; i < fiberSeeds.size(); i++)
+    {
+        const int triangleId = fiberSeeds[i].first;
+        const std::set<int> activeTriangles = computeFiberComponentTriangles(tetMesh, controlPoint, triangleId);
+        activeTrianglesPerComponent.push_back(std::move(activeTriangles));
+    }
+
+    return activeTrianglesPerComponent;
+}
+
+
+
+
 Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds, const bool debugPrint)
 {
     const seeds::SeedSet fiberSeeds = seeds::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);

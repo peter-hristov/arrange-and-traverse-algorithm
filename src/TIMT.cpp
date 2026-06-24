@@ -13,6 +13,7 @@
 
 #include "./src/TIMT.h"
 #include "./src/Timer.h"
+#include "./src/Fiber.h"
 
 
 // Helper function to interpolate domain coordinates based on range coordiantes
@@ -49,7 +50,6 @@ std::array<float, 3> interpolateDomainCoordinate(
 
 timt::TopologyGraph timt::computeInexactTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &p)
 {
-
     TopologyGraph tg;
 
     Timer::start();
@@ -102,14 +102,13 @@ timt::TopologyGraph timt::computeInexactTopologyGraph(TetMesh &tetMesh, const st
 
 }
 
-timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &p)
+timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, const std::array<double, 2> &p)
 {
     TopologyGraph tg;
 
     Timer::start();
     tg.vertexDomainCoordinates = tetMesh.vertexDomainCoordinates;
     tg.vertexRangeCoordinates = std::vector<Point_2>(tetMesh.vertexCoordinatesF.size());
-
 
     // 1. Set up exact points
     for (int i = 0 ; i < tetMesh.vertexCoordinatesF.size() ; i++)
@@ -174,6 +173,26 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, const std:
     }
     Timer::stop("Computing vertex range distances       :");
 
+
+
+    // Compute active tets
+    //
+    //
+    std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponent(tetMesh, singularArrangement, reebSpace, p);
+
+    // This new component will be a new vertex in the topolgy graph, this tells us its index
+    std::vector<int> componentTgraphIndex;
+
+    for (int i = 0 ; i < activeTrianglesPerComponent.size() ; i++)
+    {
+        tg.vertexRangeCoordinates.push_back(pExact);
+        tg.vertexRangeDistances.push_back(0.0);
+        tg.vertexDomainCoordinates.push_back({-1, -1, -1});
+
+        componentTgraphIndex.push_back(tg.vertexDomainCoordinates.size() - 1);
+    }
+
+
     // 6. Construct the edges of the topology graph
     //
     Timer::start();
@@ -210,6 +229,29 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, const std:
                 {
                     const int vertexId = edgeSubdivisionPointIndex.at(edge);
                     tetVertices.push_back({tg.vertexRangeDistances[vertexId], vertexId});
+                }
+            }
+        }
+
+        // For all triangles, if any one of them is active, the tet is active, so add the zero-fiber component vertex
+        for (int a = 0 ; a < 4 ; a++)
+        {
+            for (int b = a + 1 ; b < 4 ; b++)
+            {
+                for (int c = b + 1 ; c < 4 ; c++)
+                {
+                    const std::set<int> triangleSet{tet[a], tet[b], tet[c]};
+                    const int triangleIndex = tetMesh.triangleIndices.at(triangleSet);
+
+                    for (int id = 0 ; id < activeTrianglesPerComponent.size() ; id++)
+                    {
+                        if (activeTrianglesPerComponent[id].contains(triangleIndex))
+                        {
+                            tetVertices.push_back({0.0, componentTgraphIndex[id]});
+
+                            break;
+                        }
+                    }
                 }
             }
         }

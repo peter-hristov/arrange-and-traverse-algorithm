@@ -38,6 +38,8 @@ class Fiber
         // Grow fiber components from a seed set to determine which one contains a tet
         static int whichComponentContainsTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const CartesianPoint &controlPoint, const int &tetId);
 
+        static std::vector<std::set<int>> computeActiveTrianglesPerComponent(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint);
+
 };
 
 
