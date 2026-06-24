@@ -172,38 +172,38 @@ int main(int argc, char* argv[])
     // Arrangement Computation
     //
 
-    Timer::start();
+    //Timer::start();
     Arrangement singularArrangement;
-    singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
-    Timer::stop("Initial Singular Arrangement           :");
+    //singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
+    //Timer::stop("Initial Singular Arrangement           :");
 
-    // The initial computation may have nested faces, we need to connect them
-    Timer::start();
-    singularArrangement.connectNestedFaces(tetMesh);
-    Timer::stop("Making sure all faces are simple       :");
+    //// The initial computation may have nested faces, we need to connect them
+    //Timer::start();
+    //singularArrangement.connectNestedFaces(tetMesh);
+    //Timer::stop("Making sure all faces are simple       :");
 
-    // Recompute arrangement if needed
-    if (tetMesh.pseudoSingularEdgesNumber > 0)
-    {
-        singularArrangement = Arrangement();
+    //// Recompute arrangement if needed
+    //if (tetMesh.pseudoSingularEdgesNumber > 0)
+    //{
+        //singularArrangement = Arrangement();
 
-        // Recompute the arrangement with enough new segments to avoid connect all nested faces
-        Timer::start();
-        singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
-        Timer::stop("Singular Arrangement                   :");
-    }
+        //// Recompute the arrangement with enough new segments to avoid connect all nested faces
+        //Timer::start();
+        //singularArrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseSingularSegments);
+        //Timer::stop("Singular Arrangement                   :");
+    //}
 
-    Timer::start();
-    singularArrangement.assignIndices();
-    Timer::stop("Assigning indices to the arrangement   :");
+    //Timer::start();
+    //singularArrangement.assignIndices();
+    //Timer::stop("Assigning indices to the arrangement   :");
 
-    Timer::start();
-    singularArrangement.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
-    Timer::stop("Assigning pseudosingular edges         :");
+    //Timer::start();
+    //singularArrangement.assignHalfEdgePseudoSingular(tetMesh, singularArrangement);
+    //Timer::stop("Assigning pseudosingular edges         :");
 
-    Timer::start();
-    singularArrangement.computePointLocationDataStructure();
-    Timer::stop("Arrangement search structure           :");
+    //Timer::start();
+    //singularArrangement.computePointLocationDataStructure();
+    //Timer::stop("Arrangement search structure           :");
 
 
 
@@ -214,55 +214,55 @@ int main(int argc, char* argv[])
     //
     ReebSpace2 reebSpace2;
 
-    if (readReebSpaceFile.empty())
-    {
-        Timer::start();
-        reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
-        Timer::stop("Computed red/blud intersetions         :");
+    //if (readReebSpaceFile.empty())
+    //{
+        //Timer::start();
+        //reebSpace2.computeEdgeRegionSegments3(tetMesh, singularArrangement);
+        //Timer::stop("Computed red/blud intersetions         :");
 
-        Timer::start();
-        reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
-        Timer::stop("Edge regions plus/minus triangles      :");
-
-
-        Timer::start();
-        reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
-        Timer::stop("Computed vertex regions                :");
-
-        Timer::start();
-        reebSpace2.determineVertexRegionSegmentsOrientation(tetMesh, singularArrangement);
-        Timer::stop("Vertex regions plus/minus triangles    :");
-
-        Timer::start();
-        reebSpace2.determineEdgeCrossingSegmentsOriantation(tetMesh, singularArrangement);
-        Timer::stop("Edge crossing plus/minus triangles     :");
-
-        Timer::start();
-        reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
-        Timer::stop("Computed singular traversal            :");
-
-        if (false == saveReebSpaceFile.empty())
-        {
-            io::saveReebSpace(reebSpace2, saveReebSpaceFile);
-        }
-    }
-    else
-    {
-        Timer::start();
-        reebSpace2 = io::loadReebSpace(readReebSpaceFile);
-        Timer::stop("Read reeb space                        :");
-    }
+        //Timer::start();
+        //reebSpace2.determineEdgeRegionSegmentsOrientation(tetMesh, singularArrangement);
+        //Timer::stop("Edge regions plus/minus triangles      :");
 
 
+        //Timer::start();
+        //reebSpace2.computeVertexRegionSegments(tetMesh, singularArrangement);
+        //Timer::stop("Computed vertex regions                :");
+
+        //Timer::start();
+        //reebSpace2.determineVertexRegionSegmentsOrientation(tetMesh, singularArrangement);
+        //Timer::stop("Vertex regions plus/minus triangles    :");
+
+        //Timer::start();
+        //reebSpace2.determineEdgeCrossingSegmentsOriantation(tetMesh, singularArrangement);
+        //Timer::stop("Edge crossing plus/minus triangles     :");
+
+        //Timer::start();
+        //reebSpace2.traverse(tetMesh, singularArrangement, unitTestFiberGraphs);
+        //Timer::stop("Computed singular traversal            :");
+
+        //if (false == saveReebSpaceFile.empty())
+        //{
+            //io::saveReebSpace(reebSpace2, saveReebSpaceFile);
+        //}
+    //}
+    //else
+    //{
+        //Timer::start();
+        //reebSpace2 = io::loadReebSpace(readReebSpaceFile);
+        //Timer::stop("Read reeb space                        :");
+    //}
 
 
 
 
 
 
-    Timer::start();
-    reebSpace2.computeSheetBoundaries(singularArrangement);
-    Timer::stop("Computing sheet boundaries             :");
+
+
+    //Timer::start();
+    //reebSpace2.computeSheetBoundaries(singularArrangement);
+    //Timer::stop("Computing sheet boundaries             :");
 
 
     //for (const auto &[sheetId, boundary] : reebSpace2.sheetBoundaries)
@@ -279,31 +279,31 @@ int main(int argc, char* argv[])
     //}
 
 
-    Timer::start();
-    reebSpace2.computeSheets(singularArrangement);
-    Timer::stop("Postprocessing                         :");
+    //Timer::start();
+    //reebSpace2.computeSheets(singularArrangement);
+    //Timer::stop("Postprocessing                         :");
 
 
     // Another part of postprocessing to make sure we can do openmp for the fiber labeling of 
-    for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
-    {
-        auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
-        curve.is_vertical();          // forces lazy _is_vertical initialization
-    }
+    //for (auto he = singularArrangement.arr.halfedges_begin(); he != singularArrangement.arr.halfedges_end(); ++he)
+    //{
+        //auto& curve = he->curve();   // gets the Arr_segment_2 or whatever curve type
+        //curve.is_vertical();          // forces lazy _is_vertical initialization
+    //}
 
 
-    Timer::start();
-    singularArrangement.buildAABBtree(tetMesh);
-    Timer::stop("Arrangement AABB Tree                  :");
+    //Timer::start();
+    ////singularArrangement.buildAABBtree(tetMesh);
+    //Timer::stop("Arrangement AABB Tree                  :");
 
 
-    std::cout << "\nThe Reeb space has this many sheets " << reebSpace2.correspondenceGraphDS.countComponents() << std::endl;
+    //std::cout << "\nThe Reeb space has this many sheets " << reebSpace2.correspondenceGraphDS.countComponents() << std::endl;
 
-    int correspondenceGraphSize = 0;
-    for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
-    {
-        correspondenceGraphSize += correspondenceGraph.size();
-    }
+    //int correspondenceGraphSize = 0;
+    //for (const auto &correspondenceGraph : reebSpace2.correspondenceGraph)
+    //{
+        //correspondenceGraphSize += correspondenceGraph.size();
+    //}
 
 
     // This is the old computation, keep these empty unless we want to unit test
@@ -311,134 +311,134 @@ int main(int argc, char* argv[])
     ReebSpace reebSpace;
     Arrangement arrangement;
 
-    if (unitTestSheets || unitTestFiberGraphs)
-    {
-        Timer::start();
-        arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
-        Timer::stop("Arrangement                            :");
-
-        Timer::start();
-        arrangement.computePointLocationDataStructure();
-        Timer::stop("Arrangement search structure           :");
-
-
-        Timer::start();
-        reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds, unitTestFiberGraphs);
-        Timer::stop("Computed {G_F} and H                   :");
-
-        if (reebSpace2.numberOfSheets != reebSpace.correspondenceGraph.getComponentRepresentatives().size())
-        {
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            std::cerr << "--------------------------------- NUMBER OF SHEETS IS NOT EQUAL!!!-----------------------------------------------\n";
-            std::cerr << "---------------------The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
-            std::cerr << "---------------------The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            return 1;
-        }
-
-
-
-        Timer::start();
-        bool areSheetsEqual = unitTests::testAreSheetsIdentical(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
-        Timer::stop("Determinig whether the sheet are equal :");
-
-        if (false == areSheetsEqual)
-        {
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            std::cerr << "--------------------------------- THE SHEETS ARE NOT EQUAL!!!--------------------------------------------------\n";
-            std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-            return 1;
-        }
-
-
-        if (true == unitTestFiberGraphs)
-        {
-            Timer::start();
-            bool arePreimageGraphsEqual = reebSpace2.unitTestCompareFiberGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
-            Timer::stop("Comparing preimage graphs              :");
-
-            if (false == arePreimageGraphsEqual)
-            {
-                std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-                std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
-                std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
-                return 1;
-            }
-        }
-
-
-        //std::cout << "Postprocessing..." << std::endl;
+    //if (unitTestSheets || unitTestFiberGraphs)
+    //{
         //Timer::start();
-        //reebSpace.computeSheetGeometry(tetMesh, arrangement);
-        //reebSpace.computeSheetArea(tetMesh, arrangement);
-        //reebSpace.printTopSheets(tetMesh, arrangement, 20);
-        //Timer::stop("Computed RS(f) Postprocess             :");
+        //arrangement.computeArrangement(tetMesh, Arrangement::SegmentMode::UseAllSegments);
+        //Timer::stop("Arrangement                            :");
 
-        return 0;
-    }
+        //Timer::start();
+        //arrangement.computePointLocationDataStructure();
+        //Timer::stop("Arrangement search structure           :");
+
+
+        //Timer::start();
+        //reebSpace.computeTraversal(tetMesh, arrangement, discardFiberSeeds, unitTestFiberGraphs);
+        //Timer::stop("Computed {G_F} and H                   :");
+
+        //if (reebSpace2.numberOfSheets != reebSpace.correspondenceGraph.getComponentRepresentatives().size())
+        //{
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //std::cerr << "--------------------------------- NUMBER OF SHEETS IS NOT EQUAL!!!-----------------------------------------------\n";
+            //std::cerr << "---------------------The NEW number of sheets is " << reebSpace2.numberOfSheets << std::endl;
+            //std::cerr << "---------------------The OLD number of sheets is " << reebSpace.correspondenceGraph.getComponentRepresentatives().size() << std::endl;
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //return 1;
+        //}
+
+
+
+        //Timer::start();
+        //bool areSheetsEqual = unitTests::testAreSheetsIdentical(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
+        //Timer::stop("Determinig whether the sheet are equal :");
+
+        //if (false == areSheetsEqual)
+        //{
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //std::cerr << "--------------------------------- THE SHEETS ARE NOT EQUAL!!!--------------------------------------------------\n";
+            //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+            //return 1;
+        //}
+
+
+        //if (true == unitTestFiberGraphs)
+        //{
+            //Timer::start();
+            //bool arePreimageGraphsEqual = reebSpace2.unitTestCompareFiberGraphs(tetMesh, singularArrangement, arrangement, reebSpace);
+            //Timer::stop("Comparing preimage graphs              :");
+
+            //if (false == arePreimageGraphsEqual)
+            //{
+                //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+                //std::cerr << "--------------------------------- PREIMAGE GRAPHS NOT EQUAL!!!--------------------------------------------------\n";
+                //std::cerr << "----------------------------------------------------------------------------------------------------------------\n";
+                //return 1;
+            //}
+        //}
+
+
+        ////std::cout << "Postprocessing..." << std::endl;
+        ////Timer::start();
+        ////reebSpace.computeSheetGeometry(tetMesh, arrangement);
+        ////reebSpace.computeSheetArea(tetMesh, arrangement);
+        ////reebSpace.printTopSheets(tetMesh, arrangement, 20);
+        ////Timer::stop("Computed RS(f) Postprocess             :");
+
+        //return 0;
+    //}
 
 
     //return 0;
 
-    if (performanceRun == true)
-    {
-        return 0;
-    }
+    //if (performanceRun == true)
+    //{
+        //return 0;
+    //}
 
-    if (false == outputSheetPolygonsFilename.empty())
-    {
-        try
-        {
-            printf("SAVING SHEETS--------------------");
-            //io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtp");
-            io::saveSheets2(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename);
-            io::saveSheetsFeatures(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename + ".features.vtp");
-            io::saveSheetGraph(reebSpace2, outputSheetPolygonsFilename + ".graph.dot");
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error: " << e.what() << '\n';
-            return 1;
-        }
-    }
+    //if (false == outputSheetPolygonsFilename.empty())
+    //{
+        //try
+        //{
+            //printf("SAVING SHEETS--------------------");
+            ////io::saveSheets(tetMesh, arrangement, reebSpace, outputSheetPolygonsFilename + ".old.vtp");
+            //io::saveSheets2(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename);
+            //io::saveSheetsFeatures(tetMesh, singularArrangement, reebSpace2, outputSheetPolygonsFilename + ".features.vtp");
+            //io::saveSheetGraph(reebSpace2, outputSheetPolygonsFilename + ".graph.dot");
+        //}
+        //catch (const std::exception &e)
+        //{
+            //std::cerr << "Error: " << e.what() << '\n';
+            //return 1;
+        //}
+    //}
 
-    if (fieldFValueFS.has_value())
-    {
-        const std::vector<std::array<double, 2>> controlPoints{
-            {fieldFValueFS.value(), tetMesh.minG - 1.0}, 
-                {fieldFValueFS.value(), tetMesh.minG + 1.0}
-        };
+    //if (fieldFValueFS.has_value())
+    //{
+        //const std::vector<std::array<double, 2>> controlPoints{
+            //{fieldFValueFS.value(), tetMesh.minG - 1.0}, 
+                //{fieldFValueFS.value(), tetMesh.minG + 1.0}
+        //};
 
-        FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {});
+        //FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {});
 
-        std::string fsFilename = "./output/labeled.fs.f.vtp";
-        io::saveFiberSurface({fs}, fsFilename);
+        //std::string fsFilename = "./output/labeled.fs.f.vtp";
+        //io::saveFiberSurface({fs}, fsFilename);
 
-        std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl;
-    }
+        //std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl;
+    //}
 
-    if (fieldGValueFS.has_value())
-    {
-        const std::vector<std::array<double, 2>> controlPoint{
-            {tetMesh.minF - 1.0, fieldGValueFS.value()}, 
-                {tetMesh.maxF + 1.0, fieldGValueFS.value()}
-        };
+    //if (fieldGValueFS.has_value())
+    //{
+        //const std::vector<std::array<double, 2>> controlPoint{
+            //{tetMesh.minF - 1.0, fieldGValueFS.value()}, 
+                //{tetMesh.maxF + 1.0, fieldGValueFS.value()}
+        //};
 
-        FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
+        //FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
 
-        std::string fsFilename = "./output/labeled.fs.g.vtp";
-        io::saveFiberSurface({fs}, fsFilename);
+        //std::string fsFilename = "./output/labeled.fs.g.vtp";
+        //io::saveFiberSurface({fs}, fsFilename);
 
-        std::cout << "Saved g-field labeled FS in " << fsFilename << std::endl;
-    }
+        //std::cout << "Saved g-field labeled FS in " << fsFilename << std::endl;
+    //}
 
 
-    if (false == fiberBenchmarkFile.empty())
-    {
-        //performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
-        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberBenchmarkFile);
-        return 0;
-    }
+    //if (false == fiberBenchmarkFile.empty())
+    //{
+        ////performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
+        //performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberBenchmarkFile);
+        //return 0;
+    //}
 
     //io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");

@@ -634,38 +634,38 @@ void PlotWidget::drawReebSpaceBackground(QPainter &p)
 
     // Draw all edges
     //
-    //for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
-    //{
-        //const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
-        //const float v1 = this->data.tetMesh.vertexCoordinatesG[edge[0]];
+    for (const auto &[edge, type] : data.tetMesh.edgeSingularTypes)
+    {
+        const float u1 = this->data.tetMesh.vertexCoordinatesF[edge[0]];
+        const float v1 = this->data.tetMesh.vertexCoordinatesG[edge[0]];
 
-        //const float u2 = this->data.tetMesh.vertexCoordinatesF[edge[1]];
-        //const float v2 = this->data.tetMesh.vertexCoordinatesG[edge[1]];
+        const float u2 = this->data.tetMesh.vertexCoordinatesF[edge[1]];
+        const float v2 = this->data.tetMesh.vertexCoordinatesG[edge[1]];
 
-        //if (type == 0)
-        //{
-            ////p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
-            //p.setPen(QPen(Qt::black, 2.0, Qt::SolidLine));
-        //}
-        //else if (type == 1 || type == -1)
-        //{
-            //continue;
-            ////p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
-            //p.setPen(QPen(Qt::black, 3.0, Qt::SolidLine));
-        //}
-        ////else
-        //else if (type == 2)
-        //{
-            //p.setPen(QPen(Qt::black, 2, Qt::SolidLine));
-        //}
+        if (type == 0)
+        {
+            //p.setPen(QPen(Qt::black, 4.2, Qt::DashLine));
+            p.setPen(QPen(Qt::black, 2.0, Qt::SolidLine));
+        }
+        else if (type == 1 || type == -1)
+        {
+            continue;
+            //p.setPen(QPen(Qt::black, 3.2, Qt::SolidLine));
+            p.setPen(QPen(Qt::black, 3.0, Qt::SolidLine));
+        }
         //else
-        //{
-            //continue;
-        //}
+        else if (type == 2)
+        {
+            p.setPen(QPen(Qt::black, 2, Qt::SolidLine));
+        }
+        else
+        {
+            continue;
+        }
 
-        //p.setRenderHint(QPainter::Antialiasing, true);
-        //p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
-    //}
+        p.setRenderHint(QPainter::Antialiasing, true);
+        p.drawLine(rescalePoint(u1, v1), rescalePoint(u2, v2));
+    }
 
 
 
@@ -875,16 +875,16 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
         
-        const Fiber fiber = Fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->data.selectedSheetIds, true);
+        //const Fiber fiber = Fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->data.selectedSheetIds, true);
 
-        if (qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())->buttonShowTraces->isChecked()) 
-        {
-            this->data.fibers.push_back(std::move(fiber));
-        }
-        else
-        {
-            this->data.fibers = {std::move(fiber)};
-        }
+        //if (qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())->buttonShowTraces->isChecked()) 
+        //{
+            //this->data.fibers.push_back(std::move(fiber));
+        //}
+        //else
+        //{
+            //this->data.fibers = {std::move(fiber)};
+        //}
 
 
         sibling->updateFiber();
@@ -900,10 +900,15 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
 
         timt::TopologyGraph inexactTg   = timt::computeInexactTopologyGraph(data.tetMesh, {u, v});
+        Timer::start();
         timt::writeTopologyGraphToVTP(inexactTg, "topologyGraph.inexact.vtp");
+        Timer::stop("Saving inexact topology graph          :");
+
 
         timt::TopologyGraph exactTg     = timt::computeExactTopologyGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+        Timer::start();
         timt::writeTopologyGraphToVTP(exactTg, "topologyGraph.vtp");
+        Timer::stop("Saving exact topology graph            :");
     }
 
 

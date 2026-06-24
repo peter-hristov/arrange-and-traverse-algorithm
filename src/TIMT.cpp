@@ -178,7 +178,8 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
     // Compute active tets
     //
     //
-    std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponent(tetMesh, singularArrangement, reebSpace, p);
+    //std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponent(tetMesh, singularArrangement, reebSpace, p);
+    std::vector<std::set<int>> activeTrianglesPerComponent;
 
     // This new component will be a new vertex in the topolgy graph, this tells us its index
     std::vector<int> componentTgraphIndex;
