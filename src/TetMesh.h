@@ -34,7 +34,7 @@ class TetMesh
     // (Optional) indicative names for the two scalar fields and their units
     std::string longnameF, longnameG, units;
 
-    // Combinatorial structure of the mesh
+    // Combinatorial structure of the mesh (not sure if these are sorted by Id)
     std::vector<std::array<int, 4>> tetrahedra;
     // We always assume that edge vertices are in sorted order (but index)
     std::vector<std::array<int, 2>> edges;

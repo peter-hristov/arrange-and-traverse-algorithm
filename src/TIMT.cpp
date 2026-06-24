@@ -1,6 +1,7 @@
 #include "./src/CGALTypedefs.h"
 
 
+#include <CGAL/number_utils.h>
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>
 #include <vtkCellArray.h>
@@ -77,7 +78,9 @@ void timt::generateTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &
 
     std::vector<std::pair<int, int>> topologyGraphEdges;
 
-    // 4. Make the topology graph
+    std::map<std::array<int, 2>, int> edgeSubdivisionPointIndex;
+
+    // 4. Subdivide edges
     Timer::start();
     for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
     {
@@ -86,28 +89,31 @@ void timt::generateTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &
         const Segment_2 &segment = allSegments[edgeId];
         const Point_2 pProj = segment.supporting_line().projection(pExact);
 
-
         if (CGAL::collinear_are_ordered_along_line(segment.source(), pProj, segment.target()))
         {
             allVertexPoints.push_back(pProj);
             allDomainCoordinates.push_back(interpolateDomainCoordinate(segment, pProj, allDomainCoordinates[edge[0]], allDomainCoordinates[edge[1]]));
 
             const int newVertexId = static_cast<int>(allVertexPoints.size()) - 1;
-            topologyGraphEdges.push_back({edge[0], newVertexId});
-            topologyGraphEdges.push_back({newVertexId, edge[1]});
+            //topologyGraphEdges.push_back({edge[0], newVertexId});
+            //topologyGraphEdges.push_back({newVertexId, edge[1]});
+
+            edgeSubdivisionPointIndex[edge] = newVertexId;
 
             //std::cout << "Adding split edge " << edge[0] << " -> " << allVertexPoints.size() << std::endl;
             //std::cout << "Adding split edge " << allVertexPoints.size() << " -> " << edge[1] << std::endl;
         }
         else
         {
-            topologyGraphEdges.push_back({edge[0], edge[1]});
+            //topologyGraphEdges.push_back({edge[0], edge[1]});
 
             //std::cout << "Adding edge " << edge[0] << " -> " << edge[1] << std::endl;
 
         }
     }
-    Timer::stop("Computing topology graph               :");
+    Timer::stop("Subdividing edges                      :");
+
+
 
     // 5. Compute all the distances
     Timer::start();
@@ -117,16 +123,62 @@ void timt::generateTopologyGraph(TetMesh &tetMesh, const std::array<double, 2> &
     {
         allVertexPointsDistances[vId] = CGAL::to_double(CGAL::squared_distance(pExact, allVertexPoints[vId]));
     }
-
-
-
     Timer::stop("Computing distances                    :");
 
-    writeTopologyGraphToVTP(allDomainCoordinates, topologyGraphEdges, allVertexPointsDistances, "topologyGraph.vtp");
+    // 6. Construct the edges of the topology graph
+    Timer::start();
+    for (int i = 0 ; i <  tetMesh.tetrahedra.size() ; i++)
+    {
+        const auto &tet = tetMesh.tetrahedra[i];
+
+        // Save all the vertices and the distance to sort later
+        std::vector<std::pair<double, int>> tetVertices;
+
+        // Add all the tet vertices
+        for (int a = 0 ; a < 4 ; a++)
+        {
+            tetVertices.push_back({allVertexPointsDistances[tet[a]], tet[a]});
+        }
+
+        // For all edges, all any (if there are) internal points
+        for (int a = 0 ; a < 4 ; a++)
+        {
+            for (int b = a + 1 ; b < 4 ; b++)
+            {
+                int aIndex = tet[a];
+                int bIndex = tet[b];
+
+                if (aIndex > bIndex)
+                {
+                    std::swap(aIndex, bIndex);
+                }
+
+                std::array<int, 2> edge = {aIndex, bIndex};
+
+                if (edgeSubdivisionPointIndex.contains(edge))
+                {
+                    const int vertexId = edgeSubdivisionPointIndex.at(edge);
+                    tetVertices.push_back({allVertexPointsDistances[vertexId], vertexId});
+                }
+            }
+        }
+
+        std::sort(tetVertices.begin(), tetVertices.end());
+
+        for (int i = 0 ; i < tetVertices.size() - 1 ; i++)
+        {
+            topologyGraphEdges.push_back({tetVertices[i].second, tetVertices[i+1].second});
+        }
+    }
+
+    Timer::stop("Computing topology graph               :");
+
+    writeTopologyGraphToVTP(allDomainCoordinates, allVertexPoints, topologyGraphEdges, allVertexPointsDistances, "topologyGraph.vtp");
 }
 
 void timt::writeTopologyGraphToVTP(
     const std::vector<std::array<float, 3>> &domainCoordinates,
+    const std::vector<Point_2> &rangeCoordinates,
     const std::vector<std::pair<int, int>> &edges,
     const std::vector<double> &vertexDistances,
     const std::string &filename)
@@ -134,11 +186,19 @@ void timt::writeTopologyGraphToVTP(
     // Points
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
     points->SetNumberOfPoints(domainCoordinates.size());
-    for (size_t i = 0; i < domainCoordinates.size(); ++i)
+    //for (size_t i = 0; i < domainCoordinates.size(); ++i)
+    //{
+        //const std::array<float, 3> &coord = domainCoordinates[i];
+        //points->SetPoint(i, coord[0], coord[1], coord[2]);
+    //}
+
+    for (size_t i = 0; i < rangeCoordinates.size(); ++i)
     {
-        const std::array<float, 3> &coord = domainCoordinates[i];
-        points->SetPoint(i, coord[0], coord[1], coord[2]);
+        const float u = CGAL::to_double(rangeCoordinates[i].x());
+        const float v = CGAL::to_double(rangeCoordinates[i].y());
+        points->SetPoint(i, u, v, 0);
     }
+
     // Lines (edges)
     vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
     for (const auto &edge : edges)

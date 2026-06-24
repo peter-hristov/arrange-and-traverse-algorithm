@@ -886,7 +886,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
             this->data.fibers = {std::move(fiber)};
         }
 
-        timt::generateTopologyGraph(data.tetMesh, {u, v});
+        //timt::generateTopologyGraph(data.tetMesh, {u, v});
 
         sibling->updateFiber();
     }
