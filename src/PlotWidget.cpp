@@ -33,7 +33,6 @@
 #include "./LoadingBar.hpp"
 #include "./utility/Geometry.h"
 #include "./TracerVisualiserWindow.h"
-#include "./TIMT.h"
 
 using namespace std;
 
