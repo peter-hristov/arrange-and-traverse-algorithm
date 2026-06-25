@@ -137,7 +137,12 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
         filename = "./output/reeb-space.png";
         std::cout << "Saving surfaces to to " << filename << std::endl;
 
-        std::cerr << "This many fiber " << this->data.fibers.size() << " and this many trace points " << plotWidget->fiberPointsTraces.back().size();
+        std::cerr << "This many fibers " << this->data.fibers.size();
+
+        if (false == plotWidget->fiberPointsTraces.empty())
+        {
+            std::cerr << " and this many trace points " << plotWidget->fiberPointsTraces.back().size();
+        }
 
         this->plotWidget->saveToFile(filename);
         this->plotWidget->shouldSaveSheets = true;
