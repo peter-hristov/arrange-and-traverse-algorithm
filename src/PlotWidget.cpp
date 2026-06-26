@@ -907,7 +907,7 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
         timt::TopologyGraph exactTg     = timt::computeExactTopologyGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
         Timer::start();
-        timt::writeTopologyGraphToVTP(exactTg, "topologyGraph.vtp");
+        timt::writeTopologyGraphToVTP(exactTg, "topologyGraph.exact.vtp");
         Timer::stop("Saving exact topology graph            :");
     }
 
