@@ -39,6 +39,7 @@ class Fiber
         static int whichComponentContainsTet(const TetMesh &tetMesh, const Arrangement &singularArrangement, const std::vector<std::pair<int, int>> &fiberSeeds, const CartesianPoint &controlPoint, const int &tetId);
 
         static std::vector<std::set<int>> computeActiveTrianglesPerComponent(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint);
+        static std::vector<std::set<int>> computeActiveTrianglesPerComponentNoRS(TetMesh &tetMesh, std::array<double, 2> controlPoint);
 
 };
 

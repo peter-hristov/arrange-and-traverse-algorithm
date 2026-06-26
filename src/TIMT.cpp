@@ -179,7 +179,9 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
     //
     //
     //std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponent(tetMesh, singularArrangement, reebSpace, p);
-    std::vector<std::set<int>> activeTrianglesPerComponent;
+    Timer::start();
+    std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponentNoRS(tetMesh, p);
+    //std::vector<std::set<int>> activeTrianglesPerComponent;
 
     // This new component will be a new vertex in the topolgy graph, this tells us its index
     std::vector<int> componentTgraphIndex;
@@ -192,6 +194,7 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
 
         componentTgraphIndex.push_back(tg.vertexDomainCoordinates.size() - 1);
     }
+    Timer::stop("Computing fiber components             :");
 
 
     // 6. Construct the edges of the topology graph
@@ -285,18 +288,18 @@ void timt::writeTopologyGraphToVTP(
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
     points->SetNumberOfPoints(tg.vertexDomainCoordinates.size());
 
-    //for (size_t i = 0; i < domainCoordinates.size(); ++i)
-    //{
-        //const std::array<float, 3> &coord = domainCoordinates[i];
-        //points->SetPoint(i, coord[0], coord[1], coord[2]);
-    //}
-
-    for (size_t i = 0; i < tg.vertexRangeCoordinates.size(); ++i)
+    for (size_t i = 0; i < tg.vertexDomainCoordinates.size(); ++i)
     {
-        const float u = CGAL::to_double(tg.vertexRangeCoordinates[i].x());
-        const float v = CGAL::to_double(tg.vertexRangeCoordinates[i].y());
-        points->SetPoint(i, u, v, 0);
+        const std::array<float, 3> &coord = tg.vertexDomainCoordinates[i];
+        points->SetPoint(i, coord[0], coord[1], coord[2]);
     }
+
+    //for (size_t i = 0; i < tg.vertexRangeCoordinates.size(); ++i)
+    //{
+        //const float u = CGAL::to_double(tg.vertexRangeCoordinates[i].x());
+        //const float v = CGAL::to_double(tg.vertexRangeCoordinates[i].y());
+        //points->SetPoint(i, u, v, 0);
+    //}
 
 
     // Lines (edges)

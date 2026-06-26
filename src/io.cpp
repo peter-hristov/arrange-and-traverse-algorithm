@@ -764,12 +764,12 @@ TetMesh io::readDataVtu(const std::string &filename, const std::string &fName, c
 
     for (vtkIdType i = 0; i < fDataArray->GetNumberOfTuples(); i++) 
     {
-        tetMesh.vertexCoordinatesF[i] = fDataArray->GetTuple1(i);
+        tetMesh.vertexCoordinatesF[i] = fDataArray->GetTuple1(i) * fDataArray->GetTuple1(i);
     }
 
     for (vtkIdType i = 0; i < gDataArray->GetNumberOfTuples(); i++) 
     {
-        tetMesh.vertexCoordinatesG[i] = gDataArray->GetTuple1(i);
+        tetMesh.vertexCoordinatesG[i] = gDataArray->GetTuple1(i) * gDataArray->GetTuple1(i);
     }
 
 

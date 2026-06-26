@@ -75,6 +75,47 @@ std::vector<std::set<int>> Fiber::computeActiveTrianglesPerComponent(TetMesh& te
 }
 
 
+std::vector<std::set<int>> Fiber::computeActiveTrianglesPerComponentNoRS(TetMesh& tetMesh, std::array<double, 2> controlPoint)
+{
+    const CartesianPoint P(controlPoint[0], controlPoint[1]);
+
+    // Find all active triangles
+    std::vector<int> activeTriangles;
+    for (int tId = 0 ; tId < tetMesh.triangles.size() ; tId++)
+    {
+        if (const auto barycentricCoordinates = tetMesh.tryComputeActivePointCoordinates(tId, P))
+        {
+            activeTriangles.push_back(tId);
+        }
+    }
+
+    // Union-find to get all connected components
+    DisjointSet<int> fiberComponents;
+
+    for (int tId : activeTriangles)
+    {
+        fiberComponents.addElement(tId);
+    }
+
+    for (int tId : activeTriangles)
+    {
+        for (const int nbTriangleId : tetMesh.tetIncidentTriangles[tId])
+        {
+            if (fiberComponents.data.contains(nbTriangleId))
+            {
+                fiberComponents.unionElements(tId, nbTriangleId);
+            }
+        }
+    }
+
+    std::vector<std::set<int>> activeTrianglesPerComponent;
+    for (const auto &[componentId, component] : fiberComponents.groupComponents())
+    {
+        activeTrianglesPerComponent.push_back(component);
+    }
+
+    return activeTrianglesPerComponent;
+}
 
 
 Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangement, ReebSpace2 &reebSpace, std::array<double, 2> controlPoint, const std::set<int> &selectedSheetIds, const bool debugPrint)
