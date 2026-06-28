@@ -118,6 +118,9 @@ int main(int argc, char* argv[])
     int sheetsToProcess = 20;
     cliApp.add_option("--sheetsToProcess", sheetsToProcess, "How many of the top sheets would you like to process?. Default is 20.");
 
+    string outputCsv = "./output.distance.matrix.csv";
+    cliApp.add_option("--outputCsv", outputCsv, "Distance matrix CSV.");
+
     //string outputFibersFilename = "./fibers.vtp";
     //cliApp.add_option("--outputFibers", outputSheetPolygonsFilename, "Filename where to save the visible fiber components. Must be .vtp");
 
@@ -512,7 +515,7 @@ int main(int argc, char* argv[])
     }
 
     // Save to CSV
-    std::ofstream csv("persistence_distances.csv");
+    std::ofstream csv(outputCsv.c_str());
     csv << "i,j,distance\n";
     for (int i = 0; i < resF; i++)
     {
