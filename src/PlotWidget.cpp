@@ -1126,6 +1126,7 @@ void PlotWidget::drawAxisLabels(QPainter& p)
 
     // Write out numbers
     QFont font = p.font();
+    font.setFamily("Helvetica");
     font.setPixelSize(6);
     // font.setWeight(20);
     p.setFont(font);
