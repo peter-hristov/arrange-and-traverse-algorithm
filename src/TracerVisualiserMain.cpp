@@ -121,6 +121,9 @@ int main(int argc, char* argv[])
     string outputCsv = "./output.distance.matrix.csv";
     cliApp.add_option("--outputCsv", outputCsv, "Distance matrix CSV.");
 
+    int distanceResolution = 10;
+    cliApp.add_option("--distanceResolution", distanceResolution, "The resolution for the distance matrix.");
+
     //string outputFibersFilename = "./fibers.vtp";
     //cliApp.add_option("--outputFibers", outputSheetPolygonsFilename, "Filename where to save the visible fiber components. Must be .vtp");
 
