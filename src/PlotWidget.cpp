@@ -1234,6 +1234,7 @@ void PlotWidget::drawAxisLabels(QPainter& p)
     p.setPen(penBlack);
 
     font.setPixelSize(7);
+    font.setFamily("Helvetica");
     p.setFont(font);
 
     // x label
