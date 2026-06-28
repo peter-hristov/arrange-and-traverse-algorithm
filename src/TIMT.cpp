@@ -9,6 +9,7 @@
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
 #include <vtkXMLPolyDataWriter.h>
+#include <vtkPolyDataWriter.h>
 #include <vtkLine.h>
 
 #include "./src/TIMT.h"
@@ -52,7 +53,7 @@ timt::TopologyGraph timt::computeInexactTopologyGraph(TetMesh &tetMesh, const st
 {
     TopologyGraph tg;
 
-    Timer::start();
+    //Timer::start();
 
     // 1. Set up range and domain coordinates
     //
@@ -66,12 +67,12 @@ timt::TopologyGraph timt::computeInexactTopologyGraph(TetMesh &tetMesh, const st
 
         tg.vertexRangeCoordinates[i] = Point_2(u, v);
     };
-    Timer::stop("Converting range coordinates to exact  :");
+    //Timer::stop("Converting range coordinates to exact  :");
 
 
     // 2. Compute all the distances
     //
-    Timer::start();
+    //Timer::start();
 
     Point_2 pExact(p[0], p[1]);
     tg.vertexRangeDistances = std::vector<double>(tg.vertexRangeCoordinates.size());
@@ -80,12 +81,12 @@ timt::TopologyGraph timt::computeInexactTopologyGraph(TetMesh &tetMesh, const st
     {
         tg.vertexRangeDistances[vId] = CGAL::to_double(CGAL::squared_distance(pExact, tg.vertexRangeCoordinates[vId]));
     }
-    Timer::stop("Computing vertex range distances       :");
+    //Timer::stop("Computing vertex range distances       :");
 
 
     // 3. Construct the edges of the topology graph (using all edges)
     //
-    Timer::start();
+    //Timer::start();
 
     for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
     {
@@ -94,9 +95,9 @@ timt::TopologyGraph timt::computeInexactTopologyGraph(TetMesh &tetMesh, const st
         tg.edges.insert({edge[0], edge[1]});
     }
 
-    Timer::stop("Computing inexact topology graph       :");
+    //Timer::stop("Computing inexact topology graph       :");
 
-    std::cout << "The inexact topology graph has " << tg.vertexRangeCoordinates.size() << " points and " << tg.edges.size() << " edges.\n";
+    //std::cout << "The inexact topology graph has " << tg.vertexRangeCoordinates.size() << " points and " << tg.edges.size() << " edges.\n";
 
     return tg;
 
@@ -106,7 +107,7 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
 {
     TopologyGraph tg;
 
-    Timer::start();
+    //Timer::start();
     tg.vertexDomainCoordinates = tetMesh.vertexDomainCoordinates;
     tg.vertexRangeCoordinates = std::vector<Point_2>(tetMesh.vertexCoordinatesF.size());
 
@@ -119,20 +120,20 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
 
         tg.vertexRangeCoordinates[i] = point;
     };
-    Timer::stop("Setting up exact vertex points         :");
+    //Timer::stop("Setting up exact vertex points         :");
 
 
     // 2. Turn to segments
     std::vector<Segment_2> allSegments(tetMesh.edges.size());
 
-    Timer::start();
+    //Timer::start();
     for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
     {
         const std::array<int, 2> &edge = tetMesh.edges[edgeId];
 
         allSegments[edgeId] = Segment_2(tg.vertexRangeCoordinates[edge[0]], tg.vertexRangeCoordinates[edge[1]]);
     }
-    Timer::stop("Setting up segments                    :");
+    //Timer::stop("Setting up segments                    :");
 
     // 3. Turn p to an exact point
     Point_2 pExact(p[0], p[1]);
@@ -141,7 +142,7 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
     std::map<std::array<int, 2>, int> edgeSubdivisionPointIndex;
 
     // 4. Subdivide edges
-    Timer::start();
+    //Timer::start();
     for (int edgeId = 0 ; edgeId < tetMesh.edges.size() ; edgeId++)
     {
         const std::array<int, 2> &edge = tetMesh.edges[edgeId];
@@ -158,20 +159,20 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
             edgeSubdivisionPointIndex[edge] = newVertexId;
         }
     }
-    Timer::stop("Subdividing edges                      :");
+    //Timer::stop("Subdividing edges                      :");
 
 
 
     // 5. Compute all the distances
     //
-    Timer::start();
+    //Timer::start();
     tg.vertexRangeDistances = std::vector<double>(tg.vertexRangeCoordinates.size());
 
     for (int vId = 0 ; vId < tg.vertexRangeCoordinates.size() ; vId++)
     {
         tg.vertexRangeDistances[vId] = CGAL::to_double(CGAL::squared_distance(pExact, tg.vertexRangeCoordinates[vId]));
     }
-    Timer::stop("Computing vertex range distances       :");
+    //Timer::stop("Computing vertex range distances       :");
 
 
 
@@ -179,7 +180,7 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
     //
     //
     //std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponent(tetMesh, singularArrangement, reebSpace, p);
-    Timer::start();
+    //Timer::start();
     std::vector<std::set<int>> activeTrianglesPerComponent = Fiber::computeActiveTrianglesPerComponentNoRS(tetMesh, p);
     //std::vector<std::set<int>> activeTrianglesPerComponent;
 
@@ -194,12 +195,12 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
 
         componentTgraphIndex.push_back(tg.vertexDomainCoordinates.size() - 1);
     }
-    Timer::stop("Computing fiber components             :");
+    //Timer::stop("Computing fiber components             :");
 
 
     // 6. Construct the edges of the topology graph
     //
-    Timer::start();
+    //Timer::start();
 
     for (int i = 0 ; i <  tetMesh.tetrahedra.size() ; i++)
     {
@@ -267,10 +268,10 @@ timt::TopologyGraph timt::computeExactTopologyGraph(TetMesh &tetMesh, Arrangemen
             tg.edges.insert({tetVertices[i].second, tetVertices[i+1].second});
         }
     }
-    Timer::stop("Computing topology graph               :");
+    //Timer::stop("Computing topology graph               :");
 
 
-    std::cout << "The exact topology graph has " << tg.vertexRangeCoordinates.size() << " points and " << tg.edges.size() << " edges.\n";
+    //std::cout << "The exact topology graph has " << tg.vertexRangeCoordinates.size() << " points and " << tg.edges.size() << " edges.\n";
 
 
     return tg;
@@ -284,6 +285,7 @@ void timt::writeTopologyGraphToVTP(
     const std::string &filename)
 {
 
+    //Timer::start();
     // Points
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
     points->SetNumberOfPoints(tg.vertexDomainCoordinates.size());
@@ -293,6 +295,7 @@ void timt::writeTopologyGraphToVTP(
         const std::array<float, 3> &coord = tg.vertexDomainCoordinates[i];
         points->SetPoint(i, coord[0], coord[1], coord[2]);
     }
+    //Timer::stop("Setting up points                      :");
 
     //for (size_t i = 0; i < tg.vertexRangeCoordinates.size(); ++i)
     //{
@@ -302,33 +305,46 @@ void timt::writeTopologyGraphToVTP(
     //}
 
 
+    //Timer::start();
+
     // Lines (edges)
     vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
+    lines->Allocate(tg.edges.size());
     for (const auto &edge : tg.edges)
     {
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-        line->GetPointIds()->SetId(0, edge.first);
-        line->GetPointIds()->SetId(1, edge.second);
-        lines->InsertNextCell(line);
+        lines->InsertNextCell(2);
+        lines->InsertCellPoint(edge.first);
+        lines->InsertCellPoint(edge.second);
     }
+    //Timer::stop("Setting up edges                       :");
+
+    //Timer::start();
+
     // Scalar array: distances (per-point)
     vtkSmartPointer<vtkDoubleArray> distanceArray = vtkSmartPointer<vtkDoubleArray>::New();
     distanceArray->SetName("Distance");
     distanceArray->SetNumberOfComponents(1);
     distanceArray->SetNumberOfTuples(tg.vertexRangeDistances.size());
-    for (size_t i = 0; i < tg.vertexRangeDistances.size(); ++i)
-    {
-        distanceArray->SetValue(i, tg.vertexRangeDistances[i]);
-    }
+    std::memcpy(distanceArray->GetVoidPointer(0), tg.vertexRangeDistances.data(), 
+            tg.vertexRangeDistances.size() * sizeof(double));
+    //Timer::stop("Setting up distances                   :");
+
+
+    //Timer::start();
+    
     // Assemble PolyData
     vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
     polyData->SetPoints(points);
     polyData->SetLines(lines);
     polyData->GetPointData()->AddArray(distanceArray);
     polyData->GetPointData()->SetActiveScalars("Distance");
+    //Timer::stop("Setting up polydata                    :");
+
+    //Timer::start();
     // Write
-    vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
     writer->SetFileName(filename.c_str());
     writer->SetInputData(polyData);
     writer->Write();
+    //Timer::stop("Writing                                :");
 }

@@ -4,9 +4,8 @@
 #include <filesystem>
 #include <fstream>
 
-#include <GL/glut.h>
-#include <QApplication>
 #include <string>
+#include <omp.h>
 
 #include "./io.h"
 #include "./Timer.h"
@@ -15,7 +14,6 @@
 #include "./Data.h"
 #include "./Arrangement.h"
 #include "./utility/CLI11.hpp"
-#include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
 #include "./UnitTests.h"
 #include "./Performance.h"
@@ -23,6 +21,21 @@
 #include "./LoadingBar.hpp"
 #include "./TetMesh.h"
 #include "./Augmentation.h"
+#include "./TIMT.h"
+
+
+double runPersistenceComparison(const std::string& inexactFile, const std::string& exactFile, double threshold = 0.0) {
+    std::string cmd = "bash -c 'source /home/peter/anaconda3/etc/profile.d/conda.sh && conda activate analysis && python3 ~/Projects/data/reeb-space-test-data/torus/timt/compare/index.py " + inexactFile + " " + exactFile + " --threshold " + std::to_string(threshold) + "'";
+//FILE* pipe = popen(cmd.c_str(), "r");
+    //std::string cmd = "~/Projects/data/reeb-space-test-data/torus/timt/compare/index.py " + inexactFile + " " + exactFile + " --threshold " + std::to_string(threshold);
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe) return -1.0;
+    
+    double result = -1.0;
+    fscanf(pipe, "%lf", &result);
+    pclose(pipe);
+    return result;
+}
 
 using namespace std;
 
@@ -444,11 +457,6 @@ int main(int argc, char* argv[])
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
 
 
-
-    // Set up QT Application
-    QApplication app(argc, argv);
-    glutInit(&argc, argv);
-
     // Package all my data for visualisation
     Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
     data.zeroAxis = addZeroAxis;
@@ -464,6 +472,57 @@ int main(int argc, char* argv[])
         //return 0;
     }
 
+
+    // In your main loop
+    int resF = 20, resG = 20;
+    const double stepF = (tetMesh.maxF - tetMesh.minF) / resF;
+    const double stepG = (tetMesh.maxG - tetMesh.minG) / resG;
+    const double threshold = 0.01;
+    std::vector<std::vector<double>> distances(resF, std::vector<double>(resG));
+
+#pragma omp parallel for collapse(2)
+    for (int i = 0; i < resF; i++)
+    {
+        for (int j = 0; j < resG; j++)
+        {
+            const double u = (tetMesh.minF - 0.00001) + stepF * i;
+            const double v = (tetMesh.minG - 0.00001) + stepG * j;
+
+            int thread_id = omp_get_thread_num();
+            std::string inexactFile = "temp.inexact." + std::to_string(thread_id) + ".vtp";
+            std::string exactFile = "temp.exact." + std::to_string(thread_id) + ".vtp";
+
+
+            timt::TopologyGraph inexactTg = timt::computeInexactTopologyGraph(data.tetMesh, {u, v});
+            timt::writeTopologyGraphToVTP(inexactTg, inexactFile);
+
+            timt::TopologyGraph exactTg = timt::computeExactTopologyGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
+            timt::writeTopologyGraphToVTP(exactTg, exactFile);
+
+            double dist = runPersistenceComparison(inexactFile, exactFile, threshold);
+            distances[i][j] = dist;
+
+#pragma omp critical
+            std::cout << "\n\n-------------------------- Computed (" << u << ", " << v << ") " << i << " " << j << "\n";
+            std::cout << "Distance (" << i << "," << j << "): " << dist << "\n\n\n";
+
+            remove(inexactFile.c_str());
+            remove(exactFile.c_str());
+        }
+    }
+
+    // Save to CSV
+    std::ofstream csv("persistence_distances.csv");
+    csv << "i,j,distance\n";
+    for (int i = 0; i < resF; i++)
+    {
+        for (int j = 0; j < resG; j++)
+        {
+            csv << i << "," << j << "," << distances[i][j] << "\n";
+        }
+    }
+    csv.close();
+
     if (headless)
     {
         return 0;
@@ -474,27 +533,6 @@ int main(int argc, char* argv[])
         data.molecule = io::readMolecule(moleculeFilename);
     }
 
-    // Create the widget
-    TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);
-    window->setWindowTitle("RS Explorer");
-
-    // Make the window full screen by default
-    //window->showMaximized();
-
-    window->setWindowState(Qt::WindowNoState);
-    //window->setMinimumSize(1800, 1200);
-    window->setMinimumSize(1200, 800);
-    window->showNormal();
-    window->move(0, 0);
-
-    // Show the label
-    window->show();
-
-    // start it running
-    app.exec();
-
-    // clean up
-    delete window;
 
     // return to caller
     return 0;

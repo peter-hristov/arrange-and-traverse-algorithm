@@ -764,12 +764,12 @@ TetMesh io::readDataVtu(const std::string &filename, const std::string &fName, c
 
     for (vtkIdType i = 0; i < fDataArray->GetNumberOfTuples(); i++) 
     {
-        tetMesh.vertexCoordinatesF[i] = fDataArray->GetTuple1(i) * fDataArray->GetTuple1(i);
+        tetMesh.vertexCoordinatesF[i] = fDataArray->GetTuple1(i);
     }
 
     for (vtkIdType i = 0; i < gDataArray->GetNumberOfTuples(); i++) 
     {
-        tetMesh.vertexCoordinatesG[i] = gDataArray->GetTuple1(i) * gDataArray->GetTuple1(i);
+        tetMesh.vertexCoordinatesG[i] = gDataArray->GetTuple1(i);
     }
 
 
@@ -1597,57 +1597,6 @@ void io::saveFibers(const std::vector<Fiber> &fibers, const ReebSpace2 &reebSpac
     writer->Write();
 }
 
-void io::saveFiberTraces(const PlotWidget *pl, const std::string &filename)
-{
-    std::filesystem::path filePath(filename);
-    if (filePath.has_parent_path())
-        std::filesystem::create_directories(filePath.parent_path());
-
-    auto points       = vtkSmartPointer<vtkPoints>::New();
-    auto fiberIdArray = vtkSmartPointer<vtkIntArray>::New();
-    auto cells        = vtkSmartPointer<vtkCellArray>::New();
-
-    fiberIdArray->SetName("PointId");
-    fiberIdArray->SetNumberOfComponents(1);
-
-    vtkIdType globalPointId = 0;
-
-    for (int fiberId = pl->controlTraces.size() - 1; fiberId >= 0; fiberId--)
-    {
-        const QPolygonF &trace = pl->controlTraces[fiberId];
-        if (trace.size() < 2)
-            continue;
-
-        for (int i = trace.size() - 1; i >= 0; i--)
-        {
-            const float u = pl->paddedMinF + (trace[i].x() / pl->resolution) * (pl->paddedMaxF - pl->paddedMinF);
-            const float v = pl->paddedMinG + (trace[i].y() / pl->resolution) * (pl->paddedMaxG - pl->paddedMinG);
-            points->InsertNextPoint(u, v, 0.0);
-            fiberIdArray->InsertNextValue(globalPointId + (trace.size() - 1 - i));
-        }
-
-        for (vtkIdType i = 0; i + 1 < static_cast<vtkIdType>(trace.size()); i++)
-        {
-            auto line = vtkSmartPointer<vtkLine>::New();
-            line->GetPointIds()->SetId(0, globalPointId + i);
-            line->GetPointIds()->SetId(1, globalPointId + i + 1);
-            cells->InsertNextCell(line);
-        }
-
-        globalPointId += static_cast<vtkIdType>(trace.size());
-    }
-
-    auto polyData = vtkSmartPointer<vtkPolyData>::New();
-    polyData->SetPoints(points);
-    polyData->SetLines(cells);
-    polyData->GetPointData()->AddArray(fiberIdArray);
-    polyData->GetPointData()->SetScalars(fiberIdArray);
-
-    auto writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-    writer->SetFileName(filename.c_str());
-    writer->SetInputData(polyData);
-    writer->Write();
-}
 
 
 void io::writeSheetData(const std::string& path,

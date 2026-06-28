@@ -22,16 +22,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-
 find_package(TTKVTK REQUIRED)
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
 find_package(OpenMP REQUIRED)
-
 find_package(CGAL 6.0.1 REQUIRED)
 find_package(VTK 9.4.1 REQUIRED)
 
@@ -45,16 +37,8 @@ set(SOURCES
     ./src/Arrangement.cpp
     ./src/Augmentation.cpp
     ./src/ReebSpace.cpp
-    ./src/PlotWidget.cpp
     ./src/TracerVisualiserMain.cpp
-    ./src/TracerVisualiserWidget.cpp
-    ./src/TracerVisualiserWindow.cpp
     ./src/FiberSurface.cpp
-    ./src/ArcBall/Ball.cpp
-    ./src/ArcBall/BallAux.cpp
-    ./src/ArcBall/BallMath.cpp
-    ./src/utility/Geometry.cpp
-    ./src/utility/utility.cpp
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
