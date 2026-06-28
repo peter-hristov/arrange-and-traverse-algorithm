@@ -25,7 +25,7 @@
 
 
 double runPersistenceComparison(const std::string& inexactFile, const std::string& exactFile, double threshold = 0.0) {
-    std::string cmd = "bash -c 'source /home/peter/anaconda3/etc/profile.d/conda.sh && conda activate analysis && python3 ~/Projects/data/reeb-space-test-data/torus/timt/compare/index.py " + inexactFile + " " + exactFile + " --threshold " + std::to_string(threshold) + "'";
+    std::string cmd = "python3 /proj/reeb-space-storage/users/x_pethr/timt/index.py " + inexactFile + " " + exactFile + " --threshold " + std::to_string(threshold);
 //FILE* pipe = popen(cmd.c_str(), "r");
     //std::string cmd = "~/Projects/data/reeb-space-test-data/torus/timt/compare/index.py " + inexactFile + " " + exactFile + " --threshold " + std::to_string(threshold);
     FILE* pipe = popen(cmd.c_str(), "r");
@@ -123,6 +123,9 @@ int main(int argc, char* argv[])
 
     int distanceResolution = 10;
     cliApp.add_option("--distanceResolution", distanceResolution, "The resolution for the distance matrix.");
+
+    float persistenceThreshold = 0.0;
+    cliApp.add_option("--persistenceThreshold", persistenceThreshold, "The persistence thredhold for the distance matrix.");
 
     //string outputFibersFilename = "./fibers.vtp";
     //cliApp.add_option("--outputFibers", outputSheetPolygonsFilename, "Filename where to save the visible fiber components. Must be .vtp");
@@ -480,7 +483,7 @@ int main(int argc, char* argv[])
 
 
     // In your main loop
-    int resF = 20, resG = 20;
+    int resF = distanceResolution, resG = distanceResolution;
     const double stepF = (tetMesh.maxF - tetMesh.minF) / resF;
     const double stepG = (tetMesh.maxG - tetMesh.minG) / resG;
     const double threshold = 0.01;
@@ -505,7 +508,7 @@ int main(int argc, char* argv[])
             timt::TopologyGraph exactTg = timt::computeExactTopologyGraph(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v});
             timt::writeTopologyGraphToVTP(exactTg, exactFile);
 
-            double dist = runPersistenceComparison(inexactFile, exactFile, threshold);
+            double dist = runPersistenceComparison(inexactFile, exactFile, persistenceThreshold);
             distances[i][j] = dist;
 
 #pragma omp critical
