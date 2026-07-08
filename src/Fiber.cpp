@@ -19,18 +19,18 @@ Fiber Fiber::computeLabeledFiber(TetMesh &tetMesh, Arrangement &singularArrangem
 {
     const seeds::SeedSet fiberSeeds = seeds::computeFiberSeedSet(tetMesh, singularArrangement, reebSpace, controlPoint, selectedSheetIds);
 
-    if (debugPrint)
-    {
-        std::cerr << "Selected fibers :\n";
-        for (const auto &[triangleId, componentId] : fiberSeeds)
-        {
-            const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
-            std::cerr << "triangleId : " << triangleId << ", sheetId :  " << sheetId << std::endl;
-        }
-        std::cerr << std::endl;
+    //if (debugPrint)
+    //{
+        //std::cerr << "Selected fibers :\n";
+        //for (const auto &[triangleId, componentId] : fiberSeeds)
+        //{
+            //const int sheetId = reebSpace.correspondenceGraphDS.find(componentId);
+            //std::cerr << "triangleId : " << triangleId << ", sheetId :  " << sheetId << std::endl;
+        //}
+        //std::cerr << std::endl;
 
-        std::cerr << "Control point : (" << controlPoint[0] << ", " << controlPoint[1] << ")\n";
-    }
+        //std::cerr << "Control point : (" << controlPoint[0] << ", " << controlPoint[1] << ")\n";
+    //}
 
     return Fiber::growFiberFromSeedSet(tetMesh, reebSpace, controlPoint, fiberSeeds);
 }

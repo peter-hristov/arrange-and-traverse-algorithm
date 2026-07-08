@@ -874,7 +874,10 @@ void PlotWidget::paintEvent(QPaintEvent*)
         const float u = this->paddedMinF + (fiberPoint.x() / resolution) * (this->paddedMaxF - this->paddedMinF);
         const float v = this->paddedMinG + (fiberPoint.y() / resolution) * (this->paddedMaxG - this->paddedMinG);
         
+
+        Timer::start();
         const Fiber fiber = Fiber::computeLabeledFiber(data.tetMesh, data.singularArrangement, data.reebSpace2, {u, v}, this->data.selectedSheetIds, true);
+        Timer::stop("Computed label fiber                   :");
 
         if (qobject_cast<TracerVisualiserWindow*>(this->parent()->parent())->buttonShowTraces->isChecked()) 
         {
