@@ -4,8 +4,6 @@
 #include <filesystem>
 #include <fstream>
 
-#include <GL/glut.h>
-#include <QApplication>
 #include <string>
 
 #include "./io.h"
@@ -15,7 +13,6 @@
 #include "./Data.h"
 #include "./Arrangement.h"
 #include "./utility/CLI11.hpp"
-#include "./TracerVisualiserWindow.h"
 #include "./ReebSpace2.h"
 #include "./UnitTests.h"
 #include "./Performance.h"
@@ -74,6 +71,13 @@ int main(int argc, char* argv[])
 
     string fiberSurfaceBenchmarkFile;
     cliApp.add_option("--fiberSurfaceBenchmarkFile", fiberSurfaceBenchmarkFile, "Benchmark for timings of fiber surface segmentation. Use .csv");
+
+
+    int fiberBenchmarkNumSamples = 1000;
+    cliApp.add_option("--fiberBenchmarkNumSamples", fiberBenchmarkNumSamples, "Number of samples to benchmark for timing of fiber labeling.");
+
+    int fiberSurfaceBenchmarkNumSamples = 100;
+    cliApp.add_option("--fiberSurfaceBenchmarkNumSamples", fiberSurfaceBenchmarkNumSamples, "Number of samples to benchmark for timings of fiber surface segmentation.");
 
     int sheetOutputCount = 10;
     cliApp.add_option("--sheetOutputCount", sheetOutputCount, "How many sheets to sample for automatic feature extraction.");
@@ -438,22 +442,16 @@ int main(int argc, char* argv[])
 
     if (false == fiberBenchmarkFile.empty())
     {
-        performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
+        performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, fiberBenchmarkNumSamples, fiberBenchmarkFile);
     }
 
     if (false == fiberSurfaceBenchmarkFile.empty())
     {
-        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberSurfaceBenchmarkFile);
+        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, fiberSurfaceBenchmarkNumSamples, fiberSurfaceBenchmarkFile);
     }
 
     //io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
     //io::readDataVtp("/home/peter/Projects/data/reeb-space-test-data/nana/trajectories/State_2/fiberSurfaceExample.vtp");
-
-
-
-    // Set up QT Application
-    QApplication app(argc, argv);
-    glutInit(&argc, argv);
 
     // Package all my data for visualisation
     Data data(tetMesh, arrangement, singularArrangement, reebSpace, reebSpace2);
@@ -480,27 +478,6 @@ int main(int argc, char* argv[])
         data.molecule = io::readMolecule(moleculeFilename);
     }
 
-    // Create the widget
-    TracerVisualiserWindow* window = new TracerVisualiserWindow(NULL, data);
-    window->setWindowTitle("RS Explorer");
-
-    // Make the window full screen by default
-    //window->showMaximized();
-
-    window->setWindowState(Qt::WindowNoState);
-    //window->setMinimumSize(1800, 1200);
-    window->setMinimumSize(1200, 800);
-    window->showNormal();
-    window->move(0, 0);
-
-    // Show the label
-    window->show();
-
-    // start it running
-    app.exec();
-
-    // clean up
-    delete window;
 
     // return to caller
     return 0;

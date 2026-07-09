@@ -1,6 +1,7 @@
 #include "./Augmentation.h"
 #include "./LoadingBar.hpp"
 #include "./io.h"
+#include <random>
 
 
 int containsVertexInFiber(const TetMesh& tetMesh, const Fiber& fb, const int vertexId)
