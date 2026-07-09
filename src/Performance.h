@@ -69,7 +69,7 @@ namespace performance
         const double stddev = std::sqrt(sq_sum / timings.size() - avg * avg);
 
         std::cout << std::fixed << std::setprecision(4);
-        std::cout << "Timings over " << timings.size() << " samples:\n";
+        std::cout << "Timings for fiber labeling over " << timings.size() << " samples:\n";
         std::cout << "  Min:    " << min    << " s\n";
         std::cout << "  Max:    " << max    << " s\n";
         std::cout << "  Avg:    " << avg    << " s\n";
@@ -153,7 +153,7 @@ namespace performance
         const double stddev = std::sqrt(sq_sum / timings.size() - avg * avg);
 
         std::cout << std::fixed << std::setprecision(4);
-        std::cout << "Timings over " << timings.size() << " samples:\n";
+        std::cout << "Timings for fiber surface segmentation and labeling over " << timings.size() << " samples:\n";
         std::cout << "  Min:    " << min    << " s\n";
         std::cout << "  Max:    " << max    << " s\n";
         std::cout << "  Avg:    " << avg    << " s\n";

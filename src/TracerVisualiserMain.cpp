@@ -70,7 +70,10 @@ int main(int argc, char* argv[])
     cliApp.add_option("--saveSheetInfo, -i", saveReebSpaceSheetsInfoFile, "Save info about the sheets.");
 
     string fiberBenchmarkFile;
-    cliApp.add_option("--fiberPerformanceTimingsFile, -b", fiberBenchmarkFile, "Benchmakr for timings.");
+    cliApp.add_option("--fiberBenchmarkFile", fiberBenchmarkFile, "Benchmark for timing of fiber labeling. Use .csv.");
+
+    string fiberSurfaceBenchmarkFile;
+    cliApp.add_option("--fiberSurfaceBenchmarkFile", fiberSurfaceBenchmarkFile, "Benchmark for timings of fiber surface segmentation. Use .csv");
 
     int sheetOutputCount = 10;
     cliApp.add_option("--sheetOutputCount", sheetOutputCount, "How many sheets to sample for automatic feature extraction.");
@@ -435,9 +438,12 @@ int main(int argc, char* argv[])
 
     if (false == fiberBenchmarkFile.empty())
     {
-        //performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
-        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberBenchmarkFile);
-        return 0;
+        performance::testInteractiveFiberPerformance(tetMesh, singularArrangement, reebSpace2, 1000, fiberBenchmarkFile);
+    }
+
+    if (false == fiberSurfaceBenchmarkFile.empty())
+    {
+        performance::testInteractiveFiberSurfacePerformance(tetMesh, singularArrangement, reebSpace2, 100, fiberSurfaceBenchmarkFile);
     }
 
     //io::saveOriginalMesh("og.vtu", tetMesh.originalMesh);
