@@ -1060,7 +1060,8 @@ void PlotWidget::paintEvent(QPaintEvent*)
 
 
     p.restore();
-    drawAxisLabels2(p);
+    drawAxisLabels(p);
+    //drawAxisLabels2(p);
 }
 
 

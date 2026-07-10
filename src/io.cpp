@@ -333,7 +333,7 @@ CGALMesh io::readCGALMesh(const std::string& filename)
     return mesh;
 }
 
-vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(const FiberSurface& surfMesh)
+vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(const FiberSurface& surfMesh, const ReebSpace2 &rs)
 {
     const CGALMesh& mesh = surfMesh.mesh;
     auto edgeParamMap = surfMesh.edgeParam();
@@ -409,7 +409,11 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(const FiberSurface& s
         int tid = tetIdMap[f];
         int sid = sheetIdMap[f];
         int cid = componentIdMap[f];
-        const std::array<float, 3> triangleColour = colours::getColour(sid);
+
+        const int sheetSortId = rs.sheetOrder.at(sid);
+        const std::array<float, 3> triangleColour = colours::getColour(sheetSortId);
+
+        //const std::array<float, 3> triangleColour = colours::getColour(sid);
 
         vtkTetId->InsertNextValue(tid);
         vtkSheetId->InsertNextValue(sid);
@@ -456,7 +460,7 @@ vtkSmartPointer<vtkPolyData> io::buildFiberSurfacePolyData(const FiberSurface& s
     return polyData;
 }
 
-void io::saveFiberSurface(const std::vector<FiberSurface>& surfMeshes, const std::string& filename)
+void io::saveFiberSurface(const std::vector<FiberSurface>& surfMeshes, const ReebSpace2 &rs, const std::string& filename)
 {
     if (surfMeshes.empty())
     {
@@ -469,7 +473,7 @@ void io::saveFiberSurface(const std::vector<FiberSurface>& surfMeshes, const std
 
     auto appender = vtkSmartPointer<vtkAppendPolyData>::New();
     for (auto& surfMesh : surfMeshes)
-        appender->AddInputData(buildFiberSurfacePolyData(surfMesh));
+        appender->AddInputData(buildFiberSurfacePolyData(surfMesh, rs));
 
     appender->Update();
 

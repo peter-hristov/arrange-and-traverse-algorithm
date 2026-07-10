@@ -415,7 +415,7 @@ int main(int argc, char* argv[])
         FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoints, {});
 
         std::string fsFilename = "./output/labeled.fs.f.vtp";
-        io::saveFiberSurface({fs}, fsFilename);
+        io::saveFiberSurface({fs}, reebSpace2, fsFilename);
 
         std::cout << "Saved f-field labeled FS in " << fsFilename << std::endl;
     }
@@ -430,7 +430,7 @@ int main(int argc, char* argv[])
         FiberSurface fs = FiberSurface::constructSegmentedFiberSurface(tetMesh, singularArrangement, reebSpace2, controlPoint, {});
 
         std::string fsFilename = "./output/labeled.fs.g.vtp";
-        io::saveFiberSurface({fs}, fsFilename);
+        io::saveFiberSurface({fs}, reebSpace2, fsFilename);
 
         std::cout << "Saved g-field labeled FS in " << fsFilename << std::endl;
     }

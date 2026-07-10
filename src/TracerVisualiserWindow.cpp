@@ -126,12 +126,12 @@ TracerVisualiserWindow::keyPressEvent(QKeyEvent* event)
 
         filename = "./output/fiber-surface.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
-        io::saveFiberSurface(this->data.fiberSurfaces, filename);
+        io::saveFiberSurface(this->data.fiberSurfaces, data.reebSpace2, filename);
         //io::saveFiberPointsAsTriangleSoup(this->tracerVisualiserWidget->faceFiberSurface, filename);
 
         filename = "./output/fiber-surface-features.vtp";
         std::cout << "Saving surfaces to to " << filename << std::endl;
-        io::saveFiberSurface(this->data.featureSurfaces, filename);
+        io::saveFiberSurface(this->data.featureSurfaces, data.reebSpace2, filename);
         //io::saveFiberPointsAsTriangleSoup(this->tracerVisualiserWidget->faceFiberSurfaceFeatures, filename);
 
         filename = "./output/reeb-space.png";
