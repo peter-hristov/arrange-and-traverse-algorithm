@@ -72,7 +72,8 @@ class PlotWidget : public QWidget
 
         std::vector<QPointF> controlPoints;
 
-        int desiredSheetId = -1;
+        //int desiredSheetId = -1;
+        int desiredSheetId = 4759;
         //int desiredSheetId = 0;
         //int desiredSheetId = 152;
         //int desiredSheetId = 9;

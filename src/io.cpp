@@ -80,11 +80,11 @@ SurfaceMesh getSurfaceMesh(vtkPolyData* polyData)
         return {};
     }
 
-    std::cout << "Before Number of points: " << polyData->GetPoints()->GetNumberOfPoints() << "\n";
-    std::cout << "Before Number of cells: " << polyData->GetNumberOfCells() << "\n";
+    //std::cout << "Before Number of points: " << polyData->GetPoints()->GetNumberOfPoints() << "\n";
+    //std::cout << "Before Number of cells: " << polyData->GetNumberOfCells() << "\n";
 
-    std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
-    std::cout << "Number of cells: " << cleanedPolyData->GetNumberOfCells() << "\n";
+    //std::cout << "Number of points: " << points->GetNumberOfPoints() << "\n";
+    //std::cout << "Number of cells: " << cleanedPolyData->GetNumberOfCells() << "\n";
 
     std::vector<std::array<double, 3>> vertexCoordinates(points->GetNumberOfPoints()); 
     std::vector<double> edgeParam(points->GetNumberOfPoints()); 
@@ -597,12 +597,12 @@ SurfaceMesh io::computeFiberSurface(vtkSmartPointer<vtkUnstructuredGrid> mesh, d
     fiberSurface->SetInputArrayToProcess(3, 1, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, field2Name.c_str()); // scalar2
     fiberSurface->Update();
 
-    std::cout << "Field names are " << field1Name.c_str() << " and " << field2Name.c_str() << std::endl;
+    //std::cout << "Field names are " << field1Name.c_str() << " and " << field2Name.c_str() << std::endl;
 
     vtkPolyData* fiberSurfMesh = vtkPolyData::SafeDownCast(fiberSurface->GetOutput());
 
 
-    std::cout << "The fiber surface has " << fiberSurfMesh->GetNumberOfCells() << " cells.\n";
+    //std::cout << "The fiber surface has " << fiberSurfMesh->GetNumberOfCells() << " cells.\n";
 
 
     return getSurfaceMesh(fiberSurfMesh);

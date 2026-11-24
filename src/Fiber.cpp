@@ -68,25 +68,25 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
 
     const Segment_2 controlSegment(startPoint, endPoint);
 
-    std::cout << "\n\n----------------------------------------------------------------------\n";
-    std::cout << "Comtputing fiber surface...\n";
-    std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
-    std::cout << "----------------------------------------------------------------------\n\n";
+    //std::cout << "\n\n----------------------------------------------------------------------\n";
+    //std::cout << "Comtputing fiber surface...\n";
+    //std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
+    //std::cout << "----------------------------------------------------------------------\n\n";
 
 
-    Timer::start();
+    //Timer::start();
 
     // Compute intersectinos with the AABB tree
-    Timer::start();
+    //Timer::start();
     const std::vector<std::tuple<K::FT, int, int>> intersectedSegments = singularArrangement.getIntersectedSegments2(tetMesh, controlSegment, true);
-    Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed Alpha intersections           :");
 
 
-    Timer::start();
+    //Timer::start();
     SurfaceMesh surfaceMesh = io::computeFiberSurface(tetMesh.originalMesh, controlPoints[0][0], controlPoints[0][1], controlPoints[1][0], controlPoints[1][1]);
-    Timer::stop("Computing fiber surfaces with TTK      :");
+    //Timer::stop("Computing fiber surfaces with TTK      :");
 
-    Timer::start();
+    //Timer::start();
 
     std::vector<double> intersectionAlpha;
     intersectionAlpha.reserve(intersectedSegments.size());
@@ -100,17 +100,17 @@ SurfaceMesh fiber::computeFiberSurfaceSingularSegment(TetMesh &tetMesh, Arrangem
     }
 
     surfaceMesh.subdivideMesh(intersectionAlpha);
-    Timer::stop("Subdivided mesh                        :");
+    //Timer::stop("Subdivided mesh                        :");
 
     //Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     //surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
     //Timer::stop("Computing triangle sheets              :");
 
-    Timer::start();
+    //Timer::start();
     //surfaceMesh.computeTriangleSheets(tetMesh, singularArrangement, reebSpace);
     surfaceMesh.computeTriangleSheets2(tetMesh, singularArrangement, reebSpace, intersectedSegments, controlSegment);
-    Timer::stop("Computing triangle sheets 2            :");
+    //Timer::stop("Computing triangle sheets 2            :");
 
     return surfaceMesh;
 }
@@ -1374,19 +1374,19 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
     const Segment_2 controlSegment(startPoint, endPoint);
 
-    std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
+    //std::cout << "Start point : " << std::setprecision(17) << startPoint << " end point " << std::setprecision(17) << endPoint << std::endl;
 
 
-    Timer::start();
+    //Timer::start();
 
     // Compute intersectinos with the AABB tree
     //
-    Timer::start();
+    //Timer::start();
     std::vector<TreeAABB::Primitive_id> intersectedSegmentsAABB;
     singularArrangement.tree.all_intersected_primitives(controlSegment, std::back_inserter(intersectedSegmentsAABB));
-    Timer::stop("Computed AABB intersections in         :");
+    //Timer::stop("Computed AABB intersections in         :");
 
-    Timer::start();
+    //Timer::start();
 
 
 
@@ -1472,13 +1472,13 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
         }
     }
 
-    Timer::stop("Computed Alpha intersections           :");
+    //Timer::stop("Computed Alpha intersections           :");
     //Timer::stop("Computed AABB intersections in         :");
 
 
-    Timer::start();
+    //Timer::start();
     std::sort(intersectedSegments.begin(), intersectedSegments.end());
-    Timer::stop("Sorting alpha intersections            :");
+    //Timer::stop("Sorting alpha intersections            :");
 
 
 
@@ -1565,7 +1565,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
 
     // Fet up the fiber points in between the intersecting segments
     //
-    Timer::start();
+    //Timer::start();
     std::vector<Point_2> fiberPoints;
     fiberPoints.reserve(intersectedSegments.size() + 1);
 
@@ -1586,7 +1586,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     }
 
     fiberPoints.emplace_back(endPoint);
-    Timer::stop("Finding the midpoint alphas            :");
+    //Timer::stop("Finding the midpoint alphas            :");
 
 
 
@@ -1595,9 +1595,9 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     std::vector<std::unordered_map<int, std::array<double, 3>>> barycentricCoordinatesPerTriangle(fiberPoints.size());
 
 
-    Timer::start();
+    //Timer::start();
 
-    std::cout << "Computing " << fiberPoints.size() << " fiber graphs...\n";
+    //std::cout << "Computing " << fiberPoints.size() << " fiber graphs...\n";
 
     // Do the heavy lifting
     //
@@ -1620,7 +1620,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
         }
     }
 
-    Timer::stop("Computed fiber graphs and coords       :");
+    //Timer::stop("Computed fiber graphs and coords       :");
 
 
 
@@ -1634,7 +1634,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
     // Compute all the triangles
     //
 
-    Timer::start();
+    //Timer::start();
 
     std::vector<std::vector<FiberPoint>> allFiberPoints(fiberPoints.size());
 
@@ -2379,7 +2379,7 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
         //printf("\n\n");
     }
 
-    Timer::stop("Computing fiber surface triangles      :");
+    //Timer::stop("Computing fiber surface triangles      :");
     std::cout << std::endl << std::flush;
 
     std::vector<FiberPoint> result;
@@ -2397,9 +2397,9 @@ std::vector<FiberPoint> fiber::computeFiberSurface(TetMesh &tetMesh, Arrangement
         totalFiberSize += fiberGraphs[i].componentRoot.size();
     }
 
-    std::cerr << "Number of triangles : " << result.size() << std::endl;
-    std::cerr << "Number of total fibers : " << totalFiberSize << std::endl;
-    std::cerr << "Number of sheets : " << uniqueSheetIds.size() << std::endl;
+    //std::cerr << "Number of triangles : " << result.size() << std::endl;
+    //std::cerr << "Number of total fibers : " << totalFiberSize << std::endl;
+    //std::cerr << "Number of sheets : " << uniqueSheetIds.size() << std::endl;
 
     return result;
 }
